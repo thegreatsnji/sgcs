@@ -1,0 +1,61 @@
+# Dependências
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+env/
+.env
+
+# Build e distribuição
+dist/
+build/
+*.egg-info/
+.eggs/
+frontend/dist/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# IDE e editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs e temporários
+*.log
+logs/
+tmp/
+temp/
+
+# Testes e cobertura
+.coverage
+htmlcov/
+.pytest_cache/
+coverage/
+
+# Docker
+.docker/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Python
+*.sqlite3
+staticfiles/
+
+# Ficheiros sensíveis
+*.pem
+*.key
+secrets/
