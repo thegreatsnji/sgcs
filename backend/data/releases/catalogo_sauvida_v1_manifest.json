@@ -1,0 +1,11 @@
+{
+  "versao_catalogo": "SAUVIDA_V1",
+  "data_versao": "2026-07-31",
+  "origem": "OCR_FOTOGRAFIAS_CLINICA",
+  "estado": "CONGELADO",
+  "servicos": 119,
+  "exames": 87,
+  "checksum_servicos_sha256": "32cc9123087de039c0bef965aa61cdee4cd63d50295a32278711fe698000104f",
+  "checksum_exames_sha256": "c5e35bd97b3352705f9a1132094691ec51a4dcb3f08f94d0ee08d0a3bbeb6678",
+  "regra_alteracao": "Não editar ficheiros em releases/; criar SAUVIDA_V1_1 ou SAUVIDA_V2"
+}

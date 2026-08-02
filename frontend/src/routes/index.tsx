@@ -8,6 +8,7 @@ import { PatientHistoryPage } from "@/features/patients/pages/PatientHistoryPage
 import { PatientsListPage } from "@/features/patients/pages/PatientsListPage";
 import { CheckInPage } from "@/features/reception/pages/CheckInPage";
 import { ReceptionDashboardPage } from "@/features/reception/pages/ReceptionDashboardPage";
+import { ReceptionWorkflowPage } from "@/features/reception/pages/ReceptionWorkflowPage";
 import { ReferralPage } from "@/features/reception/pages/ReferralPage";
 import { WaitingQueuePage } from "@/features/reception/pages/WaitingQueuePage";
 import { ConsultationDashboardPage } from "@/features/appointments/pages/ConsultationDashboardPage";
@@ -33,6 +34,7 @@ import { ResultHistoryPage } from "@/features/laboratory/results/pages/ResultHis
 import { ResultsDashboardPage } from "@/features/laboratory/results/pages/ResultsDashboardPage";
 import { BillingDashboardPage } from "@/features/billing/pages/BillingDashboardPage";
 import { InvoiceCreatePage } from "@/features/billing/pages/InvoiceCreatePage";
+import { PendingReductionsPage } from "@/features/billing/pages/PendingReductionsPage";
 import { InvoiceDetailPage } from "@/features/billing/pages/InvoiceDetailPage";
 import { InvoicesListPage } from "@/features/billing/pages/InvoicesListPage";
 import { PatientHistoryPage as BillingPatientHistoryPage } from "@/features/billing/pages/PatientHistoryPage";
@@ -41,6 +43,7 @@ import { QuoteCreatePage } from "@/features/billing/pages/QuoteCreatePage";
 import { QuotesListPage } from "@/features/billing/pages/QuotesListPage";
 import { ReceiptDetailPage } from "@/features/billing/pages/ReceiptDetailPage";
 import { ReceiptsListPage } from "@/features/billing/pages/ReceiptsListPage";
+import { ServiceDetailPage } from "@/features/billing/pages/ServiceDetailPage";
 import { ServiceFormPage } from "@/features/billing/pages/ServiceFormPage";
 import { ServicesListPage } from "@/features/billing/pages/ServicesListPage";
 import { CashMovementsPage } from "@/features/finance/pages/CashMovementsPage";
@@ -75,6 +78,7 @@ import {
   SystemStatusPage,
   WorkingHoursPage,
 } from "@/features/settings/pages/SettingsPages";
+import { MedicoProfilesPage } from "@/features/settings/pages/MedicoProfilesPage";
 import {
   ClinicalEvolutionPage,
 } from "@/features/doctors/pages/ClinicalEvolutionPage";
@@ -103,10 +107,17 @@ import { PermissionsPage } from "@/pages/admin/PermissionsPage";
 import { ProfilePage } from "@/pages/admin/ProfilePage";
 import { UserFormPage } from "@/pages/admin/UserFormPage";
 import { UsersListPage } from "@/pages/admin/UsersListPage";
-import { DashboardPage } from "@/pages/DashboardPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
-import { ProtectedRoute, PublicRoute, PermissionRoute, PermissionGuard } from "@/routes/guards";
+import { AdminRoleDashboardPage } from "@/pages/dashboards/AdminRoleDashboardPage";
+import { DirectorRoleDashboardPage } from "@/pages/dashboards/DirectorRoleDashboardPage";
+import { DoctorRoleDashboardPage } from "@/pages/dashboards/DoctorRoleDashboardPage";
+import { LaboratoryRoleDashboardPage } from "@/pages/dashboards/LaboratoryRoleDashboardPage";
+import { NurseRoleDashboardPage } from "@/pages/dashboards/NurseRoleDashboardPage";
+import { ReceptionRoleDashboardPage } from "@/pages/dashboards/ReceptionRoleDashboardPage";
+import { ProtectedRoute, PublicRoute, PermissionRoute, PermissionGuard, AdminOnlyRoute } from "@/routes/guards";
+import { RoleGuard } from "@/routes/RoleGuard";
+import { RoleHomeRedirect } from "@/routes/RoleHomeRedirect";
 
 export const router = createBrowserRouter([
   {
@@ -115,7 +126,13 @@ export const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <DashboardPage /> },
+          { index: true, element: <RoleHomeRedirect /> },
+          { path: "dashboard/admin", element: <RoleGuard allowed="ADMINISTRADOR"><AdminRoleDashboardPage /></RoleGuard> },
+          { path: "dashboard/director", element: <RoleGuard allowed="DIRECTOR"><DirectorRoleDashboardPage /></RoleGuard> },
+          { path: "dashboard/doctor", element: <RoleGuard allowed="MEDICO"><DoctorRoleDashboardPage /></RoleGuard> },
+          { path: "dashboard/reception", element: <RoleGuard allowed="RECECIONISTA"><ReceptionRoleDashboardPage /></RoleGuard> },
+          { path: "dashboard/laboratory", element: <RoleGuard allowed="LABORATORIO"><LaboratoryRoleDashboardPage /></RoleGuard> },
+          { path: "dashboard/nurse", element: <RoleGuard allowed="ENFERMEIRO"><NurseRoleDashboardPage /></RoleGuard> },
           {
             element: <PermissionRoute permission="patients.view" fallback="/" />,
             children: [
@@ -131,6 +148,7 @@ export const router = createBrowserRouter([
             element: <PermissionRoute permission="reception.view" fallback="/" />,
             children: [
               { path: "reception", element: <ReceptionDashboardPage /> },
+              { path: "reception/atendimento", element: <ReceptionWorkflowPage /> },
               { path: "reception/check-in", element: <CheckInPage /> },
               { path: "reception/queue", element: <WaitingQueuePage /> },
               { path: "reception/referrals", element: <ReferralPage /> },
@@ -182,8 +200,10 @@ export const router = createBrowserRouter([
             children: [
               { path: "billing", element: <BillingDashboardPage /> },
               { path: "billing/services", element: <ServicesListPage /> },
+              { path: "billing/services/:id", element: <ServiceDetailPage /> },
               { path: "billing/quotes", element: <QuotesListPage /> },
               { path: "billing/invoices", element: <InvoicesListPage /> },
+              { path: "billing/reducoes/pendentes", element: <PendingReductionsPage /> },
               { path: "billing/payments", element: <PaymentsListPage /> },
               { path: "billing/receipts", element: <ReceiptsListPage /> },
               { path: "billing/history", element: <BillingPatientHistoryPage /> },
@@ -195,6 +215,7 @@ export const router = createBrowserRouter([
             element: <PermissionRoute permission="billing.create" fallback="/billing" />,
             children: [
               { path: "billing/services/new", element: <ServiceFormPage /> },
+              { path: "billing/services/:id/edit", element: <ServiceFormPage /> },
               { path: "billing/quotes/new", element: <QuoteCreatePage /> },
               { path: "billing/invoices/new", element: <InvoiceCreatePage /> },
             ],
@@ -233,6 +254,7 @@ export const router = createBrowserRouter([
               { path: "settings/clinic", element: <ClinicSettingsPage /> },
               { path: "settings/departments", element: <DepartmentsPage /> },
               { path: "settings/specialties", element: <SpecialtiesPage /> },
+              { path: "settings/medicos", element: <MedicoProfilesPage /> },
               { path: "settings/rooms", element: <RoomsPage /> },
               { path: "settings/hours", element: <WorkingHoursPage /> },
               { path: "settings/consultation-types", element: <ConsultationTypesPage /> },
@@ -277,8 +299,11 @@ export const router = createBrowserRouter([
           },
           {
             path: "admin",
-            element: <AdminLayout />,
+            element: <AdminOnlyRoute />,
             children: [
+              {
+                element: <AdminLayout />,
+                children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <AdminDashboardPage /> },
               { path: "users", element: <UsersListPage /> },
@@ -288,6 +313,8 @@ export const router = createBrowserRouter([
               { path: "groups", element: <GroupsPage /> },
               { path: "audit", element: <AuditPage /> },
               { path: "profile", element: <ProfilePage /> },
+                ],
+              },
             ],
           },
         ],

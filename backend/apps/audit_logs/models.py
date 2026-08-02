@@ -97,6 +97,15 @@ class AuditAction(models.TextChoices):
     TEMPLATE_CRIADO = "TEMPLATE_CRIADO", "Template criado"
     TEMPLATE_EDITADO = "TEMPLATE_EDITADO", "Template editado"
     PREFERENCIA_ALTERADA = "PREFERENCIA_ALTERADA", "Preferência alterada"
+    SERVICO_PRECO_ALTERADO = "SERVICO_PRECO_ALTERADO", "Preço de serviço alterado"
+    REDUCAO_VALOR_SOLICITADA = "REDUCAO_VALOR_SOLICITADA", "Redução de valor solicitada"
+    REDUCAO_VALOR_APROVADA = "REDUCAO_VALOR_APROVADA", "Redução de valor aprovada"
+    REDUCAO_VALOR_REJEITADA = "REDUCAO_VALOR_REJEITADA", "Redução de valor rejeitada"
+    REDUCAO_VALOR_APLICADA = "REDUCAO_VALOR_APLICADA", "Redução de valor aplicada"
+    REDUCAO_VALOR_CANCELADA = "REDUCAO_VALOR_CANCELADA", "Redução de valor cancelada"
+    TENTATIVA_ALTERAR_PRECO_OFICIAL = "TENTATIVA_ALTERAR_PRECO_OFICIAL", "Tentativa de alterar preço oficial"
+    CATALOGO_REAL_IMPORTADO = "CATALOGO_REAL_IMPORTADO", "Catálogo real importado"
+    CONFLITO_CATALOGO_RESOLVIDO = "CONFLITO_CATALOGO_RESOLVIDO", "Conflito de catálogo resolvido"
 
 
 class AuditLog(models.Model):

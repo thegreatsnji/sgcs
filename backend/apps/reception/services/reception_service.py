@@ -14,10 +14,14 @@ from apps.reception.constants import (
     DEFAULT_WAIT_MINUTES_PER_POSITION,
     QUEUE_CACHE_KEY,
     QUEUE_CACHE_TTL,
+    TRIAGE_PRIORITY_MAP,
+    TRIAGE_WAIT_MINUTES,
     CheckInStatus,
+    PRIORITY_ORDER,
     QueuePriority,
     QueueStatus,
     ReferralDepartment,
+    TriageColor,
 )
 from apps.reception.models import ReceptionCheckIn, Referral, WaitingQueue
 
@@ -48,25 +52,50 @@ class ReceptionService:
     def _recalculate_estimated_times() -> None:
         for entry in WaitingQueue.objects.filter(
             status__in=ReceptionService.ACTIVE_QUEUE_STATUSES
-        ).order_by("position"):
-            entry.estimated_wait_minutes = max(0, (entry.position - 1) * DEFAULT_WAIT_MINUTES_PER_POSITION)
+        ).select_related("check_in").order_by("position"):
+            triage_color = entry.check_in.triage_color
+            if triage_color in TRIAGE_WAIT_MINUTES:
+                entry.estimated_wait_minutes = TRIAGE_WAIT_MINUTES[triage_color]
+            else:
+                entry.estimated_wait_minutes = max(
+                    0, (entry.position - 1) * DEFAULT_WAIT_MINUTES_PER_POSITION
+                )
             entry.save(update_fields=["estimated_wait_minutes", "updated_at"])
 
     @staticmethod
     @transaction.atomic
-    def _reorder_queue_for_priority(priority: str) -> int:
+    def _insert_queue_position(priority: str) -> int:
         active_entries = list(
             WaitingQueue.objects.select_for_update()
             .filter(status__in=ReceptionService.ACTIVE_QUEUE_STATUSES)
+            .select_related("check_in")
             .order_by("position")
         )
-        next_position = len(active_entries) + 1
-        if priority != QueuePriority.EMERGENCY:
-            return next_position
+        new_rank = PRIORITY_ORDER.get(priority, PRIORITY_ORDER[QueuePriority.NORMAL])
+        insert_index = len(active_entries)
 
-        for entry in active_entries:
+        for index, entry in enumerate(active_entries):
+            entry_rank = PRIORITY_ORDER.get(entry.check_in.priority, PRIORITY_ORDER[QueuePriority.NORMAL])
+            if entry_rank > new_rank:
+                insert_index = index
+                break
+
+        position = insert_index + 1
+        for entry in active_entries[insert_index:]:
             WaitingQueue.objects.filter(pk=entry.pk).update(position=F("position") + 1)
-        return 1
+        return position
+
+    @staticmethod
+    def _resolve_priority(priority: str | None, triage_color: str | None) -> str:
+        if triage_color and triage_color in TRIAGE_PRIORITY_MAP:
+            return TRIAGE_PRIORITY_MAP[triage_color]
+        return priority or QueuePriority.NORMAL
+
+    @staticmethod
+    def _resolve_wait_minutes(triage_color: str | None, position: int) -> int:
+        if triage_color in TRIAGE_WAIT_MINUTES:
+            return TRIAGE_WAIT_MINUTES[triage_color]
+        return max(0, (position - 1) * DEFAULT_WAIT_MINUTES_PER_POSITION)
 
     @staticmethod
     @transaction.atomic
@@ -75,6 +104,12 @@ class ReceptionService:
         user,
         *,
         priority: str = QueuePriority.NORMAL,
+        triage_color: str | None = None,
+        age_at_check_in: int | None = None,
+        weight=None,
+        temperature=None,
+        blood_pressure: str = "",
+        symptoms: str = "",
         notes: str = "",
         request=None,
     ) -> ReceptionCheckIn:
@@ -84,33 +119,50 @@ class ReceptionService:
         if ReceptionService._patient_has_active_queue(patient):
             raise ValueError("O paciente já se encontra na fila de espera.")
 
+        resolved_priority = ReceptionService._resolve_priority(priority, triage_color)
+
         check_in = ReceptionCheckIn.objects.create(
             patient=patient,
             receptionist=user,
-            priority=priority,
+            priority=resolved_priority,
+            triage_color=triage_color or "",
+            age_at_check_in=age_at_check_in,
+            weight=weight,
+            temperature=temperature,
+            blood_pressure=blood_pressure,
+            symptoms=symptoms,
             notes=notes,
             status=CheckInStatus.WAITING,
         )
 
-        position = ReceptionService._reorder_queue_for_priority(priority)
+        position = ReceptionService._insert_queue_position(resolved_priority)
         WaitingQueue.objects.create(
             check_in=check_in,
             patient=patient,
             position=position,
             status=QueueStatus.WAITING,
-            estimated_wait_minutes=max(0, (position - 1) * DEFAULT_WAIT_MINUTES_PER_POSITION),
+            estimated_wait_minutes=ReceptionService._resolve_wait_minutes(triage_color, position),
         )
         ReceptionService._recalculate_estimated_times()
         ReceptionService._invalidate_queue_cache()
 
+        triage_label = dict(TriageColor.choices).get(triage_color, triage_color) if triage_color else ""
+        triage_info = f", triagem {triage_label}" if triage_label else ""
         AuditService.log(
             action=AuditAction.RECEPTION_CHECK_IN,
             user=user,
             request=request,
-            description=f"Check-in do paciente {patient.full_name} (prioridade {priority}).",
+            description=(
+                f"Triagem do paciente {patient.full_name} "
+                f"(prioridade {resolved_priority}{triage_info})."
+            ),
             resource_type="reception_check_in",
             resource_id=str(check_in.pk),
-            metadata={"patient_id": patient.pk, "priority": priority},
+            metadata={
+                "patient_id": patient.pk,
+                "priority": resolved_priority,
+                "triage_color": triage_color,
+            },
         )
         return check_in
 

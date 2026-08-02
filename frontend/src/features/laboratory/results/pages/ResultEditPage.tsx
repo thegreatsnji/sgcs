@@ -36,7 +36,7 @@ export function ResultEditPage() {
     return (
       <div className="space-y-4">
         <ErrorState message="Este resultado já foi validado e não pode ser editado." />
-        <Link to={`/laboratory/results/${resultId}`} className="text-sm text-primary-700 hover:underline">
+        <Link to={`/laboratory/results/${resultId}`} className="text-sm text-primary-600 hover:underline">
           Ver detalhes do resultado
         </Link>
       </div>
@@ -46,7 +46,7 @@ export function ResultEditPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">Editar resultado</h2>
+        <h1 className="text-2xl font-bold text-slate-900">Editar Resultado</h1>
         <Link to={`/laboratory/results/${resultId}`}>
           <Button variant="ghost">Cancelar</Button>
         </Link>
@@ -59,11 +59,17 @@ export function ResultEditPage() {
           conclusao: data.conclusao,
           parametros: data.parametros,
         }}
-        pedidoLabel={`${data.numero_pedido} — ${data.paciente_nome}`}
+        patientInfo={{
+          full_name: data.paciente_nome,
+          numero_pedido: data.numero_pedido,
+          medico_nome: data.medico_nome,
+          estado: data.estado,
+        }}
         onSubmit={(values) =>
           mutation.mutate({ observacoes: values.observacoes, conclusao: values.conclusao })
         }
         isPending={mutation.isPending}
+        parametersReadOnly
       />
     </div>
   );

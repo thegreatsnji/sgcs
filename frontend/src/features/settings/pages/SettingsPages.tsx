@@ -28,8 +28,8 @@ export function SettingsDashboardPage() {
           <Card title="Versão">
             <p className="text-xl font-bold">{(data.monitorizacao as { versao?: string }).versao}</p>
           </Card>
-          <Card title="Health">
-            <p className="text-xl font-bold">{(data.monitorizacao as { health?: string }).health}</p>
+          <Card title="Estado do sistema">
+            <p className="text-xl font-bold">{(data.monitorizacao as { health?: string }).health ?? "—"}</p>
           </Card>
           <Card title="Utilizadores">
             <p className="text-xl font-bold">
@@ -105,7 +105,7 @@ export function FeatureFlagsPage() {
   const { data, refetch } = useQuery({ queryKey: ["feature-flags"], queryFn: settingsService.getFeatureFlags });
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Feature Flags</h2>
+      <h2 className="text-2xl font-bold">Funcionalidades experimentais</h2>
       <SettingsSubNav />
       {data && (
         <FeatureFlagTable
@@ -150,4 +150,4 @@ export const ConsultationTypesPage = () => <PlaceholderPage title="Tipos de Cons
 export const LaboratorySettingsPage = () => <PlaceholderPage title="Laboratório" />;
 export const BillingSettingsPage = () => <PlaceholderPage title="Faturação" />;
 export const EmailSettingsPage = () => <PlaceholderPage title="E-mail" />;
-export const BackupPage = () => <PlaceholderPage title="Backups" />;
+export const BackupPage = () => <PlaceholderPage title="Cópias de segurança" />;

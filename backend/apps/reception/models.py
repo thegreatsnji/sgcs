@@ -8,6 +8,7 @@ from apps.reception.constants import (
     QueuePriority,
     QueueStatus,
     ReferralDepartment,
+    TriageColor,
 )
 from core.mixins import TimestampMixin
 
@@ -38,6 +39,23 @@ class ReceptionCheckIn(TimestampMixin):
         choices=QueuePriority.choices,
         default=QueuePriority.NORMAL,
     )
+    triage_color = models.CharField(
+        "Cor de triagem",
+        max_length=10,
+        choices=TriageColor.choices,
+        blank=True,
+    )
+    age_at_check_in = models.PositiveSmallIntegerField("Idade na triagem", null=True, blank=True)
+    weight = models.DecimalField("Peso (kg)", max_digits=5, decimal_places=2, null=True, blank=True)
+    temperature = models.DecimalField(
+        "Temperatura (°C)",
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+    )
+    blood_pressure = models.CharField("Pressão arterial", max_length=20, blank=True)
+    symptoms = models.TextField("Sintomas", blank=True)
     notes = models.TextField("Notas", blank=True)
 
     class Meta:

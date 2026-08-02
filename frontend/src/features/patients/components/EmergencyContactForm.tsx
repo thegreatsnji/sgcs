@@ -1,6 +1,7 @@
 import { useFieldArray, type Control, type FieldErrors, type UseFormRegister } from "react-hook-form";
 
 import { Button, Input } from "@/design-system";
+import { PhoneInput } from "@/components/forms";
 import { EMERGENCY_RELATIONSHIP_LABELS } from "@/constants/patients";
 import type { PatientFormData } from "@/schemas/patientSchema";
 import type { EmergencyRelationship } from "@/types/patient";
@@ -28,7 +29,7 @@ export function EmergencyContactForm({ control, register, errors }: EmergencyCon
             error={errors.emergency_contacts?.[index]?.name?.message}
             {...register(`emergency_contacts.${index}.name`)}
           />
-          <Input
+          <PhoneInput
             label="Telefone"
             error={errors.emergency_contacts?.[index]?.phone?.message}
             {...register(`emergency_contacts.${index}.phone`)}

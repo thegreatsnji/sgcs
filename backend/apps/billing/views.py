@@ -5,8 +5,9 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 
+from apps.billing.clinic_scope import EXCLUDED_SERVICE_CATEGORIES, EXCLUDED_SERVICE_CODES
 from apps.billing.filters import FaturaFilter, OrcamentoFilter, PagamentoFilter, ReciboFilter, ServicoFilter
-from apps.billing.models import Fatura, Orcamento, Pagamento, Recibo, Servico
+from apps.billing.models import Fatura, Orcamento, Pagamento, Recibo, ReducaoValorAutorizacao, Servico, ServicoPrecoHistorico
 from apps.billing.permissions import (
     InvoicePermissionMixin,
     PaymentPermissionMixin,
@@ -22,6 +23,9 @@ from apps.billing.serializers import (
     PagamentoCreateSerializer,
     PagamentoSerializer,
     ReciboSerializer,
+    ReducaoValorAutorizacaoSerializer,
+    ReducaoValorSolicitarSerializer,
+    ServicoPrecoHistoricoSerializer,
     ServicoSerializer,
 )
 from apps.billing.services.billing_service import BillingService
@@ -39,11 +43,28 @@ from core.responses import error_response, success_response
     destroy=extend_schema(tags=["Faturação — Serviços"]),
 )
 class ServicoViewSet(ServicePermissionMixin, viewsets.ModelViewSet):
-    queryset = Servico.objects.all()
+    queryset = Servico.objects.select_related("departamento", "especialidade").all()
     serializer_class = ServicoSerializer
     pagination_class = StandardPagination
     filterset_class = ServicoFilter
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.action in ("list", "retrieve") and not self.request.query_params.get(
+            "include_excluded"
+        ):
+            qs = qs.exclude(categoria__in=EXCLUDED_SERVICE_CATEGORIES).exclude(
+                codigo__in=EXCLUDED_SERVICE_CODES
+            )
+        if self.request.query_params.get("operacional") == "1":
+            qs = qs.filter(activo=True)
+        return qs
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
 
     def perform_create(self, serializer):
         serializer.save()
@@ -61,7 +82,7 @@ class ServicoViewSet(ServicePermissionMixin, viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
-        serializer = ServicoSerializer(page, many=True)
+        serializer = ServicoSerializer(page, many=True, context={"request": request})
         paginated = self.get_paginated_response(serializer.data)
         return success_response(
             data={
@@ -81,7 +102,7 @@ class ServicoViewSet(ServicePermissionMixin, viewsets.ModelViewSet):
         )
 
     def create(self, request, *args, **kwargs):
-        serializer = ServicoSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return success_response(
@@ -92,10 +113,18 @@ class ServicoViewSet(ServicePermissionMixin, viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = ServicoSerializer(instance, data=request.data, partial=True)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return success_response(data=serializer.data, message="Serviço actualizado com sucesso.")
+
+    @extend_schema(tags=["Faturação — Serviços"])
+    @action(detail=True, methods=["get"], url_path="price-history")
+    def price_history(self, request, pk=None):
+        servico = self.get_object()
+        historico = servico.historico_precos.select_related("alterado_por").all()[:100]
+        data = ServicoPrecoHistoricoSerializer(historico, many=True).data
+        return success_response(data=data, message="Histórico de preços obtido com sucesso.")
 
 
 @extend_schema_view(
@@ -429,6 +458,20 @@ class ReciboViewSet(ReceiptPermissionMixin, viewsets.ReadOnlyModelViewSet):
             message="Recibo obtido com sucesso.",
         )
 
+    @action(detail=True, methods=["get"], url_path="impressao")
+    def impressao(self, request, pk=None):
+        from apps.billing.services.receipt_print_service import build_receipt_print_context
+
+        recibo = self.get_object()
+        segunda = request.query_params.get("segunda_via") in ("1", "true", "sim")
+        if segunda:
+            recibo.segunda_via = True
+            recibo.save(update_fields=["segunda_via", "updated_at"])
+        return success_response(
+            data=build_receipt_print_context(recibo),
+            message="Dados de impressão do recibo.",
+        )
+
 
 class PatientFinancialHistoryView(APIView):
     permission_classes = [HasModulePermission]
@@ -438,3 +481,141 @@ class PatientFinancialHistoryView(APIView):
     def get(self, request, patient_id: int):
         data = BillingService.historico_financeiro(int(patient_id))
         return success_response(data=data, message="Histórico financeiro obtido com sucesso.")
+
+
+class ReducaoValorAutorizacaoViewSet(InvoicePermissionMixin, viewsets.ModelViewSet):
+    queryset = ReducaoValorAutorizacao.objects.select_related(
+        "servico", "paciente", "solicitado_por", "decidido_por", "fatura"
+    )
+    serializer_class = ReducaoValorAutorizacaoSerializer
+    pagination_class = StandardPagination
+    http_method_names = ["get", "post", "head", "options"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        estado = self.request.query_params.get("estado")
+        if estado:
+            qs = qs.filter(estado=estado)
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        serializer = ReducaoValorAutorizacaoSerializer(page, many=True)
+        paginated = self.get_paginated_response(serializer.data)
+        return success_response(
+            data={
+                "count": paginated.data["count"],
+                "next": paginated.data["next"],
+                "previous": paginated.data["previous"],
+                "results": paginated.data["results"],
+            },
+            message="Pedidos de redução obtidos com sucesso.",
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = ReducaoValorSolicitarSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        auth = serializer.save()
+        return success_response(
+            data=ReducaoValorAutorizacaoSerializer(auth).data,
+            message="Pedido de autorização registado.",
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["post"])
+    def aprovar(self, request, pk=None):
+        from apps.billing.services.reduction_service import ReductionError, decidir_autorizacao_reducao
+
+        try:
+            auth = decidir_autorizacao_reducao(
+                int(pk),
+                request.user,
+                aprovar=True,
+                observacao=request.data.get("observacao", ""),
+                request=request,
+            )
+        except ReducaoValorAutorizacao.DoesNotExist:
+            return error_response("Pedido não encontrado.", status=status.HTTP_404_NOT_FOUND)
+        except ReductionError as exc:
+            return error_response(str(exc), status=status.HTTP_400_BAD_REQUEST)
+        return success_response(
+            data=ReducaoValorAutorizacaoSerializer(auth).data,
+            message="Redução aprovada.",
+        )
+
+    @action(detail=True, methods=["post"])
+    def rejeitar(self, request, pk=None):
+        from apps.billing.services.reduction_service import ReductionError, decidir_autorizacao_reducao
+
+        try:
+            auth = decidir_autorizacao_reducao(
+                int(pk),
+                request.user,
+                aprovar=False,
+                observacao=request.data.get("observacao", ""),
+                request=request,
+            )
+        except ReducaoValorAutorizacao.DoesNotExist:
+            return error_response("Pedido não encontrado.", status=status.HTTP_404_NOT_FOUND)
+        except ReductionError as exc:
+            return error_response(str(exc), status=status.HTTP_400_BAD_REQUEST)
+        return success_response(
+            data=ReducaoValorAutorizacaoSerializer(auth).data,
+            message="Redução rejeitada.",
+        )
+
+
+class RelatorioReducoesView(APIView):
+    permission_classes = [HasModulePermission]
+    required_permission = "billing.view"
+
+    @extend_schema(tags=["Faturação — Relatórios"])
+    def get(self, request):
+        from django.db.models import Avg, Count, Sum
+
+        from apps.billing.constants import EstadoAutorizacaoReducao
+        from apps.billing.models import ItemFatura
+
+        qs = ItemFatura.objects.filter(valor_reducao__gt=0).select_related(
+            "fatura", "servico", "reduzido_por"
+        )
+        if request.query_params.get("de"):
+            qs = qs.filter(fatura__emitida_em__date__gte=request.query_params["de"])
+        if request.query_params.get("ate"):
+            qs = qs.filter(fatura__emitida_em__date__lte=request.query_params["ate"])
+        if request.query_params.get("motivo"):
+            qs = qs.filter(motivo_reducao=request.query_params["motivo"])
+        if request.query_params.get("rececionista"):
+            qs = qs.filter(reduzido_por_id=request.query_params["rececionista"])
+
+        agg = qs.aggregate(
+            total_linhas=Count("id"),
+            oficial=Sum("subtotal_oficial"),
+            cobrado=Sum("subtotal"),
+            reduzido=Sum("valor_reducao"),
+            media_pct=Avg("percentual_reducao"),
+        )
+        pendentes = ReducaoValorAutorizacao.objects.filter(
+            estado=EstadoAutorizacaoReducao.PENDENTE
+        ).count()
+        rejeitadas = ReducaoValorAutorizacao.objects.filter(
+            estado=EstadoAutorizacaoReducao.REJEITADA
+        ).count()
+
+        return success_response(
+            data={
+                "indicadores": {
+                    "numero_reducoes": agg["total_linhas"] or 0,
+                    "valor_oficial_total": str(agg["oficial"] or 0),
+                    "valor_cobrado_total": str(agg["cobrado"] or 0),
+                    "total_reduzido": str(agg["reduzido"] or 0),
+                    "media_percentual": str(agg["media_pct"] or 0),
+                    "pendentes": pendentes,
+                    "rejeitadas": rejeitadas,
+                },
+            },
+            message="Relatório de reduções obtido com sucesso.",
+        )

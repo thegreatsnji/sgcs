@@ -6,8 +6,8 @@ Manual de administração para gestores e administradores.
 
 | Perfil | Configurações |
 |--------|---------------|
-| ADMINISTRADOR | Acesso total |
-| DIRECTOR | Visualização e edição (sem backups) |
+| ADMINISTRADOR | Acesso total (utilizadores, segurança, backups, monitorização, feature flags) |
+| DIRECTOR | Sem acesso a configurações de sistema; assume faturação, financeiro, relatórios e dashboard executivo |
 | Outros | Sem acesso por defeito |
 
 ## Permissões RBAC

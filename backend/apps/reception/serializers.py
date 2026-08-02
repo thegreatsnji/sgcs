@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from apps.reception.constants import QueuePriority, QueueStatus, ReferralDepartment
+from apps.reception.constants import QueuePriority, QueueStatus, ReferralDepartment, TriageColor
 from apps.reception.models import ReceptionCheckIn, Referral, WaitingQueue
 from apps.reception.services.reception_service import ReceptionService
 
@@ -21,8 +21,29 @@ class UserSummarySerializer(serializers.Serializer):
 
 class CheckInCreateSerializer(serializers.Serializer):
     patient_id = serializers.IntegerField()
-    priority = serializers.ChoiceField(choices=QueuePriority.choices, default=QueuePriority.NORMAL)
+    priority = serializers.ChoiceField(choices=QueuePriority.choices, required=False)
+    triage_color = serializers.ChoiceField(choices=TriageColor.choices, required=False)
+    age_at_check_in = serializers.IntegerField(required=False, min_value=0, max_value=120)
+    weight = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, allow_null=True)
+    temperature = serializers.DecimalField(max_digits=4, decimal_places=1, required=False, allow_null=True)
+    blood_pressure = serializers.CharField(required=False, allow_blank=True, default="", max_length=20)
+    symptoms = serializers.CharField(required=False, allow_blank=True, default="")
     notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        triage_color = attrs.get("triage_color")
+        if triage_color:
+            if not attrs.get("symptoms"):
+                raise serializers.ValidationError({"symptoms": "Descreva os sintomas do paciente."})
+            if attrs.get("age_at_check_in") is None:
+                raise serializers.ValidationError({"age_at_check_in": "Indique a idade do paciente."})
+            if attrs.get("weight") is None:
+                raise serializers.ValidationError({"weight": "Indique o peso do paciente."})
+            if attrs.get("temperature") is None:
+                raise serializers.ValidationError({"temperature": "Indique a temperatura do paciente."})
+            if not attrs.get("blood_pressure"):
+                raise serializers.ValidationError({"blood_pressure": "Indique a pressão arterial."})
+        return attrs
 
     def create(self, validated_data):
         user = self.context["request"].user
@@ -32,6 +53,12 @@ class CheckInCreateSerializer(serializers.Serializer):
                 validated_data["patient_id"],
                 user,
                 priority=validated_data.get("priority", QueuePriority.NORMAL),
+                triage_color=validated_data.get("triage_color"),
+                age_at_check_in=validated_data.get("age_at_check_in"),
+                weight=validated_data.get("weight"),
+                temperature=validated_data.get("temperature"),
+                blood_pressure=validated_data.get("blood_pressure", ""),
+                symptoms=validated_data.get("symptoms", ""),
                 notes=validated_data.get("notes", ""),
                 request=request,
             )
@@ -42,6 +69,8 @@ class CheckInCreateSerializer(serializers.Serializer):
 class WaitingQueueSerializer(serializers.ModelSerializer):
     patient = PatientSummarySerializer(read_only=True)
     priority = serializers.CharField(source="check_in.priority", read_only=True)
+    triage_color = serializers.CharField(source="check_in.triage_color", read_only=True)
+    symptoms = serializers.CharField(source="check_in.symptoms", read_only=True)
     check_in_time = serializers.DateTimeField(source="check_in.check_in_time", read_only=True)
     receptionist = UserSummarySerializer(source="check_in.receptionist", read_only=True)
     check_in_id = serializers.IntegerField(source="check_in.id", read_only=True)
@@ -56,6 +85,8 @@ class WaitingQueueSerializer(serializers.ModelSerializer):
             "estimated_wait_minutes",
             "status",
             "priority",
+            "triage_color",
+            "symptoms",
             "check_in_time",
             "receptionist",
             "created_at",
@@ -185,6 +216,12 @@ class ReceptionCheckInSerializer(serializers.ModelSerializer):
             "check_in_time",
             "status",
             "priority",
+            "triage_color",
+            "age_at_check_in",
+            "weight",
+            "temperature",
+            "blood_pressure",
+            "symptoms",
             "notes",
             "created_at",
         )

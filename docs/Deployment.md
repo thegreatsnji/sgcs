@@ -16,6 +16,8 @@ Guia de implantação do Sistema de Gestão Clínica SauVida em ambiente de prod
 docker compose up -d
 docker exec sgcs-backend python manage.py migrate
 docker exec sgcs-backend python manage.py seed_rbac
+# Opcional (apenas desenvolvimento / demo — ver docs/DEMO_DATA.md):
+# docker exec sgcs-backend python manage.py seed_demo
 ```
 
 ## Variáveis de ambiente

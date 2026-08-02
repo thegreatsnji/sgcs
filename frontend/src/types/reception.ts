@@ -6,6 +6,8 @@ export type QueueStatus = "WAITING" | "CALLED" | "IN_SERVICE" | "COMPLETED" | "C
 
 export type ReferralDepartment = "RECEPTION" | "DOCTOR" | "LAB" | "BILLING";
 
+export type TriageColor = "GREEN" | "YELLOW" | "RED";
+
 export interface ReceptionPatientSummary {
   id: number;
   full_name: string;
@@ -26,6 +28,8 @@ export interface WaitingQueueEntry {
   estimated_wait_minutes: number | null;
   status: QueueStatus;
   priority: QueuePriority;
+  triage_color?: TriageColor | "";
+  symptoms?: string;
   check_in_time: string;
   receptionist: ReceptionUserSummary;
   created_at: string;
@@ -39,6 +43,12 @@ export interface ReceptionCheckIn {
   check_in_time: string;
   status: CheckInStatus;
   priority: QueuePriority;
+  triage_color?: TriageColor | "";
+  age_at_check_in?: number | null;
+  weight?: string | null;
+  temperature?: string | null;
+  blood_pressure?: string;
+  symptoms?: string;
   notes: string;
   created_at: string;
 }
@@ -57,6 +67,12 @@ export interface Referral {
 export interface CheckInPayload {
   patient_id: number;
   priority?: QueuePriority;
+  triage_color?: TriageColor;
+  age_at_check_in?: number;
+  weight?: number;
+  temperature?: number;
+  blood_pressure?: string;
+  symptoms?: string;
   notes?: string;
 }
 

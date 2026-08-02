@@ -24,6 +24,15 @@ export function getAgeFromDisplayDate(value: string): number | null {
   return age;
 }
 
+/** Converte idade em anos para data de nascimento aproximada (DD/MM/AAAA). */
+export function ageToBirthDateDisplay(age: number): string {
+  const today = new Date();
+  const birthYear = today.getFullYear() - age;
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${birthYear}`;
+}
+
 export function formatDisplayDate(value?: string | null): string {
   if (!value) return "—";
   return value;

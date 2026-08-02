@@ -1,11 +1,7 @@
 import { z } from "zod";
 
+import { localPhoneSchema } from "@/schemas/phoneSchema";
 import { getAgeFromDisplayDate, isValidDisplayDate } from "@/utils/date";
-
-const phoneSchema = z
-  .string()
-  .min(1, "O telefone é obrigatório.")
-  .regex(/^\+?[0-9]{7,15}$/, "Introduza um número de telefone válido.");
 
 const displayDateSchema = z
   .string()
@@ -24,7 +20,7 @@ const displayDateSchema = z
 
 export const emergencyContactSchema = z.object({
   name: z.string().min(1, "O nome é obrigatório."),
-  phone: phoneSchema,
+  phone: localPhoneSchema,
   email: z.string().email("E-mail inválido.").optional().or(z.literal("")),
   relationship: z.enum(["CONJUGE", "PAI", "MAE", "FILHO", "IRMAO", "AMIGO", "OUTRO"]),
   is_primary: z.boolean(),
@@ -38,7 +34,7 @@ export const patientFormSchema = z
     document_number: z.string().optional(),
     birth_date: displayDateSchema,
     gender: z.enum(["M", "F", "O"], { message: "O género é obrigatório." }),
-    phone: phoneSchema,
+    phone: localPhoneSchema,
     email: z.string().email("E-mail inválido.").optional().or(z.literal("")),
     address_street: z.string().optional(),
     address_city: z.string().optional(),

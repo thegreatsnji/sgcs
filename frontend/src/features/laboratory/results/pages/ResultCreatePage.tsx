@@ -31,6 +31,10 @@ export function ResultCreatePage() {
   if (!Number.isFinite(pedidoId)) {
     return (
       <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Novo Resultado</h1>
+          <p className="mt-1 text-slate-500">Registo de resultados analíticos.</p>
+        </div>
         <LaboratorySubNav />
         <ResultadoForm
           showPedidoField
@@ -45,10 +49,10 @@ export function ResultCreatePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Novo resultado</h2>
-          <p className="text-slate-600">{pedido.numero_pedido} — {pedido.paciente.full_name}</p>
+          <h1 className="text-2xl font-bold text-slate-900">Registo de Resultado</h1>
+          <p className="mt-1 text-slate-500">{pedido.numero_pedido} — entrada profissional de resultados</p>
         </div>
         <Link to={`/laboratory/${pedido.id}`}>
           <Button variant="ghost">Voltar ao pedido</Button>
@@ -57,7 +61,12 @@ export function ResultCreatePage() {
       <LaboratorySubNav />
       <ResultadoForm
         initial={{ pedido_laboratorial: pedido.id }}
-        pedidoLabel={`${pedido.numero_pedido} — ${pedido.paciente.full_name}`}
+        patientInfo={{
+          full_name: pedido.paciente.full_name,
+          patient_number: pedido.paciente.patient_number,
+          numero_pedido: pedido.numero_pedido,
+          medico_nome: pedido.medico?.full_name,
+        }}
         onSubmit={(values) => mutation.mutate(values)}
         isPending={mutation.isPending}
       />

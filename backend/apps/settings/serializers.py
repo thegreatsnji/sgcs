@@ -15,6 +15,7 @@ from apps.settings.models import (
     Feriado,
     FeatureFlag,
     HorarioFuncionamento,
+    MedicoPerfil,
     PerfilClinica,
     TipoConsulta,
     TipoExameLaboratorio,
@@ -118,3 +119,61 @@ class BackupRegistoSerializer(serializers.ModelSerializer):
         model = BackupRegisto
         fields = "__all__"
         read_only_fields = ("estado", "ficheiro", "tamanho_bytes", "created_at", "updated_at")
+
+
+class MedicoPerfilSerializer(serializers.ModelSerializer):
+    utilizador_nome = serializers.CharField(source="utilizador.get_full_name", read_only=True)
+    utilizador_email = serializers.CharField(source="utilizador.email", read_only=True)
+    especialidade_nome = serializers.CharField(source="especialidade.nome", read_only=True)
+    departamento_nome = serializers.CharField(source="departamento.nome", read_only=True)
+    servico_consulta_nome = serializers.CharField(source="servico_consulta.nome", read_only=True)
+    servico_consulta_preco = serializers.DecimalField(
+        source="servico_consulta.preco", max_digits=12, decimal_places=2, read_only=True
+    )
+    horario_configurado = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MedicoPerfil
+        fields = (
+            "id",
+            "utilizador",
+            "utilizador_nome",
+            "utilizador_email",
+            "especialidade",
+            "especialidade_nome",
+            "departamento",
+            "departamento_nome",
+            "numero_profissional",
+            "dias_trabalho",
+            "horario_atendimento",
+            "horario_configurado",
+            "duracao_consulta_minutos",
+            "servico_consulta",
+            "servico_consulta_nome",
+            "servico_consulta_preco",
+            "activo",
+            "disponivel_marcacao",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def get_horario_configurado(self, obj) -> bool:
+        return bool(obj.horario_atendimento and obj.dias_trabalho)
+
+    def validate_utilizador(self, user):
+        from apps.authentication.models import UserRole
+
+        if user.role != UserRole.MEDICO:
+            raise serializers.ValidationError("Apenas utilizadores com perfil Médico podem ter MedicoPerfil.")
+        return user
+
+    def validate(self, attrs):
+        utilizador = attrs.get("utilizador") or getattr(self.instance, "utilizador", None)
+        if utilizador:
+            qs = MedicoPerfil.objects.filter(utilizador=utilizador)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError({"utilizador": "Este médico já possui perfil configurado."})
+        return attrs

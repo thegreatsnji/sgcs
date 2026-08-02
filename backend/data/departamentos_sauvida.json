@@ -1,0 +1,12 @@
+[
+  {"codigo": "ADM", "nome": "Administração", "descricao": "Gestão administrativa", "activo": true, "ordem": 1},
+  {"codigo": "DIR", "nome": "Direção", "descricao": "Direção clínica", "activo": true, "ordem": 2},
+  {"codigo": "REC", "nome": "Receção", "descricao": "Atendimento e faturação", "activo": true, "ordem": 3},
+  {"codigo": "CONS-GER", "nome": "Consulta Geral", "descricao": "Consultas de clínica geral", "activo": true, "ordem": 4},
+  {"codigo": "ESP-MED", "nome": "Especialidades Médicas", "descricao": "Consultas especializadas", "activo": true, "ordem": 5},
+  {"codigo": "ENF", "nome": "Enfermagem", "descricao": "Procedimentos de enfermagem", "activo": true, "ordem": 6},
+  {"codigo": "LAB", "nome": "Laboratório", "descricao": "Análises clínicas", "activo": true, "ordem": 7},
+  {"codigo": "ECO", "nome": "Ecografia", "descricao": "Exames ecográficos", "activo": true, "ordem": 8},
+  {"codigo": "MAT-PAR", "nome": "Maternidade e Parteira", "descricao": "Consultas e procedimentos GO", "activo": true, "ordem": 9},
+  {"codigo": "CIR", "nome": "Cirurgia", "descricao": "Procedimentos cirúrgicos (catálogo)", "activo": true, "ordem": 10}
+]

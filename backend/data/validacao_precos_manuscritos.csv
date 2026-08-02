@@ -1,0 +1,6 @@
+codigo,nome,categoria,preco_impresso_fcfa,preco_manuscrito_fcfa,fotografia_origem,interpretacao,decisao_clinica,preco_final_aprovado_fcfa,confirmado_por,data_confirmacao,observacoes
+LAB-HEMO-MAN,Hemograma completo,LABORATORIO,4000,4000,image-aee66803 (Farmácia / cartões / manuscrito),Duplicado com Hemograma Completo impresso — unificar na clínica,ATUALIZACAO_MANUSCRITA_PENDENTE_VALIDACAO,,,,"Não usar manuscrito como oficial até decisão"
+LAB-WIDALL,REVISAR_COM_CLINICA,LABORATORIO,,4000,image-aee66803 (Farmácia / cartões / manuscrito),Grafia manuscrita; provável Widal,ATUALIZACAO_MANUSCRITA_PENDENTE_VALIDACAO,,,,"Nome a confirmar com a clínica"
+LAB-G-E,G.E.,LABORATORIO,,2000,image-aee66803 (Farmácia / cartões / manuscrito),Abreviatura manuscrita; provável Gota Espessa,ATUALIZACAO_MANUSCRITA_PENDENTE_VALIDACAO,,,,"Confirmar designação do exame"
+LAB-GLICEMIA,Glicemia,LABORATORIO,4000,2000,image-aee66803 (Farmácia / cartões / manuscrito),Conflito: 2.000 manuscrito vs 4.000 Bioquímica,ATUALIZACAO_MANUSCRITA_PENDENTE_VALIDACAO,,,,"Não substituir preço impresso automaticamente"
+LAB-GLICOSE,Glicose,LABORATORIO,4000,,image-a003bcac (PREÇÁRIO LABORATÓRIO Bioquímica),Preço impresso Bioquímica; cruzar com Glicemia manuscrita,ATUALIZACAO_MANUSCRITA_PENDENTE_VALIDACAO,,,,"Verificar se é o mesmo exame que Glicemia"

@@ -35,7 +35,7 @@ SGCS/
 │       └── types/         # Tipos TypeScript por domínio
 ├── database/              # Scripts PostgreSQL
 ├── docker/                # Dockerfiles
-├── docs/                  # Documentação (incl. Arquitetura.md)
+├── docs/                  # Documentação (incl. Arquitetura.md, manuais Sprint 19 UX)
 ├── scripts/               # Scripts de automação
 ├── docker-compose.yml
 ├── .env.example
@@ -52,34 +52,18 @@ Consulte [docs/Arquitetura.md](docs/Arquitetura.md) para a descrição detalhada
 
 ## Instalação rápida (Docker)
 
-1. Clone o repositório e entre na pasta do projeto:
+**Requisitos:** Docker Desktop + Node.js 20+ (para `npm` na raiz).
 
 ```bash
 cd SGCS
+npm run start
 ```
 
-2. Crie o ficheiro de ambiente:
+Isto cria `.env` se faltar, constrói os contentores e sobe a stack completa. O backend executa `migrate`, `seed_rbac` e `seed_demo` (utilizadores e dados demo).
 
-```bash
-cp .env.example .env
-```
+Abrir **http://localhost:5173** — credenciais em [docs/DEMO_DATA.md](docs/DEMO_DATA.md) (`Demo@2026!`).
 
-3. Inicie todos os serviços:
-
-```bash
-docker compose up --build
-```
-
-O entrypoint do backend executa automaticamente `migrate` e `seed_rbac` (permissões RBAC incluindo `patients.*`).
-
-4. Crie um superutilizador (num terminal separado):
-
-```bash
-docker compose exec backend python manage.py create_superuser_dev
-```
-
-> **Nota:** O script está na raiz do projeto. Alternativa dentro do contentor:
-> `docker compose exec backend python manage.py create_superuser_dev`
+Em segundo plano: `npm run start:bg` · Parar: `npm run stop` · Detalhes: [docs/DEV_RUNBOOK.md](docs/DEV_RUNBOOK.md).
 
 ### URLs de desenvolvimento
 
@@ -94,12 +78,18 @@ docker compose exec backend python manage.py create_superuser_dev
 | ReDoc | http://localhost:8000/api/redoc/ |
 | Django Admin | http://localhost:8000/admin/ |
 
-### Credenciais padrão (desenvolvimento)
+### Credenciais demo (desenvolvimento)
 
-| Campo | Valor |
-|-------|-------|
-| E-mail | `admin@sauvida.ao` |
-| Palavra-passe | `Admin@12345` |
+| Perfil | E-mail | Palavra-passe |
+|--------|--------|---------------|
+| Administrador | `admin@sauvida.gw` | `Demo@2026!` |
+| Director | `director@sauvida.gw` | `Demo@2026!` |
+| Médico | `medico1@sauvida.gw` / `medico2@sauvida.gw` | `Demo@2026!` |
+| Receção | `rececao@sauvida.gw` | `Demo@2026!` |
+| Laboratório | `laboratorio@sauvida.gw` | `Demo@2026!` |
+| Enfermagem | `enfermeiro@sauvida.gw` | `Demo@2026!` |
+
+Não há utilizador `FINANCEIRO`; o **Director** acede a faturação e financeiro. Palavras-passe apenas para desenvolvimento.
 
 ## Instalação local (sem Docker completo)
 
@@ -575,6 +565,15 @@ Documentação: `docs/Notifications/README.md`
 
 ## Comandos úteis
 
+Arranque e testes: [docs/DEV_RUNBOOK.md](docs/DEV_RUNBOOK.md)
+
+```bash
+npm run start      # stack completa (foreground)
+npm run start:bg   # em segundo plano
+npm run stop
+npm run seed       # repor passwords demo
+```
+
 ```bash
 # Parar serviços Docker
 docker compose down
@@ -595,9 +594,22 @@ cd frontend && npm run build
 cd frontend && npm run lint
 ```
 
+**Sprint 14** — UI/UX Premium, `seed_demo`, documentação de testes e impressões. Ver `docs/SPRINT14_REPORT.md`.
+
+**Sprint 15** — Validação dos fluxos reais (visita à clínica), catálogo de serviços/preços FCFA, dados iniciais, lacunas, roadmap v1.4–v1.9 **sem** implementar Farmácia/Cirurgia/Maternidade. Ver `docs/SPRINT15_REPORT.md` e `docs/SPRINT15/`.
+
+Comandos Sprint 15:
+
+```bash
+docker compose exec backend python manage.py seed_clinic_initial --import-catalog
+docker compose exec backend python manage.py import_servico_catalog --dry-run
+```
+
 ## Sprint atual
 
-**Sprint 2** — Ambiente de desenvolvimento configurado (backend, frontend, Docker, autenticação base).
+**Sprint 15** concluída (documentação e dados). Próximo passo recomendado: **v1.3.1** (hardening go-live) após validação do preçário pela direcção.
+
+## Histórico de sprints (resumo)
 
 **Sprint 2.1** — Reorganização arquitetural (apps de domínio, `core/`, componentes UI, serviços e tipos modulares).
 

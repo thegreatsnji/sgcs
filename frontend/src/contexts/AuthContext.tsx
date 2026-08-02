@@ -15,7 +15,7 @@ interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -50,10 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredAuth({ access: response.access, refresh: response.refresh });
     if (response.user) {
       setUser(response.user);
-    } else {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
+      return response.user;
     }
+    const currentUser = await getCurrentUser();
+    setUser(currentUser);
+    return currentUser;
   }, []);
 
   const logout = useCallback(async () => {

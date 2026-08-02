@@ -1,30 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
+import { IconPatients } from "@/components/icons";
+import { KpiCard } from "@/components/ui/KpiCard";
 import {
-  Badge,
   Button,
-  Card,
   EmptyState,
   ErrorState,
-  LoadingState,
   Modal,
   Pagination,
-  Table,
   useToast,
 } from "@/design-system";
 import { PatientFilters } from "@/features/patients/components/PatientFilters";
-import { PATIENT_GENDER_LABELS, PATIENT_PAGE_SIZE } from "@/constants/patients";
+import { PatientMobileCard } from "@/features/patients/components/PatientMobileCard";
+import { PatientsListSkeleton } from "@/features/patients/components/PatientsListSkeleton";
+import { PatientsTable } from "@/features/patients/components/PatientsTable";
+import { PATIENT_PAGE_SIZE } from "@/constants/patients";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { usePermissions } from "@/hooks/usePermissions";
+import { dashboardService } from "@/services/dashboard";
 import { patientsService } from "@/services/patients";
 import type { PatientListItem } from "@/types/patient";
 import { getApiErrorMessage } from "@/utils/api-error";
-import { formatDisplayDate } from "@/utils/date";
+
+import { getPatientAge, matchesAgeGroup, type AgeGroup } from "../utils/patientUtils";
 
 export function PatientsListPage() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const { hasPermission } = usePermissions();
@@ -32,6 +34,7 @@ export function PatientsListPage() {
   const [search, setSearch] = useState("");
   const [gender, setGender] = useState("");
   const [isActive, setIsActive] = useState("true");
+  const [ageGroup, setAgeGroup] = useState<AgeGroup>("");
   const [page, setPage] = useState(1);
   const [deactivateTarget, setDeactivateTarget] = useState<PatientListItem | null>(null);
 
@@ -46,6 +49,12 @@ export function PatientsListPage() {
         gender: (gender as PatientListItem["gender"]) || undefined,
         is_active: isActive === "" ? undefined : isActive === "true",
       }),
+  });
+
+  const { data: kpiData } = useQuery({
+    queryKey: ["clinical-dashboard"],
+    queryFn: dashboardService.getClinicalSummary,
+    enabled: hasPermission("patients.view"),
   });
 
   const deactivateMutation = useMutation({
@@ -78,18 +87,27 @@ export function PatientsListPage() {
     onError: (error) => showToast(getApiErrorMessage(error), "error"),
   });
 
-  if (isLoading) return <LoadingState message="A carregar pacientes..." />;
-  if (isError) return <ErrorState message="Não foi possível carregar a lista." onRetry={() => void refetch()} />;
-
   const patients = data?.results ?? [];
+
+  const filteredPatients = useMemo(
+    () =>
+      ageGroup
+        ? patients.filter((p) => matchesAgeGroup(getPatientAge(p.birth_date), ageGroup))
+        : patients,
+    [patients, ageGroup],
+  );
+
   const totalPages = Math.max(1, Math.ceil((data?.count ?? 0) / PATIENT_PAGE_SIZE));
+
+  if (isLoading) return <PatientsListSkeleton />;
+  if (isError) return <ErrorState message="Não foi possível carregar a lista." onRetry={() => void refetch()} />;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Pacientes</h2>
-          <p className="text-sm text-slate-500">Gestão de utentes da clínica</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Pacientes</h1>
+          <p className="mt-1 text-slate-500">Gestão profissional de utentes da clínica</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {hasPermission("patients.export") && (
@@ -99,18 +117,49 @@ export function PatientsListPage() {
           )}
           {hasPermission("patients.create") && (
             <Link to="/patients/new">
-              <Button>+ Novo Paciente</Button>
+              <Button size="lg">+ Novo Paciente</Button>
             </Link>
           )}
         </div>
       </div>
 
-      <Card>
-        <div className="mb-4">
+      {kpiData && (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard
+            label="Total de Pacientes"
+            value={kpiData.cards.total_patients.toLocaleString("pt-PT")}
+            icon={<IconPatients />}
+            badge={{ text: "Registos totais", variant: "info" }}
+          />
+          <KpiCard
+            label="Novos Recentes"
+            value={kpiData.cards.new_patients_week}
+            badge={{ text: "Últimos 7 dias", variant: "success" }}
+          />
+          <KpiCard
+            label="Pacientes Activos"
+            value={kpiData.cards.active_patients.toLocaleString("pt-PT")}
+            badge={{ text: "Em acompanhamento", variant: "success" }}
+          />
+          <KpiCard
+            label="Pacientes Inactivos"
+            value={kpiData.cards.inactive_patients.toLocaleString("pt-PT")}
+            badge={
+              kpiData.cards.inactive_patients > 0
+                ? { text: "Rever cadastro", variant: "warning" }
+                : { text: "Sem pendências", variant: "default" }
+            }
+          />
+        </div>
+      )}
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="border-b border-slate-100 p-6">
           <PatientFilters
             search={search}
             gender={gender}
             isActive={isActive}
+            ageGroup={ageGroup}
             onSearchChange={(value) => {
               setSearch(value);
               setPage(1);
@@ -123,80 +172,47 @@ export function PatientsListPage() {
               setIsActive(value);
               setPage(1);
             }}
+            onAgeGroupChange={(value) => setAgeGroup(value)}
           />
         </div>
 
-        {patients.length === 0 ? (
-          <EmptyState
-            title="Sem pacientes"
-            description="Não foram encontrados registos com os filtros actuais."
-          />
-        ) : (
-          <Table<PatientListItem>
-            getRowKey={(row) => row.id}
-            data={patients}
-            columns={[
-              { key: "patient_number", header: "N.º processo" },
-              { key: "full_name", header: "Nome" },
-              { key: "document_number", header: "Documento" },
-              { key: "phone", header: "Telefone" },
-              {
-                key: "birth_date",
-                header: "Nascimento",
-                render: (row) => formatDisplayDate(row.birth_date),
-              },
-              {
-                key: "gender",
-                header: "Género",
-                render: (row) => (row.gender ? PATIENT_GENDER_LABELS[row.gender] : "—"),
-              },
-              {
-                key: "is_active",
-                header: "Estado",
-                render: (row) => (
-                  <Badge variant={row.is_active ? "success" : "default"}>
-                    {row.is_active ? "Ativo" : "Inativo"}
-                  </Badge>
-                ),
-              },
-              {
-                key: "actions",
-                header: "Ações",
-                render: (row) => (
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => navigate(`/patients/${row.id}`)}>
-                      Ver
-                    </Button>
-                    {hasPermission("patients.edit") && (
-                      <Link to={`/patients/${row.id}/edit`}>
-                        <Button size="sm" variant="secondary">
-                          Editar
-                        </Button>
-                      </Link>
-                    )}
-                    {row.is_active
-                      ? hasPermission("patients.delete") && (
-                          <Button size="sm" variant="danger" onClick={() => setDeactivateTarget(row)}>
-                            Desativar
-                          </Button>
-                        )
-                      : hasPermission("patients.edit") && (
-                          <Button size="sm" variant="ghost" onClick={() => activateMutation.mutate(row.id)}>
-                            Ativar
-                          </Button>
-                        )}
-                  </div>
-                ),
-              },
-            ]}
-          />
-        )}
+        <div className="p-6 pt-0">
+          {filteredPatients.length === 0 ? (
+            <EmptyState
+              title="Sem pacientes"
+              description="Não foram encontrados registos com os filtros actuais. Tente ajustar a pesquisa ou os filtros."
+            />
+          ) : (
+            <>
+              <PatientsTable
+                patients={filteredPatients}
+                onDeactivate={setDeactivateTarget}
+                onActivate={(id) => activateMutation.mutate(id)}
+              />
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-          <span className="text-sm text-slate-600">Total: {data?.count ?? 0}</span>
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+              <div className="mt-4 space-y-3 md:hidden">
+                {filteredPatients.map((patient) => (
+                  <PatientMobileCard
+                    key={patient.id}
+                    patient={patient}
+                    onDeactivate={setDeactivateTarget}
+                    onActivate={(id) => activateMutation.mutate(id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-4">
+            <span className="text-sm text-slate-600">
+              {ageGroup
+                ? `${filteredPatients.length} na página · ${data?.count ?? 0} total`
+                : `Total: ${data?.count ?? 0}`}
+            </span>
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
         </div>
-      </Card>
+      </div>
 
       <Modal
         open={Boolean(deactivateTarget)}

@@ -4,6 +4,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { LoadingState } from "@/design-system";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { getRoleDashboardPath } from "@/utils/roleRouting";
 
 export function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -25,7 +26,7 @@ export function ProtectedRoute() {
 }
 
 export function PublicRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -36,7 +37,7 @@ export function PublicRoute() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={getRoleDashboardPath(user?.role)} replace />;
   }
 
   return <Outlet />;
@@ -79,4 +80,18 @@ export function PermissionGuard({ permission, fallback = "/", children }: Permis
   }
 
   return children;
+}
+
+export function AdminOnlyRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingState message="A verificar acesso..." />;
+  }
+
+  if (user?.role !== "ADMINISTRADOR") {
+    return <Navigate to={getRoleDashboardPath(user?.role)} replace />;
+  }
+
+  return <Outlet />;
 }

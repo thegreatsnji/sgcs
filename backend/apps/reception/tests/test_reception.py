@@ -82,6 +82,39 @@ class TestReceptionCheckIn:
         _check_in(api_client, receptionist_user, patient.pk)
         assert AuditLog.objects.filter(action=AuditAction.RECEPTION_CHECK_IN).exists()
 
+    def test_triage_red_is_immediate(self, api_client, receptionist_user, patient):
+        response = _check_in(
+            api_client,
+            receptionist_user,
+            patient.pk,
+            triage_color="RED",
+            age_at_check_in=45,
+            weight="70.00",
+            temperature="38.5",
+            blood_pressure="140/90",
+            symptoms="Dor torácica intensa",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["data"]["check_in"]["priority"] == QueuePriority.EMERGENCY
+        assert response.data["data"]["check_in"]["triage_color"] == "RED"
+        assert response.data["data"]["queue_entry"]["estimated_wait_minutes"] == 0
+
+    def test_triage_green_wait_time(self, api_client, receptionist_user, patient):
+        response = _check_in(
+            api_client,
+            receptionist_user,
+            patient.pk,
+            triage_color="GREEN",
+            age_at_check_in=30,
+            weight="65.00",
+            temperature="36.8",
+            blood_pressure="120/80",
+            symptoms="Febre ligeira",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["data"]["check_in"]["priority"] == QueuePriority.NORMAL
+        assert response.data["data"]["queue_entry"]["estimated_wait_minutes"] == 120
+
     def test_emergency_goes_to_top(self, api_client, receptionist_user, patient):
         from apps.patients.services.patient_service import PatientService
 
@@ -184,10 +217,11 @@ class TestReceptionDashboard:
         assert "average_wait_minutes" in cards
         assert "active_emergencies" in cards
 
-    def test_doctor_can_view_reception_dashboard(self, api_client, doctor_user):
+    def test_doctor_cannot_view_reception_dashboard(self, api_client, doctor_user):
+        """Médicos não têm reception.view — dashboard de receção é exclusivo da receção/admin."""
         api_client.force_authenticate(user=doctor_user)
         response = api_client.get("/api/v1/dashboard/reception/")
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 @pytest.mark.django_db

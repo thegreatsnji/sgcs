@@ -32,6 +32,20 @@ export const billingService = {
     const { data } = await api.patch<ApiEnvelope<BillingService>>(`/billing/services/${id}/`, payload);
     return unwrapApiData(data);
   },
+  getServicePriceHistory: async (id: number) => {
+    const { data } = await api.get<ApiEnvelope<Array<Record<string, unknown>>>>(
+      `/billing/services/${id}/price-history/`,
+    );
+    return unwrapApiData(data) as Array<{
+      id: number;
+      preco_anterior: string;
+      preco_novo: string;
+      motivo: string;
+      origem: string;
+      alterado_por_nome: string | null;
+      created_at: string;
+    }>;
+  },
 
   listQuotes: async (params?: object) => getPaginated<Quote>("/billing/quotes/", params),
   getQuote: async (id: number) => getOne<Quote>(`/billing/quotes/${id}/`),
@@ -63,6 +77,66 @@ export const billingService = {
 
   listReceipts: async (params?: object) => getPaginated<Receipt>("/billing/receipts/", params),
   getReceipt: async (id: number) => getOne<Receipt>(`/billing/receipts/${id}/`),
+
+  getReceiptPrint: async (id: number, segundaVia?: boolean) => {
+    const { data } = await api.get<ApiEnvelope<Record<string, unknown>>>(
+      `/billing/receipts/${id}/impressao/`,
+      { params: segundaVia ? { segunda_via: "1" } : undefined },
+    );
+    return unwrapApiData(data) as {
+      recibo: { numero: string; emitido_em: string; tipo_documento: string };
+      clinica: {
+        nome: string;
+        morada: string;
+        telefone: string;
+        email: string;
+        mensagem_rodape: string;
+        mostrar_ministerio: boolean;
+        republica: string;
+      };
+      paciente: { nome: string; numero_processo: string };
+      fatura: { numero: string };
+      pagamento: { valor: string; metodo: string; valor_extenso: string };
+      totais: Record<string, string>;
+      itens: Array<{
+        nome: string;
+        preco_oficial: string;
+        valor_reducao: string;
+        subtotal_cobrado: string;
+      }>;
+      referente_a: string;
+      config: { mostrar_preco_oficial: boolean; mostrar_reducao: boolean; mostrar_saldo: boolean; formato: string };
+      textos: { recebi_de: string; importancia_de: string; referente_a: string };
+    };
+  },
+
+  listReductionAuths: async (params?: object) =>
+    getPaginated<{
+      id: number;
+      servico_nome: string;
+      preco_oficial: string;
+      preco_proposto: string;
+      percentual_reducao: string;
+      motivo_reducao: string;
+      paciente_nome?: string;
+      solicitado_por_nome?: string;
+      fatura?: number | null;
+    }>("/billing/reducoes/", params),
+  approveReduction: async (id: number) => {
+    const { data } = await api.post<ApiEnvelope<unknown>>(`/billing/reducoes/${id}/aprovar/`, {});
+    return unwrapApiData(data);
+  },
+  rejectReduction: async (id: number) => {
+    const { data } = await api.post<ApiEnvelope<unknown>>(`/billing/reducoes/${id}/rejeitar/`, {});
+    return unwrapApiData(data);
+  },
+  getReductionsReport: async (params?: object) => {
+    const { data } = await api.get<ApiEnvelope<{ indicadores: Record<string, string | number> }>>(
+      "/billing/reports/reducoes/",
+      { params },
+    );
+    return unwrapApiData(data);
+  },
 
   getPatientHistory: async (patientId: number) =>
     getOne<PatientFinancialHistory>(`/billing/patient-history/${patientId}/`),

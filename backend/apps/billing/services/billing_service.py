@@ -152,6 +152,9 @@ class BillingService:
             raise ValueError("Não é possível alterar um orçamento aprovado ou expirado.")
 
         servico = Servico.objects.get(pk=data["servico_id"], activo=True)
+        from apps.billing.services.catalog_service import assert_servico_faturavel
+
+        assert_servico_faturavel(servico, user)
         quantidade = int(data.get("quantidade", 1))
         preco_raw = data.get("preco_unitario")
         preco_unitario = Decimal(str(preco_raw)) if preco_raw is not None else servico.preco
@@ -288,18 +291,53 @@ class BillingService:
         validate_fatura_editavel(fatura)
 
         servico = Servico.objects.get(pk=data["servico_id"], activo=True)
+        from apps.billing.services.catalog_service import assert_servico_faturavel
+
+        assert_servico_faturavel(servico, user)
         quantidade = int(data.get("quantidade", 1))
-        preco_raw = data.get("preco")
-        preco = Decimal(str(preco_raw)) if preco_raw is not None else servico.preco
-        subtotal = (preco * quantidade).quantize(Decimal("0.01"))
+        from apps.billing.services.reduction_service import ReductionError, resolve_item_pricing
+
+        preco_cobrado_raw = data.get("preco_cobrado", data.get("preco"))
+        try:
+            pricing = resolve_item_pricing(
+                servico,
+                user,
+                quantidade=quantidade,
+                preco_cobrado_raw=preco_cobrado_raw,
+                motivo_reducao=data.get("motivo_reducao"),
+                observacao_reducao=data.get("observacao_reducao"),
+                autorizacao_reducao_id=data.get("autorizacao_reducao_id"),
+                request=request,
+            )
+        except ReductionError as exc:
+            raise ValueError(str(exc)) from exc
 
         item = ItemFatura.objects.create(
             fatura=fatura,
             servico=servico,
             quantidade=quantidade,
-            preco=preco,
-            subtotal=subtotal,
+            **pricing,
         )
+        if pricing["valor_reducao"] > 0:
+            BillingService._log(
+                AuditAction.REDUCAO_VALOR_APLICADA,
+                user,
+                request,
+                "billing_invoice_item",
+                item.pk,
+                f"Redução aplicada em {servico.nome}.",
+                {
+                    "fatura_id": fatura.pk,
+                    "preco_oficial": str(pricing["preco_oficial"]),
+                    "preco_cobrado": str(pricing["preco"]),
+                    "valor_reducao": str(pricing["valor_reducao"]),
+                    "motivo": pricing["motivo_reducao"],
+                },
+            )
+            auth = pricing.get("autorizacao_reducao")
+            if auth and not auth.fatura_id:
+                auth.fatura = fatura
+                auth.save(update_fields=["fatura", "updated_at"])
         if recalcular:
             BillingService._recalcular_fatura(fatura)
             BillingCacheService.invalidate_all(patient_id=fatura.paciente_id)
@@ -419,16 +457,21 @@ class BillingService:
 
     @staticmethod
     @transaction.atomic
-    def emitir_recibo(pagamento_id: int, user, request=None) -> Recibo:
+    def emitir_recibo(pagamento_id: int, user, request=None, *, segunda_via: bool = False) -> Recibo:
         pagamento = Pagamento.objects.select_related("fatura").get(pk=pagamento_id)
         if pagamento.estado != PagamentoEstado.CONFIRMADO:
             raise ValueError("Apenas pagamentos confirmados geram recibo.")
         if hasattr(pagamento, "recibo"):
-            return pagamento.recibo
+            recibo = pagamento.recibo
+            if segunda_via and not recibo.segunda_via:
+                recibo.segunda_via = True
+                recibo.save(update_fields=["segunda_via", "updated_at"])
+            return recibo
 
         recibo = Recibo.objects.create(
             numero=BillingNumberService.generate_receipt(),
             pagamento=pagamento,
+            segunda_via=segunda_via,
         )
 
         BillingService._log(

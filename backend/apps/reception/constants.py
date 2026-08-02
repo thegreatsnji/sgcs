@@ -32,6 +32,25 @@ class ReferralDepartment(models.TextChoices):
     BILLING = "BILLING", "Faturação"
 
 
+class TriageColor(models.TextChoices):
+    GREEN = "GREEN", "Verde"
+    YELLOW = "YELLOW", "Amarelo"
+    RED = "RED", "Vermelho"
+
+
+TRIAGE_PRIORITY_MAP = {
+    TriageColor.GREEN: QueuePriority.NORMAL,
+    TriageColor.YELLOW: QueuePriority.HIGH,
+    TriageColor.RED: QueuePriority.EMERGENCY,
+}
+
+TRIAGE_WAIT_MINUTES = {
+    TriageColor.GREEN: 120,
+    TriageColor.YELLOW: 90,
+    TriageColor.RED: 0,
+}
+
+
 PRIORITY_ORDER = {
     QueuePriority.EMERGENCY: 0,
     QueuePriority.HIGH: 1,

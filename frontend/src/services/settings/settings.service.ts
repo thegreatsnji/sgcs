@@ -19,6 +19,21 @@ export const settingsService = {
   },
   listSpecialties: () => getPaginated<Specialty>("/settings/specialties/"),
   listDepartments: () => getPaginated<Department>("/settings/departments/"),
+  listMedicoPerfis: () => getPaginated<import("@/types/settings").MedicoPerfil>("/settings/medico-perfis/"),
+  createMedicoPerfil: async (payload: object) => {
+    const { data } = await api.post<ApiEnvelope<import("@/types/settings").MedicoPerfil>>(
+      "/settings/medico-perfis/",
+      payload,
+    );
+    return unwrapApiData(data);
+  },
+  updateMedicoPerfil: async (id: number, payload: object) => {
+    const { data } = await api.patch<ApiEnvelope<import("@/types/settings").MedicoPerfil>>(
+      `/settings/medico-perfis/${id}/`,
+      payload,
+    );
+    return unwrapApiData(data);
+  },
   getBilling: async () => {
     const { data } = await api.get<ApiEnvelope<Record<string, unknown>>>("/settings/billing/");
     return unwrapApiData(data);

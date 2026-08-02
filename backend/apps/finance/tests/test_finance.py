@@ -41,6 +41,7 @@ def servico_consulta(db):
         nome="Consulta Financeira",
         categoria="CONSULTA",
         preco=Decimal("3000.00"),
+        preco_confirmado=True,
     )
 
 

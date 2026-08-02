@@ -65,12 +65,16 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const { data } = await axios.post<{ access: string }>(
+      const { data } = await axios.post<{ access: string; refresh?: string }>(
         `${API_ORIGIN}/api/v1/auth/refresh/`,
         { refresh: auth.refresh },
       );
 
-      const newTokens = { access: data.access, refresh: auth.refresh };
+      // Backend rotates refresh tokens — persist the new pair to avoid blacklist failures
+      const newTokens = {
+        access: data.access,
+        refresh: data.refresh ?? auth.refresh,
+      };
       setStoredAuth(newTokens);
       processQueue(data.access);
       originalRequest.headers.Authorization = `Bearer ${data.access}`;

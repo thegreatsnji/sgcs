@@ -9,12 +9,12 @@ interface NotificationCardProps {
 
 export function NotificationCard({ notificacao, onRead }: NotificationCardProps) {
   return (
-    <div className="rounded border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded border border-border bg-surface p-3 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="font-medium text-slate-900">{notificacao.titulo}</p>
-          <p className="mt-1 text-sm text-slate-600">{notificacao.mensagem}</p>
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="font-medium text-text">{notificacao.titulo}</p>
+          <p className="mt-1 text-sm text-text-muted">{notificacao.mensagem}</p>
+          <p className="mt-2 text-xs text-text-muted/80">
             {new Date(notificacao.created_at).toLocaleString("pt-PT")}
           </p>
         </div>
@@ -23,7 +23,7 @@ export function NotificationCard({ notificacao, onRead }: NotificationCardProps)
       {!notificacao.lida && onRead && (
         <button
           type="button"
-          className="mt-2 text-sm text-primary-600 hover:underline"
+          className="mt-2 text-sm text-primary-600 hover:underline dark:text-primary-400"
           onClick={() => onRead(notificacao.id)}
         >
           Marcar como lida

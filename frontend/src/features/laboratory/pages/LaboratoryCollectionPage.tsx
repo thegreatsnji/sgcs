@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { ErrorState, LoadingState, useToast } from "@/design-system";
+import { ErrorState, useToast } from "@/design-system";
 import { CollectionQueue } from "@/features/laboratory/components/CollectionQueue";
 import { LaboratorySubNav } from "@/features/laboratory/components/LaboratorySubNav";
+import { LaboratoryTableSkeleton } from "@/features/laboratory/components/LaboratorySkeleton";
 import { laboratoryService } from "@/services/laboratory";
 import { getApiErrorMessage } from "@/utils/api-error";
 
@@ -26,10 +27,13 @@ export function LaboratoryCollectionPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">Fila de colheitas</h2>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Fila de Colheitas</h1>
+        <p className="mt-1 text-slate-500">Pacientes aguardando colheita de amostras biológicas.</p>
+      </div>
       <LaboratorySubNav />
       {isLoading ? (
-        <LoadingState message="A carregar fila..." />
+        <LaboratoryTableSkeleton rows={4} />
       ) : isError ? (
         <ErrorState message="Erro ao carregar fila." onRetry={() => void refetch()} />
       ) : (

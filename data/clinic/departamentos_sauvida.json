@@ -1,0 +1,14 @@
+[
+  { "codigo": "REC", "nome": "Receção", "descricao": "Atendimento inicial, fila e encaminhamentos", "activo": true },
+  { "codigo": "CONS", "nome": "Consultas", "descricao": "Consultório médico e agenda", "activo": true },
+  { "codigo": "ENF", "nome": "Enfermagem", "descricao": "Cuidados de enfermagem e apoio clínico", "activo": true },
+  { "codigo": "TRI", "nome": "Triagem", "descricao": "Classificação de risco e sinais vitais iniciais", "activo": true },
+  { "codigo": "LAB", "nome": "Laboratório", "descricao": "Análises clínicas e imunologia", "activo": true },
+  { "codigo": "IMG", "nome": "Imagiologia / Ecografia", "descricao": "Exames de imagem", "activo": true },
+  { "codigo": "FARM", "nome": "Farmácia", "descricao": "Dispensação e stock (módulo futuro)", "activo": true },
+  { "codigo": "CIR", "nome": "Cirurgia", "descricao": "Bloco e procedimentos cirúrgicos (módulo futuro)", "activo": true },
+  { "codigo": "MAT", "nome": "Maternidade / Obstetrícia", "descricao": "Pré-natal, parto e pós-parto (módulo futuro)", "activo": true },
+  { "codigo": "PART", "nome": "Parteira", "descricao": "Acompanhamento obstétrico (módulo futuro)", "activo": true },
+  { "codigo": "INT", "nome": "Internamento", "descricao": "Camas e internamento (módulo futuro — não aplicável SauVida)", "activo": false },
+  { "codigo": "ADM", "nome": "Administração", "descricao": "Gestão, relatórios e configuração", "activo": true }
+]

@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { ErrorState, LoadingState, useToast } from "@/design-system";
+import { ErrorState, useToast } from "@/design-system";
 import { LaboratorySubNav } from "@/features/laboratory/components/LaboratorySubNav";
 import { LaboratoryTable } from "@/features/laboratory/components/LaboratoryTable";
+import { LaboratoryTableSkeleton } from "@/features/laboratory/components/LaboratorySkeleton";
 import { laboratoryService } from "@/services/laboratory";
 import { getApiErrorMessage } from "@/utils/api-error";
 
@@ -28,16 +29,21 @@ export function LaboratoryPendingPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">Pedidos pendentes</h2>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pedidos Pendentes</h1>
+        <p className="mt-1 text-slate-500">Pedidos aguardando receção no laboratório.</p>
+      </div>
       <LaboratorySubNav />
       {isLoading ? (
-        <LoadingState message="A carregar pedidos..." />
+        <LaboratoryTableSkeleton />
       ) : isError ? (
         <ErrorState message="Erro ao carregar pedidos." onRetry={() => void refetch()} />
       ) : (
         <LaboratoryTable
           orders={data?.results ?? []}
           onReceive={(o) => receiveMutation.mutate(o.id)}
+          emptyTitle="Sem pedidos pendentes"
+          emptyDescription="Todos os pedidos foram recebidos ou processados."
         />
       )}
     </div>

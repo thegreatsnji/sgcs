@@ -1,5 +1,6 @@
 export type UserRole =
   | "ADMINISTRADOR"
+  | "DIRECTOR"
   | "RECECIONISTA"
   | "MEDICO"
   | "ENFERMEIRO"

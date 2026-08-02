@@ -16,6 +16,7 @@ export const userFormSchema = z
       "LABORATORIO",
       "FINANCEIRO",
       "ADMINISTRADOR",
+      "DIRECTOR",
     ]),
     password: z.string().optional(),
     password_confirm: z.string().optional(),

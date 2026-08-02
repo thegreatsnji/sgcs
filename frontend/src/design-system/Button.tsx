@@ -13,17 +13,18 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-primary-600 text-white hover:bg-primary-700",
-  secondary: "bg-slate-100 text-slate-700 hover:bg-slate-200",
-  ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
-  danger: "bg-red-600 text-white hover:bg-red-700",
-  outline: "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+  primary:
+    "bg-primary-600 text-white shadow-md shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-600/30",
+  secondary: "bg-surface-muted text-text hover:bg-border-subtle dark:hover:bg-slate-700",
+  ghost: "bg-transparent text-text hover:bg-surface-muted",
+  danger: "bg-red-600 text-white shadow-md shadow-red-600/20 hover:bg-red-700",
+  outline: "border border-border bg-surface text-text hover:border-primary-300 hover:bg-surface-muted",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "px-3 py-1.5 text-xs",
-  md: "px-4 py-2 text-sm",
-  lg: "px-5 py-2.5 text-base",
+  sm: "rounded-xl px-3 py-1.5 text-xs",
+  md: "rounded-xl px-4 py-2 text-sm",
+  lg: "rounded-2xl px-5 py-2.5 text-base",
 };
 
 export function Button({
@@ -41,7 +42,7 @@ export function Button({
     <button
       type="button"
       disabled={disabled || isLoading}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 font-semibold transition focus-ring disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     >
       {leftIcon}

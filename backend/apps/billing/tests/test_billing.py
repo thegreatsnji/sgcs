@@ -33,6 +33,7 @@ def servico_consulta(db):
         nome="Consulta Geral",
         categoria="CONSULTA",
         preco=Decimal("5000.00"),
+        preco_confirmado=True,
     )
 
 
@@ -161,9 +162,14 @@ class TestBillingAPI:
 
 @pytest.mark.django_db
 class TestBillingRBAC:
-    def test_rececionista_sem_acesso(self, api_client, receptionist_user, seed_rbac):
+    def test_rececionista_acesso_servicos(self, api_client, receptionist_user, seed_rbac):
         api_client.force_authenticate(user=receptionist_user)
         response = api_client.get("/api/v1/billing/services/")
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_rececionista_sem_finance(self, api_client, receptionist_user, seed_rbac):
+        api_client.force_authenticate(user=receptionist_user)
+        response = api_client.get("/api/v1/finance/expenses/")
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
 

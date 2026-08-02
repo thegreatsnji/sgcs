@@ -237,7 +237,7 @@ class TestSystemDashboard:
     def test_system_dashboard_director(self, api_client, director_settings):
         api_client.force_authenticate(user=director_settings)
         response = api_client.get(reverse("dashboard:system"))
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 @pytest.mark.django_db
@@ -247,10 +247,10 @@ class TestSettingsRBAC:
         response = api_client.get(reverse("settings:clinic"))
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_director_allowed(self, api_client, director_settings):
+    def test_director_denied_settings(self, api_client, director_settings):
         api_client.force_authenticate(user=director_settings)
         response = api_client.get(reverse("settings:clinic"))
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_admin_full_access(self, api_client, admin_user):
         api_client.force_authenticate(user=admin_user)

@@ -1,0 +1,65 @@
+[
+  {
+    "nome": "Teste de gravidez",
+    "tipo": "preco_divergente",
+    "precos": [
+      2000,
+      2500
+    ],
+    "codigos": [
+      "LAB-HCG",
+      "LAB-TESTE-DE-GRAVIDEZ",
+      "LAB-TESTE-DE-GRAVIDEZ"
+    ],
+    "sugestao": "Rever com a clínica antes de unificar"
+  },
+  {
+    "nome": "Hemograma Completo",
+    "tipo": "duplicado",
+    "codigos": [
+      "LAB-HEMO",
+      "LAB-HEMO-MAN"
+    ],
+    "sugestao": "Manter um código; desactivar duplicado após confirmação"
+  },
+  {
+    "nome": "VIH (AG/AC) 4a Geração",
+    "tipo": "preco_divergente",
+    "precos": [
+      4500,
+      8000
+    ],
+    "codigos": [
+      "LAB-VIH-AG-AC-4A-GERACAO",
+      "LAB-VIH-AG-AC-4A-GERACAO"
+    ],
+    "sugestao": "Rever com a clínica antes de unificar"
+  },
+  {
+    "nome": "TSH",
+    "tipo": "duplicado",
+    "codigos": [
+      "LAB-TSH",
+      "LAB-TSH"
+    ],
+    "sugestao": "Manter um código; desactivar duplicado após confirmação"
+  },
+  {
+    "nome": "Toxoplasmose",
+    "tipo": "duplicado",
+    "codigos": [
+      "LAB-TOXOPLASMOSE",
+      "LAB-TOXOPLASMOSE"
+    ],
+    "sugestao": "Manter um código; desactivar duplicado após confirmação"
+  },
+  {
+    "nome": "Progesterona",
+    "tipo": "duplicado",
+    "codigos": [
+      "LAB-PROGESTERONA",
+      "LAB-PROGESTERONA"
+    ],
+    "sugestao": "Manter um código; desactivar duplicado após confirmação"
+  }
+]

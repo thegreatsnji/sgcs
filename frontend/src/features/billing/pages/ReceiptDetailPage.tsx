@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
-import { LoadingState } from "@/design-system";
+import { Button, LoadingState } from "@/design-system";
 import { BillingSubNav } from "@/features/billing/components/BillingSubNav";
-import { ReceiptPreview } from "@/features/billing/components/ReceiptPreview";
+import { SauVidaReceiptPrint } from "@/features/billing/components/SauVidaReceiptPrint";
 import { billingService } from "@/services/billing/billing.service";
 
 export function ReceiptDetailPage() {
@@ -18,9 +18,16 @@ export function ReceiptDetailPage() {
   if (isLoading || !data) return <LoadingState />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print:hidden-scope">
       <BillingSubNav />
-      <ReceiptPreview receipt={data} />
+      <div className="flex flex-wrap gap-2 print:hidden">
+        <Button type="button" variant="secondary" onClick={() => window.print()}>
+          Imprimir
+        </Button>
+      </div>
+      <div className="print:block">
+        <SauVidaReceiptPrint receiptId={receiptId} />
+      </div>
     </div>
   );
 }

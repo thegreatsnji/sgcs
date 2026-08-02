@@ -20,7 +20,6 @@ APPOINTMENT_PERMISSION_MAP = {
     "complete": "appointments.finish",
     "finish": "appointments.finish",
     "cancel": "appointments.cancel",
-    "clinical_record": "appointments.view",
     "clinical_record": "appointments.clinical",
     "vital_signs": "appointments.clinical",
     "diagnoses": "appointments.diagnosis",
@@ -29,10 +28,8 @@ APPOINTMENT_PERMISSION_MAP = {
     "follow_up": "appointments.followup",
 }
 
-# Compatibilidade: PATCH clinical aceita também appointments.edit
-CLINICAL_PERMISSION_FALLBACKS = {
-    "clinical_record": ["appointments.edit"],
-}
+# Sem fallback: edição do prontuário exige appointments.clinical (não appointments.edit)
+CLINICAL_PERMISSION_FALLBACKS: dict[str, list[str]] = {}
 
 
 class HasAppointmentPermission(HasModulePermission):

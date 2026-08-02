@@ -1,18 +1,20 @@
-import { CheckInForm } from "@/features/reception/components/CheckInForm";
+import { TriageCheckInWizard } from "@/features/reception/components/TriageCheckInWizard";
 import { ReceptionSubNav } from "@/features/reception/components/ReceptionSubNav";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export function CheckInPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Check-in de paciente</h2>
-        <p className="mt-1 text-slate-600">Registe a chegada do utente e adicione-o à fila de espera.</p>
-      </div>
+      <PageHeader
+        eyebrow="Receção"
+        title="Triagem"
+        description="Pesquise o paciente, registe novos utentes e defina a prioridade de atendimento."
+      />
 
       <ReceptionSubNav />
 
-      <div className="max-w-xl">
-        <CheckInForm />
+      <div className="max-w-4xl">
+        <TriageCheckInWizard />
       </div>
     </div>
   );

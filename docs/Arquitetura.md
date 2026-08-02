@@ -384,7 +384,8 @@ Fluxo JWT inalterado desde a Sprint 2:
 | Datas | DD/MM/AAAA |
 | Moeda | FCFA (XOF) |
 | API prefix | `/api/v1/` |
-| Perfis | ADMINISTRADOR, RECECIONISTA, MEDICO, ENFERMEIRO, LABORATORIO, FINANCEIRO |
+| Perfis operacionais | ADMINISTRADOR, DIRECTOR, MEDICO, RECECIONISTA, LABORATORIO |
+| Perfis técnicos | FINANCEIRO (expansão futura, sem utilizadores); ENFERMEIRO (legado) |
 
 ## Roadmap de módulos
 
@@ -404,7 +405,10 @@ Fluxo JWT inalterado desde a Sprint 2:
 | Sprint 11 | **Módulo Médico** (prescrições, tratamentos, evolução, alta) |
 | Sprint 12 | **Notificações e Comunicações** |
 | Sprint 13 | **Otimização e Produção** |
-| Sprint 13+ | Farmácia |
+| Sprint 14 | **UI/UX Premium** — painéis por perfil, impressão, seed_demo, design system |
+| Sprint 18 | Catálogo SauVida V1, faturação flexível, piloto |
+| Sprint 19 | **UX operacional** — fluxo receção, fatura redesenhada, painéis por perfil (sem novos módulos API) |
+| Sprint 14+ | Farmácia |
 
 ## Evolução prevista
 

@@ -1,0 +1,10 @@
+codigo,nome,categoria,servico_codigo,tipo_amostra,recipiente,exige_jejum,tempo_medio_horas,unidade,valor_referencia,activo,ordem
+LAB-HEMO-TIPO,Hemograma Completo,Hematologia,LAB-HEMO,Sangue,Tubo EDTA,0,24,,,1,1
+LAB-GLIC-TIPO,Glicemia,Bioquímica,LAB-GLIC,Sangue,Tubo fluoreto,1,6,mg/dL,70-110,1,2
+LAB-UREIA-TIPO,Ureia,Bioquímica,LAB-UREIA,Sangue,Soro,0,12,mg/dL,15-40,1,3
+LAB-CREAT-TIPO,Creatinina,Bioquímica,LAB-CREAT,Sangue,Soro,0,12,mg/dL,,1,4
+LAB-URINA-TIPO,Exame de Urina,Microbiologia,LAB-URINA,Urina,Frasco estéril,0,12,,,1,5
+LAB-FEZES-TIPO,Exame de Fezes,Parasitologia,LAB-FEZES,Fezes,Recipiente,0,24,,,1,6
+LAB-HCG-TIPO,β-HCG,Endocrinologia,LAB-HCG,Sangue ou urina,Soro/urina,0,6,mUI/mL,,1,7
+LAB-VIH-TIPO,Teste VIH,Imunologia,LAB-VIH,Sangue,Soro,0,24,,,1,8
+LAB-HBS-TIPO,HBsAg,Imunologia,LAB-HBS,Sangue,Soro,0,24,,,1,9

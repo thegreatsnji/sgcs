@@ -1,7 +1,12 @@
 import { useState } from "react";
 
-import { Button, Card } from "@/design-system";
+import { Button } from "@/design-system";
 import { ParametroEditor } from "@/features/laboratory/results/components/ParametroEditor";
+import {
+  InterpretationPanel,
+  LabPatientPanel,
+  type LabPatientInfo,
+} from "@/features/laboratory/results/components/ResultEntryLayout";
 import type { ParametroResultado } from "@/types/laboratoryResult";
 
 export interface ResultadoFormValues {
@@ -13,20 +18,22 @@ export interface ResultadoFormValues {
 
 interface ResultadoFormProps {
   initial?: Partial<ResultadoFormValues>;
-  pedidoLabel?: string;
+  patientInfo?: LabPatientInfo;
   onSubmit: (values: ResultadoFormValues) => void;
   isPending?: boolean;
   disabled?: boolean;
   showPedidoField?: boolean;
+  parametersReadOnly?: boolean;
 }
 
 export function ResultadoForm({
   initial,
-  pedidoLabel,
+  patientInfo,
   onSubmit,
   isPending,
   disabled,
   showPedidoField = false,
+  parametersReadOnly = false,
 }: ResultadoFormProps) {
   const [pedidoId, setPedidoId] = useState(initial?.pedido_laboratorial ?? 0);
   const [observacoes, setObservacoes] = useState(initial?.observacoes ?? "");
@@ -45,53 +52,44 @@ export function ResultadoForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {showPedidoField ? (
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">ID do pedido</label>
+      {showPedidoField && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">ID do pedido laboratorial</label>
           <input
             type="number"
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="w-full max-w-xs rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-primary-300 focus:ring-2 focus:ring-primary-100 focus:outline-none"
             value={pedidoId || ""}
             disabled={disabled}
             onChange={(e) => setPedidoId(Number(e.target.value))}
             required
           />
         </div>
-      ) : pedidoLabel ? (
-        <Card title="Pedido">
-          <p className="text-sm font-medium text-slate-800">{pedidoLabel}</p>
-        </Card>
-      ) : null}
+      )}
 
-      <Card title="Parâmetros">
-        <ParametroEditor value={parametros} onChange={setParametros} disabled={disabled} />
-      </Card>
+      <div className="grid gap-6 xl:grid-cols-[240px_1fr_280px]">
+        {patientInfo && (
+          <LabPatientPanel patient={patientInfo} />
+        )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Observações</label>
-          <textarea
-            className="min-h-24 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-            value={observacoes}
-            disabled={disabled}
-            onChange={(e) => setObservacoes(e.target.value)}
-          />
+        <div className="min-w-0 space-y-4">
+          <ParametroEditor value={parametros} onChange={setParametros} disabled={disabled || parametersReadOnly} />
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Conclusão</label>
-          <textarea
-            className="min-h-24 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-            value={conclusao}
-            disabled={disabled}
-            onChange={(e) => setConclusao(e.target.value)}
-          />
-        </div>
+
+        <InterpretationPanel
+          observacoes={observacoes}
+          conclusao={conclusao}
+          onObservacoesChange={disabled ? undefined : setObservacoes}
+          onConclusaoChange={disabled ? undefined : setConclusao}
+          disabled={disabled}
+        />
       </div>
 
       {!disabled && (
-        <Button type="submit" variant="primary" disabled={isPending}>
-          {isPending ? "A guardar..." : "Guardar resultado"}
-        </Button>
+        <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-200 bg-white/95 px-4 py-4 backdrop-blur-md lg:-mx-0 lg:rounded-2xl lg:border lg:shadow-sm">
+          <Button type="submit" variant="primary" size="lg" disabled={isPending} isLoading={isPending}>
+            Guardar resultado
+          </Button>
+        </div>
       )}
     </form>
   );

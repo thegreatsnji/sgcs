@@ -6,6 +6,6 @@ export function useReceptionQueue(page = 1) {
   return useQuery({
     queryKey: ["reception-queue", page],
     queryFn: () => receptionService.getQueue({ page }),
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
   });
 }

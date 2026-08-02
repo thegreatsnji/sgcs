@@ -1,0 +1,157 @@
+# Comparação catálogo preparado vs real (OCR)
+
+## Novos serviços (código real ausente no preparado)
+
+- `CARD-CARTAO-DE-GRAVIDA` — Cartão de Grávida (2000 FCFA)
+- `CARD-CARTAO-DE-TETANO` — CARTÃO DE TETANO (None FCFA)
+- `CARD-CARTAO-DE-VACINA` — Cartão de Vacina (1000 FCFA)
+- `ECO-REN-ABD` — Ecografia Renal e Abdominal (15000 FCFA)
+- `LAB-ACIDO-URICO` — Acido úrico (4000 FCFA)
+- `LAB-ALBUMINA` — Albumina (4000 FCFA)
+- `LAB-AMILASE` — Amiláse (4000 FCFA)
+- `LAB-ANTICORPO-HBC-IGM` — Anticorpo HBc IgM (4000 FCFA)
+- `LAB-ANTICORPO-HBE` — Anticorpo HBe (4000 FCFA)
+- `LAB-ANTIGENIO-HBS` — Antigénio HBs (4000 FCFA)
+- `LAB-ANTIGENIO-HEPATITE-B` — Antigénio Hepatite B (4000 FCFA)
+- `LAB-ASTO` — ASTO (4000 FCFA)
+- `LAB-BILIRRUBINA-DIRETA` — Bilirrubina Direta (4000 FCFA)
+- `LAB-BILIRRUBINA-INDIRETA` — Bilirrubina Indireta (4000 FCFA)
+- `LAB-BILIRRULINA-TOTAL` — Bilirrulina Total (4000 FCFA)
+- `LAB-BK` — BK (4000 FCFA)
+- `LAB-CALCIO` — Cálcio (4000 FCFA)
+- `LAB-CARDIO-COMBO-CK-MB-TROPONINA-MIOGLOBINA` — Cardio Combo (CK-MB Troponina, Mioglobina) (9000 FCFA)
+- `LAB-CK-MB` — CK-MB (3500 FCFA)
+- `LAB-CLAMIDIA` — Clamidia (5000 FCFA)
+- `LAB-COAGULACAO` — Coagulação (8000 FCFA)
+- `LAB-COAGULOGRAMA` — Coagulograma (8000 FCFA)
+- `LAB-COLESTEROL-HDL` — Colesterol HDL (4000 FCFA)
+- `LAB-COLESTEROL-LDL` — Colesterol LDL (4000 FCFA)
+- `LAB-COLESTEROL-TOTAL` — Colesterol Total (4000 FCFA)
+- `LAB-CREATININA` — Creatinina (4000 FCFA)
+- `LAB-CREATININA-URINA-24-H` — Creatinina Urina 24 H (4000 FCFA)
+- `LAB-D-DIMEROS` — D-Dimeros (4000 FCFA)
+- `LAB-E-BACTERIOLOGICO-DE-FERIDAS` — E. Bacteriológico De Feridas (4000 FCFA)
+- `LAB-E-BACTERIOLOGICO-DE-FEZES` — E. Bacteriológico De Fezes (4000 FCFA)
+- `LAB-E-BACTERIOLOGICO-DE-URINA` — E. Bacteriológico De Urina (4000 FCFA)
+- `LAB-E-BACTERIOLOGICO-DO-EXSUDADO-DO-TRATO-RE` — E. Bacteriológico do exsudado do trato Respiratório Superior (5000 FCFA)
+- `LAB-E-BACTERIOLOGICO-DO-EXSUDADO-URETRAL` — E. Bacteriológico Do exsudado Uretral (4000 FCFA)
+- `LAB-E-BACTERIOLOGICO-DO-EXSUDADOVAGINAL` — E. Bacteriológico Do exsudadoVaginal (4000 FCFA)
+- `LAB-E-DIRETA-DO-EXSUDADO-VAGINAL` — E. Direta Do exsudado Vaginal (4000 FCFA)
+- `LAB-E-PARASITOLOGICO-DE-FEZES` — E. Parasitológico De Fezes (4000 FCFA)
+- `LAB-ESTRADIOL` — Estradiol (7500 FCFA)
+- `LAB-FACTOR-REUMATOIDE` — Factor Reumatoide (4000 FCFA)
+- `LAB-FERRO-SERICO` — Ferro Serico (4000 FCFA)
+- `LAB-FOSFATASSE-ALCALINA` — Fosfatasse Alcalina (4000 FCFA)
+- `LAB-FOSFORO` — Fosforo (4000 FCFA)
+- `LAB-FSH` — FSH (8000 FCFA)
+- `LAB-G-E` — G.E. (2000 FCFA)
+- `LAB-GLICEMIA` — Glicemia (2000 FCFA)
+- `LAB-GLICOSE` — Glicose (4000 FCFA)
+- `LAB-GOT-AST` — GOT/AST (4000 FCFA)
+- `LAB-GOTA-ESPESSA` — Gota Espessa (2000 FCFA)
+- `LAB-GPT-ALT` — GPT/ALT (4000 FCFA)
+- `LAB-GRUPO-SANGUINEO` — Grupo Sanguíneo (4000 FCFA)
+- `LAB-HBS-AG` — HBS AG (3000 FCFA)
+- `LAB-HCV` — HCV (4000 FCFA)
+- `LAB-HELICOBACTER-PYLORI` — Helicobacter Pylori (8000 FCFA)
+- `LAB-HEMO-MAN` — Hemograma completo (4000 FCFA)
+- `LAB-HEMOGLOBINA-GLICOSILADA` — Hemoglobina glicosilada (15000 FCFA)
+- `LAB-IONOGRAMA` — Ionograma (20000 FCFA)
+- `LAB-LH` — LH (8000 FCFA)
+- `LAB-LINHA-SEM-NOME` — [linha sem nome] (4000 FCFA)
+- `LAB-MAGNESIO` — Magnésio (4000 FCFA)
+- `LAB-MIOGLOBINA` — Mioglobina (None FCFA)
+- `LAB-POTASSIO` — Potássio (4000 FCFA)
+- `LAB-PROGESTERONA` — Progesterona (8000 FCFA)
+- `LAB-PROLACTINA` — Prolactina (10000 FCFA)
+- `LAB-PROTEINA-C-REACTIVA` — Proteína C Reactiva (4000 FCFA)
+- `LAB-PROTEINAS-TOTAL` — Proteínas Total (4000 FCFA)
+- `LAB-PROTEINAS-URINARIAS-URINA-24-H` — Proteínas Urinarias Urina 24 H (4000 FCFA)
+- `LAB-PSA` — PSA (8000 FCFA)
+- `LAB-PT-INR` — PT/INR (4000 FCFA)
+- `LAB-PTT` — PTT (4000 FCFA)
+- `LAB-ROTAVIRUS` — Rotavirus (4000 FCFA)
+- `LAB-RUBEOLA-IGG-IGM` — Rubéola IGG IGM (None FCFA)
+- `LAB-SALMONELA-AG` — Salmonela AG (4000 FCFA)
+- `LAB-SIFILIS-VDRL` — Sifilis/VDRL (3000 FCFA)
+- `LAB-T3` — T3 (4000 FCFA)
+- `LAB-T4` — T4 (4000 FCFA)
+- `LAB-TEMPO-COAGULACAO` — Tempo Coagulação (4000 FCFA)
+- `LAB-TEMPO-SANGRAMENTO` — Tempo Sangramento (4000 FCFA)
+- `LAB-TESTE-DE-GRAVIDEZ` — Teste De Gravidez (2500 FCFA)
+- `LAB-TESTE-DE-KOH` — Teste de Koh (9500 FCFA)
+- `LAB-TESTOSTERONA` — Testosterona (8000 FCFA)
+- `LAB-TOXOPLASMOSE` — Toxoplasmose (8000 FCFA)
+- `LAB-TPHA` — TPHA (5000 FCFA)
+- `LAB-TRIGLICERIDEOS` — Triglicerídeos (4000 FCFA)
+- `LAB-TROPONINA` — Troponina (4000 FCFA)
+- `LAB-TSH` — TSH (6000 FCFA)
+- `LAB-TUBERCULOSE-IGG-IGM` — Tuberculose IGG IgM (5000 FCFA)
+- `LAB-UREIA-NA-URINA-24H` — Ureia na Urina 24H (4000 FCFA)
+- `LAB-URINA-TIPO-II` — Urina Tipo II (4000 FCFA)
+- `LAB-URINA-TIPO-II-NA-URINA-DE-24-H` — Urina Tipo II Na Urina De 24 H (4000 FCFA)
+- `LAB-VELOCIDADE-SEDIMENTACAO` — Velocidade Sedimentação (4000 FCFA)
+- `LAB-VIH-AG-AC-4A-GERACAO` — VIH (AG/AC) 4a Geração (4500 FCFA)
+- `LAB-VIH-TESTE-RAPIDO` — VIH TESTE Rapido (1500 FCFA)
+- `LAB-WIDAL` — Widal (4000 FCFA)
+- `LAB-WIDALL` — Widall (4000 FCFA)
+- `LAB-Y-GT` — Y-GT (4000 FCFA)
+- `MATC-CATETER` — Cateter (500 FCFA)
+- `MATC-COMPRESSA` — Compressa (1500 FCFA)
+- `MATC-NACL-0-9` — NaCl 0,9 % (1500 FCFA)
+- `MATC-PLACA-DE-HERNIA` — Placa de Hernia (30000 FCFA)
+- `MATC-SIRINGA-10-CC` — Siringa 10 cc (250 FCFA)
+- `MATC-SIRINGA-20-CC` — Siringa 20 cc (500 FCFA)
+- `MATC-SIRINGA-5-CC` — Siringa 5 cc (150 FCFA)
+- `MEDU-B-COMPLEXO-INJ` — B- Complexo inj. (1000 FCFA)
+- `MEDU-CEFTRIAXONA` — Ceftriaxona (1500 FCFA)
+- `MEDU-CIMETIDINA` — Cimetidina (1000 FCFA)
+- `MEDU-DESTROSA-5` — Destrosa 5 % (1500 FCFA)
+- `MEDU-DICLOFENAC` — Diclofenac (1000 FCFA)
+- `MEDU-METOCLOPRAMIDA` — Metoclopramida (1000 FCFA)
+- `MEDU-NOLOTIL-INJ` — Nolotil INJ. (1000 FCFA)
+- `MEDU-RINGER-LACTATO` — Ringer Lactato (1500 FCFA)
+- `MEDU-VITAMINA-C-INJ` — Vitamina C inj. (1000 FCFA)
+- `OBS-CAMA` — Cama (5000 FCFA)
+
+## Removidos do preparado (não reaparecem no real)
+
+- `CIR-DIU-EXT` — Extração de DIU
+- `CIR-JAD-EXT` — Extração de Jadelle
+- `DOC-ATESTADO` — Atestado Médico
+- `DOC-CERT` — Certificado Médico
+- `ECO-ABD` — Ecografia Abdominal
+- `ECO-RENAL` — Ecografia Renal
+- `ENF-CURATIVO` — Curativo
+- `ENF-GLIC` — Medição de Glicemia
+- `ENF-INJ` — Administração de Injeção
+- `ENF-OBS` — Observação Clínica
+- `ENF-PA` — Controlo de Pressão
+- `ENF-SORO` — Administração de Soro
+- `IMM-VAC` — Vacinação (taxa administração)
+- `LAB-CREAT` — Creatinina
+- `LAB-FEZES` — Exame de Fezes
+- `LAB-GLIC` — Glicemia
+- `LAB-HBS` — HBsAg
+- `LAB-URINA` — Exame de Urina
+- `LAB-VIH` — Teste VIH
+
+## Preços diferentes (mesmo código)
+
+- `LAB-HCG`: preparado pendente → real **2000** FCFA
+- `CIR-JAD-APL`: preparado pendente → real **5000** FCFA
+- `CONS-CONTROLO`: preparado pendente → real **2000** FCFA
+- `CIR-DIU-APL`: preparado pendente → real **5000** FCFA
+- `MAT-PARTO-NORMAL`: preparado pendente → real **35000** FCFA
+- `LAB-HEMO`: preparado pendente → real **4000** FCFA
+- `CONS-ESP`: preparado pendente → real **5000** FCFA
+- `CONS-PRE-NATAL`: preparado pendente → real **3000** FCFA
+- `LAB-UREIA`: preparado pendente → real **4000** FCFA
+- `ECO-GO`: preparado pendente → real **10000** FCFA
+- `CONS-CLIN-GER`: preparado pendente → real **3000** FCFA
+- `CIR-ECTOP`: preparado pendente → real **180000** FCFA
+- `CIR-MIOMA`: preparado pendente → real **250000** FCFA
+- `ECO-MORF`: preparado pendente → real **25000** FCFA
+- `CIR-QUISTO`: preparado pendente → real **200000** FCFA
+- `CIR-CESAR`: preparado pendente → real **180000** FCFA
+- `CIR-HERNIA`: preparado pendente → real **200000** FCFA

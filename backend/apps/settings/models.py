@@ -40,6 +40,8 @@ class PerfilClinica(TimestampMixin):
     horario_funcionamento = models.TextField("Horário de funcionamento", blank=True)
     dias_uteis = models.JSONField("Dias úteis", default=list)
     mensagem_rodape = models.TextField("Mensagem do rodapé", blank=True)
+    contacto_urgencia = models.CharField("Contacto de urgência", max_length=50, blank=True)
+    texto_legal = models.TextField("Texto legal", blank=True)
     assinatura_digital = models.ImageField(
         "Assinatura digital", upload_to="clinic/signature/", blank=True, null=True
     )
@@ -58,11 +60,21 @@ class EspecialidadeMedica(TimestampMixin):
     descricao = models.TextField("Descrição", blank=True)
     cor = models.CharField("Cor", max_length=7, default="#1e40af")
     activo = models.BooleanField("Activo", default=True)
+    duracao_consulta_minutos = models.PositiveIntegerField("Duração consulta (min)", default=30)
+    departamento = models.ForeignKey(
+        "clinic_settings.Departamento",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="especialidades",
+        verbose_name="Departamento",
+    )
+    ordem = models.PositiveIntegerField("Ordem", default=0)
 
     class Meta:
         verbose_name = "Especialidade médica"
         verbose_name_plural = "Especialidades médicas"
-        ordering = ["nome"]
+        ordering = ["ordem", "nome"]
 
     def __str__(self) -> str:
         return self.nome
@@ -73,11 +85,23 @@ class Departamento(TimestampMixin):
     nome = models.CharField("Nome", max_length=150)
     descricao = models.TextField("Descrição", blank=True)
     activo = models.BooleanField("Activo", default=True)
+    responsavel = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="departamentos_responsavel",
+        verbose_name="Responsável",
+    )
+    localizacao = models.CharField("Localização", max_length=150, blank=True)
+    horario = models.TextField("Horário", blank=True)
+    contactos_internos = models.TextField("Contactos internos", blank=True)
+    ordem = models.PositiveIntegerField("Ordem", default=0)
 
     class Meta:
         verbose_name = "Departamento"
         verbose_name_plural = "Departamentos"
-        ordering = ["nome"]
+        ordering = ["ordem", "nome"]
 
     def __str__(self) -> str:
         return self.nome
@@ -155,18 +179,31 @@ class TipoConsulta(TimestampMixin):
 
 
 class TipoExameLaboratorio(TimestampMixin):
-    codigo = models.CharField("Código", max_length=30, unique=True)
+    codigo = models.CharField("Código", max_length=64, unique=True)
     nome = models.CharField("Nome", max_length=150)
     categoria = models.CharField("Categoria", max_length=50)
     unidade = models.CharField("Unidade", max_length=30, blank=True)
     valor_referencia = models.CharField("Valor de referência", max_length=100, blank=True)
     tempo_medio_horas = models.PositiveIntegerField("Tempo médio (h)", default=24)
     activo = models.BooleanField("Activo", default=True)
+    servico = models.ForeignKey(
+        "billing.Servico",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tipos_exame_laboratorio",
+        verbose_name="Serviço de faturação",
+    )
+    tipo_amostra = models.CharField("Tipo de amostra", max_length=80, blank=True)
+    recipiente = models.CharField("Recipiente", max_length=80, blank=True)
+    instrucoes_colheita = models.TextField("Instruções de colheita", blank=True)
+    exige_jejum = models.BooleanField("Exige jejum", default=False)
+    ordem = models.PositiveIntegerField("Ordem", default=0)
 
     class Meta:
         verbose_name = "Tipo de exame laboratorial"
         verbose_name_plural = "Tipos de exames laboratoriais"
-        ordering = ["nome"]
+        ordering = ["ordem", "nome"]
 
     def __str__(self) -> str:
         return self.nome
@@ -179,6 +216,56 @@ class ConfiguracaoFaturacao(TimestampMixin):
     serie_recibos = models.CharField("Série recibos", max_length=20, default=DEFAULT_BILLING["serie_recibos"])
     serie_orcamentos = models.CharField("Série orçamentos", max_length=20, default=DEFAULT_BILLING["serie_orcamentos"])
     desconto_maximo_percentagem = models.DecimalField("Desconto máximo (%)", max_digits=5, decimal_places=2, default=20)
+    permitir_reducao_rececao = models.BooleanField("Permitir redução na receção", default=True)
+    limite_reducao_rececao_percentual = models.DecimalField(
+        "Limite de redução na receção (%)",
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Deixar vazio até a clínica definir o limite.",
+    )
+    exigir_motivo_reducao = models.BooleanField("Exigir motivo de redução", default=True)
+    exigir_autorizacao_acima_limite = models.BooleanField(
+        "Exigir autorização acima do limite", default=True
+    )
+    permitir_valor_zero = models.BooleanField("Permitir valor cobrado zero", default=False)
+    exigir_observacao_acima_percentual = models.DecimalField(
+        "Exigir observação acima de (%)",
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    notificar_director_reducao = models.BooleanField("Notificar direção sobre reduções", default=False)
+    mostrar_reducao_no_recibo = models.BooleanField(
+        "Mostrar redução no recibo entregue ao paciente", default=False
+    )
+    mostrar_preco_oficial_recibo = models.BooleanField(
+        "Mostrar preço oficial no recibo", default=False
+    )
+    mostrar_reducao_recibo = models.BooleanField(
+        "Mostrar linha de redução no recibo", default=False
+    )
+    mostrar_saldo_recibo = models.BooleanField("Mostrar saldo pendente no recibo", default=True)
+    mostrar_ministerio_saude_recibo = models.BooleanField(
+        "Mostrar referência ao Ministério da Saúde Pública", default=False
+    )
+    mostrar_valor_por_extenso = models.BooleanField(
+        "Mostrar valor por extenso no recibo", default=False
+    )
+    formato_recibo = models.CharField(
+        "Formato do recibo",
+        max_length=20,
+        default="A4",
+        choices=[
+            ("A4", "A4"),
+            ("A5", "A5"),
+            ("TERMICO_80", "Térmico 80 mm"),
+        ],
+    )
+    texto_rodape_recibo = models.TextField("Texto do rodapé do recibo", blank=True)
+    numero_inicial_recibo = models.PositiveIntegerField("Número inicial recibo", default=1)
     metodos_pagamento = models.JSONField("Métodos de pagamento", default=list)
 
     class Meta:
@@ -294,3 +381,49 @@ class BackupRegisto(TimestampMixin):
 
     def __str__(self) -> str:
         return f"Backup {self.tipo} — {self.estado}"
+
+
+class MedicoPerfil(TimestampMixin):
+    utilizador = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="perfil_medico",
+        verbose_name="Médico",
+    )
+    especialidade = models.ForeignKey(
+        EspecialidadeMedica,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="medicos",
+        verbose_name="Especialidade",
+    )
+    departamento = models.ForeignKey(
+        Departamento,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="medicos",
+        verbose_name="Departamento",
+    )
+    numero_profissional = models.CharField("Número profissional", max_length=50, blank=True)
+    dias_trabalho = models.JSONField("Dias de trabalho", default=list, blank=True)
+    horario_atendimento = models.JSONField("Horário de atendimento", default=dict, blank=True)
+    duracao_consulta_minutos = models.PositiveIntegerField("Duração consulta (min)", default=30)
+    servico_consulta = models.ForeignKey(
+        "billing.Servico",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="medicos_consulta",
+        verbose_name="Serviço de consulta",
+    )
+    activo = models.BooleanField("Activo", default=True)
+    disponivel_marcacao = models.BooleanField("Disponível para marcação", default=True)
+
+    class Meta:
+        verbose_name = "Perfil médico"
+        verbose_name_plural = "Perfis médicos"
+
+    def __str__(self) -> str:
+        return f"Perfil médico — {self.utilizador.get_full_name()}"

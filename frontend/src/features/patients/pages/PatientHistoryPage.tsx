@@ -11,8 +11,7 @@ import {
   Pagination,
   Table,
 } from "@/design-system";
-import { PatientHeader } from "@/features/patients/components/PatientHeader";
-import { PatientSubNav } from "@/features/patients/components/PatientSubNav";
+import { PatientProfileShell } from "@/features/patients/components/PatientProfileShell";
 import { SelectField } from "@/features/patients/components/SelectField";
 import { HISTORY_EVENT_TYPE_LABELS, PATIENT_PAGE_SIZE } from "@/constants/patients";
 import { patientsService } from "@/services/patients";
@@ -72,10 +71,7 @@ export function PatientHistoryPage() {
   const totalPages = Math.max(1, Math.ceil((history?.count ?? 0) / PATIENT_PAGE_SIZE));
 
   return (
-    <div className="space-y-6">
-      <PatientHeader patient={patient} />
-      <PatientSubNav />
-
+    <PatientProfileShell patient={patient}>
       <Card>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
           <div className="flex gap-2">
@@ -170,6 +166,6 @@ export function PatientHistoryPage() {
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </Card>
-    </div>
+    </PatientProfileShell>
   );
 }

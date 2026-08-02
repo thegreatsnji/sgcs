@@ -9,8 +9,19 @@ export interface BillingService {
   nome: string;
   descricao: string;
   categoria: string;
+  categoria_label?: string;
+  departamento?: number | null;
+  departamento_nome?: string | null;
+  especialidade?: number | null;
+  especialidade_nome?: string | null;
   preco: string;
+  moeda?: string;
   activo: boolean;
+  exige_pedido_medico?: boolean;
+  preco_confirmado?: boolean;
+  estado_validacao?: string;
+  exige_agendamento?: boolean;
+  updated_at?: string;
 }
 
 export interface BillingItem {

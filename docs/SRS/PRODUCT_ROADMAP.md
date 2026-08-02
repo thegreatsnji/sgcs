@@ -34,17 +34,56 @@ Status: ✅ Concluído
 
 # Versão 1.2
 
-- Laboratório ✅ (Sprint 7 — pedidos e resultados)
-- Faturação ✅ (Sprint 8 Fase 1 — serviços, orçamentos, faturas, pagamentos)
-- Financeiro ✅ (Sprint 8 Fase 2 — caixa, movimentos, despesas, relatórios, integração Billing)
+- Laboratório ✅ (Sprint 7)
+- Faturação ✅ (Sprint 8 Fase 1)
+- Financeiro ✅ (Sprint 8 Fase 2)
 - Relatórios e BI ✅ (Sprint 9)
 - Administração e Configuração ✅ (Sprint 10)
-- Módulo Médico ✅ (Sprint 11 — prescrições, tratamentos, evolução, alta, seguimento)
+- Módulo Médico ✅ (Sprint 11)
 - Notificações e Comunicações ✅ (Sprint 12)
 - Otimização e Produção ✅ (Sprint 13)
-- Farmácia
+- UI/UX Premium e refinamento de fluxos ✅ (Sprint 14)
 
-Status: 🚧 Em desenvolvimento (Farmácia pendente)
+Status: ✅ Concluído
+
+---
+
+# Versão 1.3 — Arranque clínico (Sprint 15)
+
+- Validação dos fluxos reais na clínica (documentação)
+- Catálogo de serviços e preços FCFA (CSV + importação)
+- Dados iniciais: perfil, departamentos, preçário de referência
+- Roadmap de expansão (Enfermagem → Internamento) **sem** implementar Farmácia/Cirurgia/Maternidade
+
+Status: ✅ Sprint 15 (análise e dados) — ver [SPRINT15_REPORT.md](../SPRINT15_REPORT.md)
+
+Detalhe por versão: [SPRINT15/ROADMAP_MODULOS_POR_VERSAO.md](../SPRINT15/ROADMAP_MODULOS_POR_VERSAO.md)
+
+---
+
+# Versão 1.3.1 — Go-live hardening (planeado)
+
+- UI cancelamento de consulta
+- Impressões ligadas aos ecrãs
+- Recuperação de palavra-passe
+- Notificação de resultados de laboratório (canal acordado)
+
+Status: 📋 Próxima sprint de código
+
+---
+
+# Versões 1.4 – 1.9 (expansão clínica — só após SRS)
+
+| Versão | Foco |
+|--------|------|
+| **1.4** | Enfermagem e triagem |
+| **1.5** | Imagiologia / ecografia; lab e imunologia alargados |
+| **1.6** | Farmácia (fase 1 — dispensação/stock) |
+| **1.7** | Cirurgia |
+| **1.8** | Maternidade, obstetrícia, parteira |
+| **1.9** | Internamento e camas |
+
+Status: 📋 Documentado na Sprint 15; **não iniciar código** sem aprovação da direcção
 
 ---
 

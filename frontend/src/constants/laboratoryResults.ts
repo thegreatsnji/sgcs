@@ -23,3 +23,10 @@ export const INTERPRETACAO_LABELS: Record<string, string> = {
   BAIXO: "Baixo",
   CRITICO: "Crítico",
 };
+
+export const INTERPRETACAO_COLORS: Record<string, string> = {
+  NORMAL: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  ALTO: "bg-amber-50 text-amber-800 border-amber-200",
+  BAIXO: "bg-sky-50 text-sky-800 border-sky-200",
+  CRITICO: "bg-red-50 text-red-800 border-red-200",
+};

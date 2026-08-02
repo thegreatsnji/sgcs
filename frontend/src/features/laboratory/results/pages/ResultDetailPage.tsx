@@ -1,14 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 
-import { Button, Card, ErrorState, LoadingState, useToast } from "@/design-system";
+import { Button, Card, ErrorState, useToast } from "@/design-system";
 import { LaboratorySubNav } from "@/features/laboratory/components/LaboratorySubNav";
-import { ResultadoPreview } from "@/features/laboratory/results/components/ResultadoPreview";
+import { LaboratoryTableSkeleton } from "@/features/laboratory/components/LaboratorySkeleton";
+import {
+  InterpretationPanel,
+  LabPatientPanel,
+} from "@/features/laboratory/results/components/ResultEntryLayout";
+import { ParametroResultsTable } from "@/features/laboratory/results/components/ParametroResultsTable";
+import { ResultadoStatusBadge } from "@/features/laboratory/results/components/ResultadoStatusBadge";
 import { ResultadoTimeline } from "@/features/laboratory/results/components/ResultadoTimeline";
 import { UploadResultado } from "@/features/laboratory/results/components/UploadResultado";
 import { usePermissions } from "@/hooks/usePermissions";
 import { laboratoryResultsService } from "@/services/laboratory";
 import { getApiErrorMessage } from "@/utils/api-error";
+import { formatDisplayDateTime } from "@/utils/date";
 
 export function ResultDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -48,56 +55,86 @@ export function ResultDetailPage() {
   });
 
   if (!Number.isFinite(resultId)) return <ErrorState message="Resultado inválido." />;
-  if (isLoading || !data) return <LoadingState message="A carregar resultado..." />;
+  if (isLoading || !data) return <LaboratoryTableSkeleton rows={4} />;
   if (isError) return <ErrorState message="Erro ao carregar." onRetry={() => void refetch()} />;
 
   const canEdit = hasPermission("laboratory.results.edit") && data.editavel;
   const canValidate = hasPermission("laboratory.results.validate") && data.estado === "RESULTADO_PENDENTE";
   const canPublish = hasPermission("laboratory.results.publish") && data.estado === "VALIDADO";
 
+  const validationStatus = (
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+      <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Estado de validação</p>
+      <div className="mt-2">
+        <ResultadoStatusBadge status={data.estado} />
+      </div>
+      {data.data_validacao && (
+        <p className="mt-2 text-xs text-slate-500">
+          Validado: {formatDisplayDateTime(data.data_validacao)}
+          {data.validado_por_nome && ` · ${data.validado_por_nome}`}
+        </p>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <Link to="/laboratory/results" className="text-sm text-primary-700 hover:underline">
+        <Link to="/laboratory/results" className="text-sm font-medium text-primary-600 hover:text-primary-700">
           ← Voltar aos resultados
         </Link>
         <div className="flex flex-wrap gap-2">
           {canEdit && (
             <Link to={`/laboratory/results/${resultId}/edit`}>
-              <Button variant="secondary">Editar</Button>
+              <Button variant="outline">Editar</Button>
             </Link>
           )}
           {canValidate && (
-            <Button variant="primary" onClick={() => validateMutation.mutate()} disabled={validateMutation.isPending}>
-              Validar
+            <Button variant="primary" onClick={() => validateMutation.mutate()} isLoading={validateMutation.isPending}>
+              Validar resultado
             </Button>
           )}
           {canPublish && (
-            <Button variant="primary" onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>
-              Publicar
+            <Button variant="primary" onClick={() => publishMutation.mutate()} isLoading={publishMutation.isPending}>
+              Publicar ao médico
             </Button>
           )}
         </div>
       </div>
+
       <LaboratorySubNav />
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <ResultadoPreview resultado={data} />
+
+      <div className="grid gap-6 xl:grid-cols-[240px_1fr_280px]">
+        <LabPatientPanel
+          patient={{
+            full_name: data.paciente_nome,
+            numero_pedido: data.numero_pedido,
+            medico_nome: data.medico_nome,
+            estado: data.estado,
+          }}
+        />
+
+        <div className="min-w-0 space-y-4">
+          <ParametroResultsTable parametros={data.parametros} />
         </div>
-        <Card title="Histórico">
-          <ResultadoTimeline resultado={data} />
-        </Card>
+
+        <InterpretationPanel
+          observacoes={data.observacoes}
+          conclusao={data.conclusao}
+          validationStatus={validationStatus}
+          timeline={<ResultadoTimeline resultado={data} />}
+        />
       </div>
 
       {data.anexos.length > 0 && (
         <Card title="Anexos">
-          <ul className="space-y-2 text-sm">
+          <ul className="divide-y divide-slate-100">
             {data.anexos.map((anexo) => (
-              <li key={anexo.id} className="flex items-center justify-between gap-2">
-                <span>{anexo.nome_ficheiro || anexo.descricao || anexo.tipo}</span>
+              <li key={anexo.id} className="flex items-center justify-between gap-2 py-3 first:pt-0">
+                <span className="text-sm text-slate-700">{anexo.nome_ficheiro || anexo.descricao || anexo.tipo}</span>
                 <a
                   href={laboratoryResultsService.downloadUrl(resultId, anexo.id)}
-                  className="text-primary-700 hover:underline"
+                  className="text-sm font-medium text-primary-600 hover:text-primary-700"
                   target="_blank"
                   rel="noreferrer"
                 >

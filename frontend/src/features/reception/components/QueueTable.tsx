@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 
-import { Badge, Button, Table } from "@/design-system";
-import { QUEUE_STATUS_LABELS } from "@/constants/reception";
+import { Button, Table } from "@/design-system";
 import { PriorityBadge } from "@/features/reception/components/PriorityBadge";
+import { QueueStatusBadge } from "@/features/reception/components/QueueStatusBadge";
+import { TriageBadge } from "@/features/reception/components/TriageBadge";
 import type { WaitingQueueEntry } from "@/types/reception";
 import { formatDisplayDateTime } from "@/utils/date";
 
@@ -41,6 +42,16 @@ export function QueueTable({ entries, onAssign, onUpdateStatus, showActions = tr
           ),
         },
         {
+          key: "triage",
+          header: "Triagem",
+          render: (row) => (
+            <div className="space-y-1">
+              <TriageBadge color={row.triage_color} />
+              {!row.triage_color && <PriorityBadge priority={row.priority} />}
+            </div>
+          ),
+        },
+        {
           key: "priority",
           header: "Prioridade",
           render: (row) => <PriorityBadge priority={row.priority} />,
@@ -48,7 +59,7 @@ export function QueueTable({ entries, onAssign, onUpdateStatus, showActions = tr
         {
           key: "status",
           header: "Estado",
-          render: (row) => <Badge>{QUEUE_STATUS_LABELS[row.status]}</Badge>,
+          render: (row) => <QueueStatusBadge status={row.status} />,
         },
         {
           key: "estimated_wait_minutes",
@@ -58,7 +69,7 @@ export function QueueTable({ entries, onAssign, onUpdateStatus, showActions = tr
         },
         {
           key: "check_in_time",
-          header: "Check-in",
+          header: "Entrada",
           render: (row) => formatDisplayDateTime(row.check_in_time),
         },
         ...(showActions

@@ -25,14 +25,14 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
-        <div className="border-b border-slate-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-          {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
+      <div className="w-full max-w-lg rounded-xl border border-border bg-surface-elevated shadow-xl">
+        <div className="border-b border-border-subtle px-6 py-4">
+          <h2 className="text-lg font-semibold text-text">{title}</h2>
+          {description && <p className="mt-1 text-sm text-text-muted">{description}</p>}
         </div>
         {children && <div className="px-6 py-4">{children}</div>}
-        <div className="flex justify-end gap-2 border-t border-slate-100 px-6 py-4">
+        <div className="flex justify-end gap-2 border-t border-border-subtle px-6 py-4">
           <Button variant="ghost" onClick={onClose}>
             {cancelLabel}
           </Button>

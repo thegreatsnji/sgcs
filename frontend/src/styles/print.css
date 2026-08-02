@@ -1,0 +1,53 @@
+@media print {
+  @page {
+    margin: 12mm 10mm;
+    size: A4;
+  }
+
+  body {
+    background: #fff !important;
+    color: #0f172a !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-hidden,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-document {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .print-document__header,
+  .print-document__footer {
+    break-inside: avoid;
+  }
+
+  .print-document__body {
+    break-inside: auto;
+  }
+
+  .print-signature-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+}
+
+@media screen {
+  .print-document {
+    max-width: 210mm;
+    margin-inline: auto;
+  }
+}

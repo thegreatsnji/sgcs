@@ -16,8 +16,7 @@ import { AllergyFormModal } from "@/features/patients/components/AllergyFormModa
 import { AllergyAlertBanner } from "@/features/patients/components/AllergyAlertBanner";
 import { ChronicDiseaseFormModal } from "@/features/patients/components/ChronicDiseaseFormModal";
 import { ObservationFormModal } from "@/features/patients/components/ObservationFormModal";
-import { PatientHeader } from "@/features/patients/components/PatientHeader";
-import { PatientSubNav } from "@/features/patients/components/PatientSubNav";
+import { PatientProfileShell } from "@/features/patients/components/PatientProfileShell";
 import {
   ALLERGY_SEVERITY_LABELS,
   CHRONIC_DISEASE_STATUS_LABELS,
@@ -146,9 +145,7 @@ export function PatientClinicalPage() {
   const canEdit = hasPermission("patients.edit");
 
   return (
-    <div className="space-y-6">
-      <PatientHeader patient={patient} />
-      <PatientSubNav />
+    <PatientProfileShell patient={patient}>
       <AllergyAlertBanner allergies={allergyRows} />
 
       <Card
@@ -293,6 +290,6 @@ export function PatientClinicalPage() {
         onClose={() => setObservationModal(null)}
         onSubmit={(data) => observationMutation.mutate(data)}
       />
-    </div>
+    </PatientProfileShell>
   );
 }

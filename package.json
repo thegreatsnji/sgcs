@@ -1,0 +1,14 @@
+{
+  "name": "sgcs",
+  "private": true,
+  "description": "Scripts de arranque SGCS (Docker Compose)",
+  "scripts": {
+    "start": "node scripts/ensure-env.mjs && docker compose up --build",
+    "start:bg": "node scripts/ensure-env.mjs && docker compose up -d --build",
+    "stop": "docker compose stop",
+    "down": "docker compose down",
+    "logs": "docker compose logs -f",
+    "seed": "docker compose exec backend python manage.py seed_demo --reset-demo-users",
+    "ready": "node scripts/wait-ready.mjs"
+  }
+}

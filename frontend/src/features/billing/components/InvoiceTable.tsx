@@ -1,22 +1,10 @@
 import { Link } from "react-router-dom";
 
-import { Badge, Table } from "@/design-system";
+import { Table } from "@/design-system";
+import { InvoiceStatusBadge } from "@/features/billing/components/InvoiceStatusBadge";
+import { formatCurrency } from "@/features/billing/utils/formatBilling";
 import type { Invoice } from "@/types/billing";
 import { formatDisplayDateTime } from "@/utils/date";
-
-const ESTADO_VARIANT: Record<string, "default" | "success" | "warning" | "danger" | "info"> = {
-  PENDENTE: "warning",
-  PARCIAL: "info",
-  PAGA: "success",
-  CANCELADA: "default",
-};
-
-const ESTADO_LABEL: Record<string, string> = {
-  PENDENTE: "Pendente",
-  PARCIAL: "Parcial",
-  PAGA: "Paga",
-  CANCELADA: "Cancelada",
-};
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -43,9 +31,13 @@ export function InvoiceTable({ invoices, emptyMessage = "Sem faturas." }: Invoic
         {
           key: "estado",
           header: "Estado",
-          render: (row) => <Badge variant={ESTADO_VARIANT[row.estado]}>{ESTADO_LABEL[row.estado]}</Badge>,
+          render: (row) => <InvoiceStatusBadge estado={row.estado} />,
         },
-        { key: "total", header: "Total", render: (row) => `${row.total} FCFA` },
+        {
+          key: "total",
+          header: "Total",
+          render: (row) => <span className="font-medium text-slate-900">{formatCurrency(row.total)}</span>,
+        },
         {
           key: "emitida_em",
           header: "Emitida",

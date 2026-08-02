@@ -21,6 +21,7 @@ from apps.settings.views import (
     SmsSettingsView,
     TipoConsultaViewSet,
     TipoExameViewSet,
+    MedicoPerfilViewSet,
 )
 
 app_name = "settings"
@@ -33,6 +34,7 @@ router.register("working-hours", HorarioViewSet, basename="working-hours")
 router.register("holidays", FeriadoViewSet, basename="holiday")
 router.register("consultation-types", TipoConsultaViewSet, basename="consultation-type")
 router.register("laboratory/exam-types", TipoExameViewSet, basename="lab-exam-type")
+router.register("medico-perfis", MedicoPerfilViewSet, basename="medico-perfil")
 router.register("backups", BackupViewSet, basename="backup")
 
 urlpatterns = [

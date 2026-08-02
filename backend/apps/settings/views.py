@@ -12,6 +12,7 @@ from apps.settings.models import (
     EspecialidadeMedica,
     Feriado,
     HorarioFuncionamento,
+    MedicoPerfil,
     TipoConsulta,
     TipoExameLaboratorio,
 )
@@ -35,6 +36,7 @@ from apps.settings.serializers import (
     HorarioFuncionamentoSerializer,
     TipoConsultaSerializer,
     TipoExameLaboratorioSerializer,
+    MedicoPerfilSerializer,
 )
 from apps.settings.services.backup_service import BackupService
 from apps.settings.services.settings_service import SettingsService
@@ -133,9 +135,17 @@ class TipoConsultaViewSet(SettingsModelViewSet):
 
 
 class TipoExameViewSet(SettingsModelViewSet):
-    queryset = TipoExameLaboratorio.objects.all()
+    queryset = TipoExameLaboratorio.objects.select_related("servico")
     serializer_class = TipoExameLaboratorioSerializer
     permission_map = LAB_EXAM_MAP
+
+
+class MedicoPerfilViewSet(SettingsModelViewSet):
+    queryset = MedicoPerfil.objects.select_related(
+        "utilizador", "especialidade", "departamento", "servico_consulta"
+    )
+    serializer_class = MedicoPerfilSerializer
+    permission_map = SPECIALTY_MAP
 
 
 class BackupViewSet(SettingsPermissionMixin, viewsets.ModelViewSet):

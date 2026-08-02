@@ -13,8 +13,7 @@ import {
   useToast,
 } from "@/design-system";
 import { DocumentUploadModal } from "@/features/patients/components/DocumentUploadModal";
-import { PatientHeader } from "@/features/patients/components/PatientHeader";
-import { PatientSubNav } from "@/features/patients/components/PatientSubNav";
+import { PatientProfileShell } from "@/features/patients/components/PatientProfileShell";
 import { PATIENT_DOCUMENT_TYPE_LABELS } from "@/constants/patients";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { DocumentUploadFormData } from "@/schemas/patientSchema";
@@ -88,10 +87,7 @@ export function PatientDocumentsPage() {
   const canEdit = hasPermission("patients.edit");
 
   return (
-    <div className="space-y-6">
-      <PatientHeader patient={patient} />
-      <PatientSubNav />
-
+    <PatientProfileShell patient={patient}>
       <Card
         title="Documentos"
         footer={
@@ -173,6 +169,6 @@ export function PatientDocumentsPage() {
         onClose={() => setUploadOpen(false)}
         onSubmit={(data) => uploadMutation.mutate(data)}
       />
-    </div>
+    </PatientProfileShell>
   );
 }

@@ -1,0 +1,8 @@
+{
+  "versao": "1.0",
+  "clinica": "SauVida",
+  "moeda": "FCFA",
+  "nota": "Preços não confirmados devem usar REVISAR_COM_CLINICA no CSV; não importar com --apply até validação.",
+  "ficheiro_csv": "catalogo_servicos_sauvida.csv",
+  "total_linhas_servico": 36
+}

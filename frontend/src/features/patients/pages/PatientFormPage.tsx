@@ -12,6 +12,7 @@ import {
   Modal,
   useToast,
 } from "@/design-system";
+import { PhoneInput } from "@/components/forms";
 import { DuplicateAlert } from "@/features/patients/components/DuplicateAlert";
 import { EmergencyContactForm } from "@/features/patients/components/EmergencyContactForm";
 import { SelectField } from "@/features/patients/components/SelectField";
@@ -33,6 +34,7 @@ import type {
   PatientPayload,
 } from "@/types/patient";
 import { getApiErrorMessage } from "@/utils/api-error";
+import { stripCountryCode, toFullPhone } from "@/utils/phone";
 
 function toPayload(data: PatientFormData): PatientPayload {
   return {
@@ -42,7 +44,7 @@ function toPayload(data: PatientFormData): PatientPayload {
     document_number: data.document_number || null,
     birth_date: data.birth_date,
     gender: data.gender,
-    phone: data.phone,
+    phone: toFullPhone(data.phone),
     email: data.email || null,
     address_street: data.address_street || null,
     address_city: data.address_city || null,
@@ -55,6 +57,7 @@ function toPayload(data: PatientFormData): PatientPayload {
     occupation: data.occupation || null,
     emergency_contacts: data.emergency_contacts.map((contact) => ({
       ...contact,
+      phone: toFullPhone(contact.phone),
       email: contact.email || null,
     })),
   };
@@ -94,7 +97,7 @@ export function PatientFormPage() {
           document_number: patient.document_number ?? "",
           birth_date: patient.birth_date ?? "",
           gender: patient.gender ?? "M",
-          phone: patient.phone ?? "",
+          phone: stripCountryCode(patient.phone ?? ""),
           email: patient.email ?? "",
           address_street: patient.address_street ?? "",
           address_city: patient.address_city ?? "",
@@ -108,7 +111,7 @@ export function PatientFormPage() {
           emergency_contacts:
             patient.emergency_contacts?.map((contact) => ({
               name: contact.name,
-              phone: contact.phone,
+              phone: stripCountryCode(contact.phone),
               email: contact.email ?? "",
               relationship: contact.relationship,
               is_primary: contact.is_primary,
@@ -142,7 +145,7 @@ export function PatientFormPage() {
     first_name: watched[0],
     last_name: watched[1],
     birth_date: watched[2],
-    phone: watched[3] || undefined,
+    phone: watched[3] ? toFullPhone(watched[3]) : undefined,
     document_number: watched[4] || undefined,
   };
   const debouncedDuplicateParams = useDebouncedValue(duplicateParams, 500);
@@ -300,12 +303,12 @@ export function PatientFormPage() {
         <Card title="Contactos" description="Telefone e e-mail do paciente">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Telefone</label>
-              <input
-                className={`w-full rounded-lg border px-3 py-2 text-sm ${errors.phone ? "border-red-500" : "border-slate-300"}`}
+              <PhoneInput
+                label="Telefone"
+                error={errors.phone?.message}
+                hint="Introduza apenas os dígitos após +245"
                 {...register("phone")}
               />
-              {errors.phone?.message && <p className="mt-1 text-xs text-red-600">{errors.phone.message}</p>}
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">E-mail</label>

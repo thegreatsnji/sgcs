@@ -9,6 +9,8 @@ from apps.billing.views import (
     PagamentoViewSet,
     PatientFinancialHistoryView,
     ReciboViewSet,
+    ReducaoValorAutorizacaoViewSet,
+    RelatorioReducoesView,
     ServicoViewSet,
 )
 
@@ -20,6 +22,7 @@ router.register("quotes", OrcamentoViewSet, basename="billing-quote")
 router.register("invoices", FaturaViewSet, basename="billing-invoice")
 router.register("payments", PagamentoViewSet, basename="billing-payment")
 router.register("receipts", ReciboViewSet, basename="billing-receipt")
+router.register("reducoes", ReducaoValorAutorizacaoViewSet, basename="billing-reducao")
 
 urlpatterns = [
     path(
@@ -27,5 +30,6 @@ urlpatterns = [
         PatientFinancialHistoryView.as_view(),
         name="patient-history",
     ),
+    path("reports/reducoes/", RelatorioReducoesView.as_view(), name="billing-report-reducoes"),
     path("", include(router.urls)),
 ]

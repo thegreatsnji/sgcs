@@ -1,0 +1,5 @@
+codigo,nome,descricao,departamento,activo,duracao_consulta_minutos,ordem
+CLIN-GER,Clínica Geral,Medicina geral,CONS-GER,1,30,1
+GIN,Ginecologia,Saúde da mulher,ESP-MED,1,30,2
+OBS,Obstetrícia,Gravidez e parto,MAT-PAR,1,30,3
+CIR-GER,Cirurgia Geral,Procedimentos cirúrgicos gerais,CIR,1,45,4

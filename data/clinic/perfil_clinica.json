@@ -1,0 +1,17 @@
+{
+  "nome": "Clínica SauVida",
+  "nif": "",
+  "morada": "",
+  "cidade": "Bissau",
+  "pais": "Guiné-Bissau",
+  "telefone": "",
+  "telemovel": "",
+  "email": "contacto@sauvida.gw",
+  "website": "",
+  "moeda": "FCFA",
+  "fuso_horario": "Africa/Bissau",
+  "idioma": "pt",
+  "horario_funcionamento": "Segunda a Sábado — confirmar horário na receção",
+  "dias_uteis": ["segunda", "terca", "quarta", "quinta", "sexta", "sabado"],
+  "mensagem_rodape": "Documento emitido pelo SGCS — Clínica SauVida"
+}

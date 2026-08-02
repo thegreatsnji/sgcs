@@ -10,7 +10,10 @@ export function ConsultationSubNav() {
   const location = useLocation();
 
   return (
-    <nav className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+    <nav
+      className="flex flex-wrap gap-1 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-sm"
+      aria-label="Navegação de consultas médicas"
+    >
       {links.map((link) => {
         const isActive = link.exact
           ? location.pathname === link.to
@@ -19,10 +22,10 @@ export function ConsultationSubNav() {
           <Link
             key={link.to}
             to={link.to}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            className={`rounded-xl px-4 py-2.5 text-sm font-medium transition focus-ring ${
               isActive
-                ? "bg-primary-600 text-white"
-                : "text-slate-600 hover:bg-slate-100 hover:text-primary-700"
+                ? "bg-primary-600 text-white shadow-md shadow-primary-600/20"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
             {link.label}

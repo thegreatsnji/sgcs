@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
 
+import { PillSubNav } from "@/components/layout/PillSubNav";
+import { UI_COPY } from "@/constants/uiCopy";
 import { Card, LoadingState } from "@/design-system";
 import { NotificationFilters } from "@/features/notifications/components/NotificationFilters";
 import { NotificationPreferencesForm } from "@/features/notifications/components/NotificationPreferencesForm";
@@ -11,27 +12,12 @@ import type { PreferenciaNotificacao } from "@/types/notifications";
 
 function NotificationsSubNav() {
   const tabs = [
-    { to: "/notifications", label: "Centro", end: true },
-    { to: "/notifications/history", label: "Histórico" },
-    { to: "/notifications/templates", label: "Templates" },
-    { to: "/notifications/preferences", label: "Preferências" },
+    { to: "/notifications", label: UI_COPY.nav.center, end: true },
+    { to: "/notifications/history", label: UI_COPY.nav.history },
+    { to: "/notifications/templates", label: UI_COPY.nav.templates },
+    { to: "/notifications/preferences", label: UI_COPY.nav.preferences },
   ];
-  return (
-    <nav className="flex flex-wrap gap-1 border-b border-slate-200">
-      {tabs.map((tab) => (
-        <NavLink
-          key={tab.to}
-          to={tab.to}
-          end={tab.end}
-          className={({ isActive }) =>
-            `px-4 py-2 text-sm font-medium ${isActive ? "border-b-2 border-primary-600 text-primary-700" : "text-slate-500"}`
-          }
-        >
-          {tab.label}
-        </NavLink>
-      ))}
-    </nav>
-  );
+  return <PillSubNav tabs={tabs} ariaLabel="Navegação de notificações" />;
 }
 
 export function NotificationsDashboardPage() {
@@ -170,12 +156,12 @@ export function TemplatesPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Templates</h2>
+      <h2 className="text-2xl font-bold">Modelos de comunicação</h2>
       <NotificationsSubNav />
       {isLoading ? (
         <LoadingState />
       ) : (
-        <Card title="Templates de e-mail">
+        <Card title="Modelos de e-mail">
           <ul className="space-y-2 text-sm">
             {data?.results.map((t) => (
               <li key={t.id} className="rounded border border-slate-100 px-3 py-2">

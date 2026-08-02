@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { Badge, Card, ErrorState, LoadingState } from "@/design-system";
 import { QUEUE_PRIORITY_LABELS, QUEUE_STATUS_LABELS } from "@/constants/reception";
+import { ReceptionActivityFeed } from "@/features/reception/components/ReceptionActivityFeed";
 import { ReceptionSubNav } from "@/features/reception/components/ReceptionSubNav";
 import { useReceptionDashboard } from "@/features/reception/hooks/useReceptionDashboard";
 import type { QueuePriority } from "@/types/reception";
@@ -13,7 +14,7 @@ export function ReceptionDashboardPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Receção</h2>
-        <p className="mt-1 text-slate-600">Painel de receção — fila, check-ins e indicadores.</p>
+        <p className="mt-1 text-slate-600">Painel de receção — fila, entradas e indicadores.</p>
       </div>
 
       <ReceptionSubNav />
@@ -44,7 +45,7 @@ export function ReceptionDashboardPage() {
                   to="/reception/check-in"
                   className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
                 >
-                  Novo check-in
+                  Novo registo de entrada
                 </Link>
                 <Link
                   to="/reception/queue"
@@ -87,22 +88,8 @@ export function ReceptionDashboardPage() {
             </Card>
           </div>
 
-          <Card title="Atividade recente — Receção">
-            <ul className="space-y-3 text-sm">
-              {data.recent_reception_activity.length === 0 ? (
-                <li className="text-slate-500">Sem atividade registada.</li>
-              ) : (
-                data.recent_reception_activity.map((item, index) => (
-                  <li key={index} className="border-b border-slate-100 pb-2">
-                    <p className="font-medium text-slate-800">{item.action}</p>
-                    <p className="text-slate-600">{item.description}</p>
-                    <p className="text-xs text-slate-400">
-                      {item.user} — {item.created_at}
-                    </p>
-                  </li>
-                ))
-              )}
-            </ul>
+          <Card title="Actividade recente" description="Últimos movimentos na receção">
+            <ReceptionActivityFeed items={data.recent_reception_activity} />
           </Card>
         </>
       )}

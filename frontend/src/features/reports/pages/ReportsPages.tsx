@@ -1,10 +1,21 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { Card, ErrorState, LoadingState } from "@/design-system";
+import { ErrorState, LoadingState } from "@/design-system";
 import { ChartCard } from "@/features/reports/components/ChartCard";
-import { DashboardExecutiveCards } from "@/features/reports/components/DashboardExecutiveCards";
+import { DepartmentPerformanceGrid } from "@/features/reports/components/DepartmentPerformanceGrid";
+import { ExecutiveAlertsPanel } from "@/features/reports/components/ExecutiveAlertsPanel";
+import { ExecutiveChartsGrid } from "@/features/reports/components/ExecutiveChartsGrid";
+import { ExecutiveKpiStrip } from "@/features/reports/components/ExecutiveKpiStrip";
+import { ExecutiveDashboardSkeleton } from "@/features/reports/components/ExecutiveSkeleton";
 import { ExportMenu } from "@/features/reports/components/ExportMenu";
+import { computeCollectionRate } from "@/features/reports/utils/executiveMetrics";
+import { appointmentsService } from "@/services/appointments/appointments.service";
+import { billingService } from "@/services/billing/billing.service";
+import { dashboardService } from "@/services/dashboard";
+import { financeService } from "@/services/finance/finance.service";
+import { laboratoryService } from "@/services/laboratory";
+import { notificationsService } from "@/services/notifications/notifications.service";
 import { ReportCard } from "@/features/reports/components/ReportCard";
 import { ReportFilter } from "@/features/reports/components/ReportFilter";
 import { ReportsSubNav } from "@/features/reports/components/ReportsSubNav";
@@ -147,43 +158,115 @@ export function ExecutiveReportPage() {
     refetchInterval: 120_000,
   });
 
+  const { data: reception } = useQuery({
+    queryKey: ["reception-dashboard"],
+    queryFn: dashboardService.getReceptionSummary,
+  });
+
+  const { data: medical } = useQuery({
+    queryKey: ["consultas-dashboard"],
+    queryFn: appointmentsService.getDashboard,
+  });
+
+  const { data: laboratory } = useQuery({
+    queryKey: ["laboratory-dashboard"],
+    queryFn: laboratoryService.getDashboard,
+  });
+
+  const { data: billing } = useQuery({
+    queryKey: ["billing-dashboard"],
+    queryFn: billingService.getDashboard,
+  });
+
+  const { data: finance } = useQuery({
+    queryKey: ["finance-dashboard"],
+    queryFn: financeService.getDashboard,
+  });
+
+  const { data: notifications } = useQuery({
+    queryKey: ["notifications-dashboard"],
+    queryFn: notificationsService.getDashboard,
+  });
+
+  const { data: unread } = useQuery({
+    queryKey: ["notifications-unread"],
+    queryFn: notificationsService.unread,
+    refetchInterval: 60_000,
+  });
+
+  const loading =
+    isLoading ||
+    !data ||
+    !reception ||
+    !medical ||
+    !laboratory ||
+    !billing ||
+    !finance ||
+    !notifications;
+
+  const collectionRate = computeCollectionRate(
+    billing?.indicadores.faturas_pagas ?? 0,
+    billing?.indicadores.faturas_pendentes ?? 0,
+  );
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Dashboard Executivo</h2>
-        <p className="mt-1 text-slate-600">Visão consolidada para a direção clínica.</p>
+      <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-primary-600 via-primary-700 to-slate-900 p-6 text-white shadow-lg shadow-primary-900/20 sm:p-8">
+        <p className="text-xs font-semibold tracking-widest text-primary-100 uppercase">Análise Clínica SauVida</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Painel Executivo</h1>
+        <p className="mt-2 max-w-2xl text-sm text-primary-100/90">
+          Visão consolidada para direcção clínica — indicadores financeiros, operacionais e alertas em tempo real.
+        </p>
       </div>
+
       <ReportsSubNav />
-      {isLoading || !data ? (
-        <LoadingState message="A carregar dashboard executivo..." />
+
+      {loading ? (
+        <ExecutiveDashboardSkeleton />
       ) : isError ? (
         <ErrorState message="Não foi possível carregar o dashboard." onRetry={() => void refetch()} />
       ) : (
         <>
-          <DashboardExecutiveCards data={data} />
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card title="Top médicos">
-              <ul className="space-y-1 text-sm">
-                {data.top_medicos.map((m) => (
-                  <li key={m.medico} className="flex justify-between">
-                    <span>{m.medico}</span>
-                    <span>{m.total}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-            <Card title="Top serviços">
-              <ul className="space-y-1 text-sm">
-                {data.top_servicos.map((s) => (
-                  <li key={s.nome} className="flex justify-between">
-                    <span>{s.nome}</span>
-                    <span>{s.quantidade}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+          <ExecutiveKpiStrip
+            patientsToday={reception.cards.attended_today}
+            patientsWaiting={reception.cards.patients_waiting}
+            revenueToday={billing.indicadores.receita_hoje}
+            appointmentsToday={medical.indicadores.consultas_do_dia}
+            appointmentsCompleted={medical.indicadores.consultas_concluidas}
+            laboratoryRequests={
+              medical.indicadores.pedidos_laboratorio_emitidos ??
+              laboratory.indicadores.pedidos_pendentes + laboratory.indicadores.em_processamento
+            }
+            laboratoryPending={laboratory.resultados?.resultados_pendentes ?? laboratory.indicadores.pedidos_pendentes}
+            collectionRate={collectionRate}
+            paidInvoices={billing.indicadores.faturas_pagas}
+            pendingInvoices={billing.indicadores.faturas_pendentes}
+          />
+
+          <div className="grid gap-4 lg:grid-cols-4">
+            <div className="lg:col-span-3">
+              <ExecutiveChartsGrid graficos={data.graficos} />
+            </div>
+            <div className="lg:col-span-1">
+              <ExecutiveAlertsPanel
+                pendingLabResults={laboratory.resultados?.resultados_pendentes ?? laboratory.indicadores.pedidos_pendentes}
+                unpaidInvoices={billing.indicadores.faturas_pendentes}
+                unreadNotifications={notifications.nao_lidas}
+                notificationFailures={notifications.falhas}
+                notifications={unread?.notificacoes ?? []}
+              />
+            </div>
           </div>
-          <ChartCard title="Receitas" data={data.graficos.receitas} />
+
+          <DepartmentPerformanceGrid
+            reception={reception}
+            medical={medical}
+            laboratory={laboratory}
+            billing={billing}
+            finance={finance}
+            graficos={data.graficos}
+            collectionRate={collectionRate}
+          />
         </>
       )}
     </div>

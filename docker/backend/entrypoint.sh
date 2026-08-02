@@ -27,6 +27,9 @@ if [ "$#" -gt 0 ]; then
 fi
 
 if [ "$APP_ENV" = "development" ]; then
+  if [ "${SGCS_SEED_DEMO:-1}" != "0" ]; then
+    python manage.py seed_demo --skip-if-present || true
+  fi
   exec python manage.py runserver 0.0.0.0:8000
 else
   exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3

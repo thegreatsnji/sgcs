@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
-import { ROLE_LABELS } from "@/constants/roles";
+import { ASSIGNABLE_ROLES, ROLE_LABELS } from "@/constants/roles";
 import { userFormSchema, type UserFormData } from "@/schemas/userSchema";
 import { usersService } from "@/services/users";
 
@@ -102,9 +102,9 @@ export function UserFormPage() {
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-700">Perfil</label>
           <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" {...register("role")}>
-            {Object.entries(ROLE_LABELS).map(([value, label]) => (
+            {ASSIGNABLE_ROLES.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {ROLE_LABELS[value]}
               </option>
             ))}
           </select>
