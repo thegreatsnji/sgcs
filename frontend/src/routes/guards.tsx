@@ -48,15 +48,17 @@ interface PermissionRouteProps {
   fallback?: string;
 }
 
-export function PermissionRoute({ permission, fallback = "/" }: PermissionRouteProps) {
+export function PermissionRoute({ permission, fallback }: PermissionRouteProps) {
   const { hasPermission, isLoading } = usePermissions();
+  const { user } = useAuth();
+  const resolvedFallback = fallback ?? getRoleDashboardPath(user?.role);
 
   if (isLoading) {
     return <LoadingState message="A verificar permissões..." />;
   }
 
   if (!hasPermission(permission)) {
-    return <Navigate to={fallback} replace />;
+    return <Navigate to={resolvedFallback} replace />;
   }
 
   return <Outlet />;

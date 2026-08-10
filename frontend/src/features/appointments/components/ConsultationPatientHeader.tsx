@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 
 import { Avatar, Badge } from "@/design-system";
+import { PatientAgeCategoryBadge } from "@/components/patients/PatientAgeCategoryBadge";
 import { PATIENT_GENDER_LABELS } from "@/constants/patients";
+import { getPatientAgeCategory } from "@/utils/patientAgeCategory";
 import type { ClinicalPatientSummary } from "@/types/clinicalRecord";
 import type { ClinicalRecord } from "@/types/clinicalRecord";
 import { formatDisplayDateTime } from "@/utils/date";
@@ -41,6 +43,7 @@ export function ConsultationPatientHeader({ paciente, consulta }: ConsultationPa
               {paciente.age != null && (
                 <Badge variant="default">{paciente.age} anos</Badge>
               )}
+              <PatientAgeCategoryBadge category={getPatientAgeCategory(paciente.age)} />
               {paciente.gender && (
                 <Badge>
                   {PATIENT_GENDER_LABELS[paciente.gender as keyof typeof PATIENT_GENDER_LABELS] ?? paciente.gender}
@@ -87,6 +90,9 @@ export function ConsultationPatientHeader({ paciente, consulta }: ConsultationPa
         <div>
           <h2 className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Motivo actual</h2>
           <p className="mt-1 text-sm text-slate-700">{consulta.chief_complaint || "—"}</p>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Queixas registadas na triagem/receção — não repetir na ficha do utente.
+          </p>
           <p className="mt-2 text-xs text-slate-500">
             {paciente.phone ?? "—"} · {paciente.email ?? "—"}
           </p>

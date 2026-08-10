@@ -45,6 +45,14 @@ export const receptionService = {
     return unwrapApiData(data);
   },
 
+  getDoctorAssignmentOptions: async (patientId: number) => {
+    const { data } = await api.get<ApiEnvelope<import("@/types/reception").DoctorAssignmentOptions>>(
+      "/reception/doctor-assignment-options/",
+      { params: { patient_id: patientId } },
+    );
+    return unwrapApiData(data);
+  },
+
   getHistory: async (params?: { patient?: number; page?: number }) =>
     getPaginated<ReceptionCheckIn>("/reception/history/", params),
 

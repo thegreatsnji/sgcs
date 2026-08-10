@@ -1,4 +1,5 @@
 import { api } from "@/services/api/client";
+import type { ReceiptPrintData } from "@/features/billing/types/receiptPrint";
 import type { ApiEnvelope, PaginatedResponse } from "@/types/api";
 import type {
   BillingDashboardData,
@@ -79,35 +80,11 @@ export const billingService = {
   getReceipt: async (id: number) => getOne<Receipt>(`/billing/receipts/${id}/`),
 
   getReceiptPrint: async (id: number, segundaVia?: boolean) => {
-    const { data } = await api.get<ApiEnvelope<Record<string, unknown>>>(
+    const { data } = await api.get<ApiEnvelope<ReceiptPrintData>>(
       `/billing/receipts/${id}/impressao/`,
       { params: segundaVia ? { segunda_via: "1" } : undefined },
     );
-    return unwrapApiData(data) as {
-      recibo: { numero: string; emitido_em: string; tipo_documento: string };
-      clinica: {
-        nome: string;
-        morada: string;
-        telefone: string;
-        email: string;
-        mensagem_rodape: string;
-        mostrar_ministerio: boolean;
-        republica: string;
-      };
-      paciente: { nome: string; numero_processo: string };
-      fatura: { numero: string };
-      pagamento: { valor: string; metodo: string; valor_extenso: string };
-      totais: Record<string, string>;
-      itens: Array<{
-        nome: string;
-        preco_oficial: string;
-        valor_reducao: string;
-        subtotal_cobrado: string;
-      }>;
-      referente_a: string;
-      config: { mostrar_preco_oficial: boolean; mostrar_reducao: boolean; mostrar_saldo: boolean; formato: string };
-      textos: { recebi_de: string; importancia_de: string; referente_a: string };
-    };
+    return unwrapApiData(data);
   },
 
   listReductionAuths: async (params?: object) =>

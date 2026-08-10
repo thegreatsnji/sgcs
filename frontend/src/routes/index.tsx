@@ -35,6 +35,7 @@ import { ResultsDashboardPage } from "@/features/laboratory/results/pages/Result
 import { BillingDashboardPage } from "@/features/billing/pages/BillingDashboardPage";
 import { InvoiceCreatePage } from "@/features/billing/pages/InvoiceCreatePage";
 import { PendingReductionsPage } from "@/features/billing/pages/PendingReductionsPage";
+import { UrgentStockPage } from "@/features/pharmacy/pages/UrgentStockPage";
 import { InvoiceDetailPage } from "@/features/billing/pages/InvoiceDetailPage";
 import { InvoicesListPage } from "@/features/billing/pages/InvoicesListPage";
 import { PatientHistoryPage as BillingPatientHistoryPage } from "@/features/billing/pages/PatientHistoryPage";
@@ -113,6 +114,7 @@ import { AdminRoleDashboardPage } from "@/pages/dashboards/AdminRoleDashboardPag
 import { DirectorRoleDashboardPage } from "@/pages/dashboards/DirectorRoleDashboardPage";
 import { DoctorRoleDashboardPage } from "@/pages/dashboards/DoctorRoleDashboardPage";
 import { LaboratoryRoleDashboardPage } from "@/pages/dashboards/LaboratoryRoleDashboardPage";
+import { NurseTriagePage } from "@/features/nursing/pages/NurseTriagePage";
 import { NurseRoleDashboardPage } from "@/pages/dashboards/NurseRoleDashboardPage";
 import { ReceptionRoleDashboardPage } from "@/pages/dashboards/ReceptionRoleDashboardPage";
 import { ProtectedRoute, PublicRoute, PermissionRoute, PermissionGuard, AdminOnlyRoute } from "@/routes/guards";
@@ -134,6 +136,14 @@ export const router = createBrowserRouter([
           { path: "dashboard/laboratory", element: <RoleGuard allowed="LABORATORIO"><LaboratoryRoleDashboardPage /></RoleGuard> },
           { path: "dashboard/nurse", element: <RoleGuard allowed="ENFERMEIRO"><NurseRoleDashboardPage /></RoleGuard> },
           {
+            element: (
+              <RoleGuard allowed="ENFERMEIRO">
+                <PermissionRoute permission="reception.view" fallback="/" />
+              </RoleGuard>
+            ),
+            children: [{ path: "nursing/triage", element: <NurseTriagePage /> }],
+          },
+          {
             element: <PermissionRoute permission="patients.view" fallback="/" />,
             children: [
               { path: "patients", element: <PatientsListPage /> },
@@ -145,7 +155,7 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            element: <PermissionRoute permission="reception.view" fallback="/" />,
+            element: <PermissionRoute permission="reception.view" />,
             children: [
               { path: "reception", element: <ReceptionDashboardPage /> },
               { path: "reception/atendimento", element: <ReceptionWorkflowPage /> },
@@ -234,6 +244,10 @@ export const router = createBrowserRouter([
           {
             element: <PermissionRoute permission="finance.create" fallback="/finance/expenses" />,
             children: [{ path: "finance/expenses/new", element: <ExpenseFormPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="pharmacy.view" fallback="/" />,
+            children: [{ path: "pharmacy/urgent-stock", element: <UrgentStockPage /> }],
           },
           {
             element: <PermissionRoute permission="reports.view" fallback="/" />,

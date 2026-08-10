@@ -76,6 +76,9 @@ export function buildSidebarConfig(
         { to: "/doctor", label: nav.doctors, icon: icons.calendar },
         { to: "/laboratory", label: nav.laboratory, icon: icons.lab },
         { to: "/billing", label: nav.billing, icon: icons.billing },
+        ...(hasPermission("pharmacy.view")
+          ? [{ to: "/pharmacy/urgent-stock", label: nav.pharmacyUrgent, icon: icons.lab }]
+          : []),
         { to: "/finance", label: nav.finance, icon: icons.billing },
         { to: "/reports", label: nav.reports, icon: icons.dashboard },
         { to: "/notifications", label: nav.notifications, icon: icons.bell },
@@ -91,6 +94,9 @@ export function buildSidebarConfig(
         { to: "/patients", label: nav.patients, icon: icons.patients },
         { to: "/consultations", label: nav.clinicalRecords, icon: icons.calendar },
         { to: "/laboratory/results", label: nav.labResultsShort, icon: icons.lab },
+        ...(hasPermission("pharmacy.view")
+          ? [{ to: "/pharmacy/urgent-stock", label: nav.pharmacyUrgent, icon: icons.lab }]
+          : []),
         { to: "/consultations/history", label: nav.followUps, icon: icons.calendar },
         { to: "/notifications", label: nav.notifications, icon: icons.bell },
       ],
@@ -101,19 +107,33 @@ export function buildSidebarConfig(
     return {
       main: [
         { to: dashboardPath, label: nav.dashboard, icon: icons.dashboard, end: true },
-        { to: "/reception/atendimento", label: nav.fastReception, icon: icons.patients },
+        { to: "/reception/atendimento?passo=1", label: nav.fastReception, icon: icons.patients },
+        { to: "/reception/queue", label: nav.queue, icon: icons.patients },
+        ...(hasPermission("billing.view")
+          ? [{ to: "/billing/invoices", label: nav.billing, icon: icons.billing }]
+          : []),
         { to: "/patients", label: nav.patients, icon: icons.patients },
         { to: "/appointments", label: nav.appointmentsSchedule, icon: icons.calendar },
-        { to: "/reception/queue", label: nav.queue, icon: icons.patients },
-        { to: "/reception/check-in", label: nav.checkIn, icon: icons.patients },
-        ...(hasPermission("billing.view")
+        { to: "/notifications", label: nav.notifications, icon: icons.bell },
+      ],
+    };
+  }
+
+  if (role === "ENFERMEIRO") {
+    return {
+      main: [
+        { to: dashboardPath, label: nav.dashboard, icon: icons.dashboard, end: true },
+        ...(hasPermission("reception.view")
           ? [
-              { to: "/billing", label: nav.billing, icon: icons.billing },
-              { to: "/billing/payments", label: nav.payments, icon: icons.billing },
-              { to: "/billing/receipts", label: nav.receipts, icon: icons.billing },
+              { to: "/nursing/triage", label: nav.checkIn, icon: icons.patients },
+              { to: "/reception/queue", label: nav.queue, icon: icons.patients },
             ]
           : []),
-        { to: "/notifications", label: nav.notifications, icon: icons.bell },
+        ...(hasPermission("pharmacy.view")
+          ? [{ to: "/pharmacy/urgent-stock", label: nav.pharmacyUrgent, icon: icons.lab }]
+          : []),
+        { to: "/patients", label: nav.patients, icon: icons.patients },
+        { to: "/appointments", label: nav.appointments, icon: icons.calendar },
       ],
     };
   }
@@ -138,6 +158,9 @@ export function buildSidebarConfig(
       ...(hasPermission("appointments.view") ? [{ to: "/appointments", label: nav.appointments, icon: icons.calendar }] : []),
       ...(hasPermission("laboratory.view") ? [{ to: "/laboratory", label: nav.laboratory, icon: icons.lab }] : []),
       ...(hasPermission("billing.view") ? [{ to: "/billing", label: nav.billing, icon: icons.billing }] : []),
+      ...(hasPermission("pharmacy.view")
+        ? [{ to: "/pharmacy/urgent-stock", label: nav.pharmacyUrgent, icon: icons.lab }]
+        : []),
       ...(hasPermission("finance.view") ? [{ to: "/finance", label: nav.finance, icon: icons.billing }] : []),
       ...(hasPermission("reports.view") ? [{ to: "/reports", label: nav.reports, icon: icons.dashboard }] : []),
       ...(hasPermission("notifications.view") ? [{ to: "/notifications", label: nav.notifications, icon: icons.bell }] : []),

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 
 import { Card, ErrorState } from "@/design-system";
+import { RoleDashboardHero } from "@/components/dashboards/RoleDashboardHero";
 import { BillingCharts } from "@/features/billing/components/BillingCharts";
 import { BillingDashboardCards } from "@/features/billing/components/BillingDashboardCards";
 import { BillingDashboardSkeleton } from "@/features/billing/components/BillingSkeleton";
@@ -37,18 +37,14 @@ export function BillingDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Faturação</h1>
-          <p className="mt-1 text-slate-500">Painel executivo de receitas, faturas e pagamentos.</p>
-        </div>
-        <Link
-          to="/billing/invoices"
-          className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-primary-600/20 transition hover:bg-primary-700"
-        >
-          Ver todas as faturas
-        </Link>
-      </div>
+      <RoleDashboardHero
+        tone="primary"
+        eyebrow="Faturação"
+        title="Painel de faturação"
+        description="Receitas, faturas pendentes e pagamentos do dia."
+        primaryAction={{ to: "/billing/invoices/new", label: "Nova fatura" }}
+        secondaryAction={{ to: "/billing/invoices", label: "Todas as faturas" }}
+      />
 
       <BillingSubNav />
       <BillingDashboardCards data={data} />

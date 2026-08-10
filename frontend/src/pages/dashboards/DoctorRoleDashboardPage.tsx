@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
+import { RoleDashboardHero } from "@/components/dashboards/RoleDashboardHero";
 import { IconCalendar, IconPatients } from "@/components/icons";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Badge, Card, ErrorState, SkeletonCard } from "@/design-system";
 import { appointmentsService } from "@/services/appointments/appointments.service";
 import { laboratoryService } from "@/services/laboratory";
+import { APPOINTMENT_STATUS_LABELS } from "@/constants/appointments";
 import { formatDisplayDateTime } from "@/utils/date";
 
 export function DoctorRoleDashboardPage() {
@@ -40,28 +42,21 @@ export function DoctorRoleDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-600 via-violet-800 to-slate-900 p-6 text-white shadow-lg sm:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold tracking-widest text-violet-200 uppercase">Área Clínica</p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Painel Médico</h1>
-            <p className="mt-2 text-sm text-violet-100">
-              Pacientes de hoje, fila e próximo atendimento — actualização automática.
-            </p>
-          </div>
-          <Link
-            to="/consultations/queue"
-            className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-violet-900 shadow-sm hover:bg-violet-50"
-          >
-            Abrir fila de consultas
-          </Link>
-        </div>
-        {dataUpdatedAt > 0 && (
-          <p className="mt-4 text-xs text-violet-200/80">
-            {isFetching ? "A actualizar…" : `Actualizado às ${new Date(dataUpdatedAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}`}
-          </p>
-        )}
-      </div>
+      <RoleDashboardHero
+        tone="violet"
+        eyebrow="Área clínica"
+        title="Painel médico"
+        description="Pacientes de hoje, fila e próximo atendimento — actualização automática."
+        primaryAction={{ to: "/consultations/queue", label: "Fila de consultas" }}
+        secondaryAction={{ to: "/consultations", label: "Registos clínicos" }}
+        footer={
+          dataUpdatedAt > 0
+            ? isFetching
+              ? "A actualizar…"
+              : `Actualizado às ${new Date(dataUpdatedAt).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}`
+            : undefined
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
@@ -142,7 +137,10 @@ export function DoctorRoleDashboardPage() {
                   <p className="font-medium text-text">{item.patient__full_name}</p>
                   <p className="text-xs text-text-muted">{item.patient__patient_number}</p>
                 </div>
-                <Badge variant="warning">{item.status}</Badge>
+                <Badge variant="warning">
+                  {APPOINTMENT_STATUS_LABELS[item.status as keyof typeof APPOINTMENT_STATUS_LABELS] ??
+                    item.status}
+                </Badge>
                 <Link
                   to={`/consultations/${item.id}`}
                   className="text-sm font-semibold text-primary-600 hover:text-primary-700"
@@ -155,22 +153,6 @@ export function DoctorRoleDashboardPage() {
         </Card>
       )}
 
-      <Card title="Atalhos">
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <Link to="/consultations" className="rounded-xl bg-primary-600 px-4 py-3 text-center text-sm font-medium text-white hover:bg-primary-700">
-            Registos clínicos
-          </Link>
-          <Link to="/consultations/history" className="rounded-xl border border-border px-4 py-3 text-center text-sm font-medium hover:bg-surface-muted">
-            Histórico
-          </Link>
-          <Link to="/laboratory/results" className="rounded-xl border border-border px-4 py-3 text-center text-sm font-medium hover:bg-surface-muted">
-            Laboratório
-          </Link>
-          <Link to="/patients" className="rounded-xl border border-border px-4 py-3 text-center text-sm font-medium hover:bg-surface-muted">
-            Pacientes
-          </Link>
-        </div>
-      </Card>
     </div>
   );
 }

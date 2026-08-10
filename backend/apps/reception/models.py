@@ -5,10 +5,12 @@ from django.db import models
 
 from apps.reception.constants import (
     CheckInStatus,
+    PatientAgeCategory,
     QueuePriority,
     QueueStatus,
     ReferralDepartment,
     TriageColor,
+    VisitPurpose,
 )
 from core.mixins import TimestampMixin
 
@@ -46,6 +48,12 @@ class ReceptionCheckIn(TimestampMixin):
         blank=True,
     )
     age_at_check_in = models.PositiveSmallIntegerField("Idade na triagem", null=True, blank=True)
+    age_category_at_check_in = models.CharField(
+        "Categoria etária na triagem",
+        max_length=10,
+        choices=PatientAgeCategory.choices,
+        blank=True,
+    )
     weight = models.DecimalField("Peso (kg)", max_digits=5, decimal_places=2, null=True, blank=True)
     temperature = models.DecimalField(
         "Temperatura (°C)",
@@ -55,6 +63,18 @@ class ReceptionCheckIn(TimestampMixin):
         blank=True,
     )
     blood_pressure = models.CharField("Pressão arterial", max_length=20, blank=True)
+    height_cm = models.PositiveSmallIntegerField("Altura (cm)", null=True, blank=True)
+    spo2 = models.PositiveSmallIntegerField("SpO₂ (%)", null=True, blank=True)
+    heart_rate = models.PositiveSmallIntegerField("FC (b/min)", null=True, blank=True)
+    respiratory_rate = models.PositiveSmallIntegerField("FR (c/min)", null=True, blank=True)
+    race = models.CharField("Raça", max_length=80, blank=True)
+    visit_purpose = models.CharField(
+        "Motivo da visita",
+        max_length=12,
+        choices=VisitPurpose.choices,
+        default=VisitPurpose.CONSULTA,
+        blank=True,
+    )
     symptoms = models.TextField("Sintomas", blank=True)
     notes = models.TextField("Notas", blank=True)
 
@@ -145,6 +165,14 @@ class Referral(TimestampMixin):
         blank=True,
         related_name="referrals_created",
         verbose_name="Encaminhado por",
+    )
+    assigned_doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="referrals_assigned",
+        verbose_name="Médico atribuído",
     )
 
     class Meta:

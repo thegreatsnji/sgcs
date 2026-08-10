@@ -1,12 +1,41 @@
 # SGCS — Arranque rápido
 
+## Onde correr cada comando (pastas)
+
+O repositório tem uma **raiz do projeto**. No seu PC costuma ser:
+
+```text
+C:\PROJECTS\SGCS
+```
+
+Confirme que está na raiz: deve existir `package.json`, `docker-compose.yml` e as pastas `backend\` e `frontend\`.
+
+```powershell
+cd C:\PROJECTS\SGCS
+```
+
+| O que quer fazer | Pasta (directório) | Exemplo de comando |
+|------------------|--------------------|--------------------|
+| **Arrancar / parar a app (Docker)** — uso normal para testes | **Raiz** `C:\PROJECTS\SGCS` | `npm run start` · `npm run stop` · `docker compose up -d --build` |
+| **Scripts de atalho** | **Raiz** | `.\scripts\start-for-testing.ps1` |
+| **Repor passwords demo (Docker)** | **Raiz** | `npm run seed` ou `docker compose exec backend python manage.py seed_demo --reset-demo-users` |
+| **Só PostgreSQL + Redis (modo híbrido)** | **Raiz** | `docker compose up -d db redis` |
+| **API Django local** (`runserver`) | **`backend\`** | `cd backend` → activar venv → `python manage.py runserver` |
+| **Frontend local** (`npm run dev`) | **`frontend\`** | `cd frontend` → `npm run dev` |
+| **Testes pytest** | **`backend\`** | `cd backend` → `python -m pytest` |
+| **Lint frontend** | **`frontend\`** | `cd frontend` → `npm run lint` |
+| **Setup inicial híbrido (Windows)** | **Raiz** | `.\scripts\setup-dev.bat` |
+
+**Regra simples:** se o comando é `npm run …` ou `docker compose …`, está sempre na **raiz**. Só entre em `backend\` ou `frontend\` quando o guia disser explicitamente.
+
+---
+
 ## Para testar (recomendado)
 
 **Requisitos:** [Docker Desktop](https://www.docker.com/) + [Node.js](https://nodejs.org/) 20+ (só para o comando `npm` na raiz).
 
-Na pasta do projeto:
-
-```bash
+```powershell
+cd C:\PROJECTS\SGCS
 npm run start
 ```
 
@@ -19,20 +48,22 @@ Na primeira execução isto cria `.env`, sobe **toda a stack** (PostgreSQL, Redi
 
 **Login demo:** `admin@sauvida.gw` / `Demo@2026!` — outros perfis em [DEMO_DATA.md](./DEMO_DATA.md).
 
-**Em segundo plano** (liberta o terminal):
+**Em segundo plano** (liberta o terminal) — ainda na **raiz**:
 
-```bash
+```powershell
+cd C:\PROJECTS\SGCS
 npm run start:bg
-npm run ready    # opcional: espera o backend
+npm run ready
 ```
 
-**Parar:**
+**Parar** — na **raiz**:
 
-```bash
+```powershell
+cd C:\PROJECTS\SGCS
 npm run stop
 ```
 
-Atalhos equivalentes:
+Atalhos equivalentes (na **raiz** `C:\PROJECTS\SGCS`):
 
 - Windows: `.\scripts\start-for-testing.ps1`
 - Linux/macOS: `./scripts/start-for-testing.sh`
@@ -40,6 +71,8 @@ Atalhos equivalentes:
 ---
 
 ## Comandos úteis
+
+Todos na **raiz** `C:\PROJECTS\SGCS` (excepto se indicado noutra secção):
 
 | Comando | Função |
 |---------|--------|
@@ -82,7 +115,8 @@ Cenários manuais por perfil: [USER_TESTING_GUIDE.md](./USER_TESTING_GUIDE.md).
 |----------|---------|
 | Porta 8000 ocupada | `docker compose stop backend` ou fechar `runserver` local |
 | Login falha | `npm run seed` ou `docker compose exec backend python manage.py seed_demo` |
-| Frontend sem API | Confirmar `VITE_API_URL=http://localhost:8000` no `.env` |
+| Login falha no Docker (`proxy error` / ECONNREFUSED) | Recriar frontend: `docker compose up -d --build frontend` |
+| Frontend sem API (dev local) | `VITE_API_URL=http://localhost:8000` no `.env` |
 | Reset total da BD | `docker compose down -v` (apaga volume PostgreSQL) e `npm run start` |
 
 Desactivar seed automático no Docker: `SGCS_SEED_DEMO=0` no `.env`.

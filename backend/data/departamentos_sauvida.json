@@ -8,5 +8,6 @@
   {"codigo": "LAB", "nome": "Laboratório", "descricao": "Análises clínicas", "activo": true, "ordem": 7},
   {"codigo": "ECO", "nome": "Ecografia", "descricao": "Exames ecográficos", "activo": true, "ordem": 8},
   {"codigo": "MAT-PAR", "nome": "Maternidade e Parteira", "descricao": "Consultas e procedimentos GO", "activo": true, "ordem": 9},
-  {"codigo": "CIR", "nome": "Cirurgia", "descricao": "Procedimentos cirúrgicos (catálogo)", "activo": true, "ordem": 10}
+  {"codigo": "CIR", "nome": "Cirurgia", "descricao": "Procedimentos cirúrgicos (catálogo)", "activo": true, "ordem": 10},
+  {"codigo": "FARM", "nome": "Farmácia de Urgência", "descricao": "Stock de medicamentos para casos urgentes (não farmácia comercial)", "activo": true, "ordem": 11}
 ]

@@ -17,7 +17,7 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={`rounded-2xl border border-border bg-surface shadow-sm transition hover:shadow-md ${className}`}
+      className={`rounded-xl border border-border bg-surface shadow-sm ${className}`}
       {...props}
     >
       {(title || description) && (

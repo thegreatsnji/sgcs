@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { TYPO } from "@/constants/typography";
+
 interface PageHeaderProps {
   eyebrow?: string;
   title: string;
@@ -22,23 +24,13 @@ export function PageHeader({ eyebrow, title, description, actions, variant = "de
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           {eyebrow && (
-            <p
-              className={`text-xs font-semibold tracking-widest uppercase ${
-                isDark ? "text-primary-100" : "text-primary-600 dark:text-primary-400"
-              }`}
-            >
-              {eyebrow}
-            </p>
+            <p className={`${TYPO.eyebrow} ${isDark ? "text-primary-100/90" : ""}`}>{eyebrow}</p>
           )}
-          <h1
-            className={`mt-1 text-2xl font-bold tracking-tight sm:text-3xl ${
-              isDark ? "text-white" : "text-text"
-            }`}
-          >
-            {title}
-          </h1>
+          <h1 className={`mt-1 ${TYPO.pageTitle} ${isDark ? "text-white" : ""}`}>{title}</h1>
           {description && (
-            <p className={`mt-2 max-w-2xl text-sm ${isDark ? "text-primary-100/90" : "text-text-muted"}`}>
+            <p
+              className={`mt-2 max-w-2xl ${TYPO.bodyMuted} ${isDark ? "text-primary-100/90" : ""}`}
+            >
               {description}
             </p>
           )}

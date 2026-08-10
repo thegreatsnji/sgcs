@@ -94,14 +94,41 @@ class ReceptionViewSet(ReceptionPermissionMixin, viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         referral = serializer.save()
         queue_entry = WaitingQueue.objects.filter(check_in=referral.check_in).first()
+        from apps.appointments.models import Appointment
+
+        consulta = (
+            Appointment.objects.filter(referral_id=referral.pk).order_by("-pk").first()
+        )
+        consulta_payload = None
+        if consulta:
+            consulta_payload = {
+                "id": consulta.pk,
+                "appointment_number": consulta.appointment_number,
+                "status": consulta.status,
+                "doctor_id": consulta.doctor_id,
+                "doctor_name": consulta.doctor.get_full_name() if consulta.doctor_id else None,
+            }
         return success_response(
             data={
                 "referral": ReferralSerializer(referral).data,
                 "queue_entry": WaitingQueueSerializer(queue_entry).data if queue_entry else None,
+                "consulta": consulta_payload,
             },
             message="Paciente encaminhado para médico com sucesso.",
             status=status.HTTP_201_CREATED,
         )
+
+    @action(detail=False, methods=["get"], url_path="doctor-assignment-options")
+    def doctor_assignment_options(self, request):
+        patient_id = request.query_params.get("patient_id")
+        if not patient_id:
+            return error_response("Indique patient_id.", status=status.HTTP_400_BAD_REQUEST)
+        try:
+            patient_id_int = int(patient_id)
+        except (TypeError, ValueError):
+            return error_response("patient_id inválido.", status=status.HTTP_400_BAD_REQUEST)
+        data = ReceptionService.get_doctor_assignment_options(patient_id_int)
+        return success_response(data=data, message="Opções de médico obtidas com sucesso.")
 
     @action(detail=False, methods=["get"], url_path="history")
     def history(self, request):

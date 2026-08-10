@@ -18,6 +18,7 @@ MODULES = [
     SystemModule.SETTINGS,
     SystemModule.DOCTORS,
     SystemModule.NOTIFICATIONS,
+    SystemModule.PHARMACY,
 ]
 
 ACTIONS = [
@@ -128,14 +129,17 @@ DEFAULT_ROLE_PERMISSIONS = {
         "appointments.followup",
         "laboratory.results.view", "laboratory.results.download",
         "billing.view",
+        "pharmacy.view",
         "dashboard.view",
         "doctors.prescription", "doctors.treatment", "doctors.evolution",
         "doctors.discharge", "doctors.followup",
         "notifications.view", "notifications.settings", "notifications.history",
     ],
     UserRole.ENFERMEIRO: [
-        "patients.view",
+        "patients.view", "patients.create",
         "appointments.view", "appointments.edit",
+        "reception.view", "reception.create", "reception.edit",
+        "pharmacy.view", "pharmacy.edit", "pharmacy.create",
         "dashboard.view",
     ],
     UserRole.LABORATORIO: [
@@ -176,6 +180,7 @@ DEFAULT_ROLE_PERMISSIONS = {
         "finance.cash", "finance.expense", "finance.report", "finance.dashboard",
         "reports.view", "reports.export", "reports.dashboard", "reports.statistics",
         "dashboard.view",
+        "pharmacy.view",
         "notifications.view", "notifications.send", "notifications.template",
         "notifications.settings", "notifications.history",
     ],

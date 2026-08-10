@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
+import { RoleDashboardHero } from "@/components/dashboards/RoleDashboardHero";
 import { DepartmentPerformanceGrid } from "@/features/reports/components/DepartmentPerformanceGrid";
 import { ExecutiveAlertsPanel } from "@/features/reports/components/ExecutiveAlertsPanel";
 import { ExecutiveChartsGrid } from "@/features/reports/components/ExecutiveChartsGrid";
@@ -53,16 +53,14 @@ export function DirectorRoleDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-primary-600 via-primary-700 to-slate-900 p-6 text-white shadow-lg sm:p-8">
-          <p className="text-xs font-semibold tracking-widest text-primary-100 uppercase">Direcção Clínica</p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Painel Executivo</h1>
-          <p className="mt-2 text-sm text-primary-100/90">Visão financeira e operacional da clínica SauVida.</p>
-        </div>
-        <Link to="/reports/executive" className="inline-flex h-fit items-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-primary-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50">
-          Relatório completo →
-        </Link>
-      </div>
+      <RoleDashboardHero
+        tone="primary"
+        eyebrow="Direcção clínica"
+        title="Painel executivo"
+        description="Visão financeira e operacional da clínica SauVida."
+        primaryAction={{ to: "/reports/executive", label: "Relatório completo" }}
+        secondaryAction={{ to: "/finance", label: "Financeiro" }}
+      />
 
       <ExecutiveKpiStrip
         patientsToday={reception.data!.cards.attended_today}

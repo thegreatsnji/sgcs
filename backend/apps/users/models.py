@@ -66,6 +66,7 @@ class SystemModule(models.TextChoices):
     RECEPTION = "reception", "Receção"
     DOCTORS = "doctors", "Médicos"
     NOTIFICATIONS = "notifications", "Notificações"
+    PHARMACY = "pharmacy", "Farmácia de urgência"
 
 
 class ModulePermission(models.Model):

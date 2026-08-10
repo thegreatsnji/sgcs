@@ -121,7 +121,8 @@ services:
     env_file:
       - .env
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+      # Proxy do Vite corre *dentro* do contentor — não usar localhost aqui.
+      VITE_PROXY_TARGET: http://backend:8000
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     volumes:

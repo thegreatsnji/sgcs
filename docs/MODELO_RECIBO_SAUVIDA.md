@@ -7,14 +7,15 @@ Alinhado ao livro de recibos em papel: logótipo, identificação da clínica, n
 ## Implementação
 
 - API: `GET /api/v1/billing/receipts/{id}/impressao/` (`?segunda_via=1` para segunda via, **mesmo número**).
-- UI: `SauVidaReceiptPrint` + `PrintDocument` + `src/styles/print.css` (oculta navegação na impressão).
+- UI: `SauVidaReceiptDocument` + `SauVidaReceiptPrint` + `src/styles/print.css` (emblema, logótipo, campos do livro de recibos).
+- Imagens por defeito: `frontend/public/branding/` (substituíveis por logótipo no perfil da clínica).
 
 ## Configuração (`ConfiguracaoFaturacao`)
 
 - `mostrar_preco_oficial_recibo`
 - `mostrar_reducao_recibo` / `mostrar_reducao_no_recibo`
 - `mostrar_saldo_recibo`
-- `mostrar_ministerio_saude_recibo` (desligado por defeito — activar só com autorização)
+- `mostrar_ministerio_saude_recibo` (**activo por defeito**, como no livro de recibos em papel)
 - `mostrar_valor_por_extenso`
 - `formato_recibo` (A4, A5, TERMICO_80)
 - `texto_rodape_recibo`

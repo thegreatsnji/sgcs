@@ -117,9 +117,9 @@ class TestReciboImpressao:
         BillingService.confirmar_pagamento(pag.pk, receptionist_user)
         recibo = pag.recibo
         ctx = build_receipt_print_context(recibo)
-        assert ctx["textos"]["recebi_de"]
-        assert ctx["pagamento"]["valor"] in ("3000.00", "3000")
-        assert ctx["recibo"]["tipo_documento"] == "ORIGINAL"
+        assert ctx["textos"]["importancia_de"] == "Importância de"
+        assert ctx["exator"]["nome"]
+        assert ctx["recibo"]["numero_livro"]["ano"]
 
 
 @pytest.mark.django_db

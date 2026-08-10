@@ -249,7 +249,7 @@ class ConfiguracaoFaturacao(TimestampMixin):
     )
     mostrar_saldo_recibo = models.BooleanField("Mostrar saldo pendente no recibo", default=True)
     mostrar_ministerio_saude_recibo = models.BooleanField(
-        "Mostrar referência ao Ministério da Saúde Pública", default=False
+        "Mostrar referência ao Ministério da Saúde Pública", default=True
     )
     mostrar_valor_por_extenso = models.BooleanField(
         "Mostrar valor por extenso no recibo", default=False

@@ -1,0 +1,44 @@
+codigo,nome,descricao,categoria,preco,activo
+CONS-GERAL,Consulta médica geral,Consulta de clínica geral,CONSULTA,15000,1
+CONS-CONTROLE,Consulta de controlo,Retorno ou seguimento com o médico,CONSULTA,10000,1
+CONS-ESP,Consulta especializada,Consulta por especialidade,CONSULTA,25000,1
+CONS-PED,Consulta pediátrica,Consulta criança,CONSULTA,20000,1
+CONS-GIN,Consulta ginecologia / obstetrícia,Consulta GO,CONSULTA,25000,1
+CONS-PRE-NATAL,Consulta pré-natal,Seguimento gravidez,CONSULTA,20000,1
+CONS-URG,Urgência / consulta prioritária,Atendimento prioritário na fila,CONSULTA,30000,1
+PROC-ECO-ABD,Ecografia abdominal,Exame ecográfico abdominal,EXAME,35000,1
+PROC-ECO-OBST,Ecografia obstétrica,Ecografia gravidez,EXAME,40000,1
+PROC-ECO-PÉLV,Ecografia pélvica,Exame ginecológico por imagem,EXAME,40000,1
+PROC-ECO-TIRE,Ecografia tireoide,Exame tireoide,EXAME,35000,1
+PROC-ECO-DOPPLER,Doppler vascular (básico),Estudo vascular por ecografia,EXAME,45000,1
+EX-LAB-HEMO,Hemograma completo,Análise sangue — hemograma,EXAME,12000,1
+EX-LAB-GLIC,Glicemia em jejum,Análise sangue — glicose,EXAME,5000,1
+EX-LAB-UREIA,Ureia,Função renal,EXAME,5000,1
+EX-LAB-CREAT,Creatinina,Função renal,EXAME,5000,1
+EX-LAB-ALT,ALT (TGP),Função hepática,EXAME,6000,1
+EX-LAB-AST,AST (TGO),Função hepática,EXAME,6000,1
+EX-LAB-HIV,Teste VIH (rápido),Sorologia VIH,EXAME,8000,1
+EX-LAB-HBS,HBsAg,Hepatite B,EXAME,10000,1
+EX-LAB-HCV,Anti-HCV,Hepatite C,EXAME,12000,1
+EX-LAB-URINA,Exame de urina (EAU),Urina tipo II,EXAME,5000,1
+EX-LAB-FEZES,Exame de fezes,Parasitologia / coprocultura básica,EXAME,6000,1
+EX-LAB-GRAV,Teste de gravidez (β-HCG),Teste urinário ou sangue,EXAME,4000,1
+EX-LAB-PCR-MAL,PCR malária (se disponível),Diagnóstico malária,EXAME,15000,1
+EX-IMM-VAC,Vacinação (taxa de administração),Aplicação vacina — mão de obra,PROCEDIMENTO,5000,1
+EX-IMM-SORO,Soro / fluido IV (taxa),Administração fluidoterapia,PROCEDIMENTO,8000,1
+PROC-CIR-PEQUENA,Cirurgia menor,Procedimento ambulatório menor,PROCEDIMENTO,75000,1
+PROC-CIR-HERNIA,Herniorrafia (referência),Cirurgia hernia — preço base,PROCEDIMENTO,250000,1
+PROC-CIR-CESAR,Cesariana (referência),Parto cirúrgico — preço base,PROCEDIMENTO,350000,1
+PROC-PARTO-NORMAL,Parto normal (acompanhamento),Assistência ao parto,PROCEDIMENTO,200000,1
+PROC-CURATIVO,Curativo simples,Curativo ambulatório,PROCEDIMENTO,5000,1
+PROC-SUTURA,Sutura simples,Sutura até 10 cm,PROCEDIMENTO,15000,1
+PROC-NEBUL,Nebulização,Tratamento inalatório,PROCEDIMENTO,8000,1
+PROC-INJ-IM,Injeção intramuscular,Administração IM,PROCEDIMENTO,3000,1
+PROC-INJ-IV,Injeção / acesso IV,Administração IV,PROCEDIMENTO,5000,1
+INT-DIA-1,Internamento — 1 dia (referência),Diária cama + cuidados básicos,INTERNAMENTO,50000,0
+INT-DIA-UTI,Internamento UTI / observação (referência),Diária observação intensiva,INTERNAMENTO,100000,0
+MAT-KIT-PARTO,Kit parto institucional,Materiais parto — pacote,OUTRO,45000,1
+OUT-MAT-CONSUMO,Material médico consumível,Material descartável (referência),OUTRO,5000,1
+OUT-FARM-MARGEM,Dispensação farmácia (taxa serviço),Taxa sobre medicamento — até módulo farmácia,OUTRO,0,1
+OUT-RELATORIO,Relatório médico / atestado,Documento clínico administrativo,OUTRO,10000,1
+OUT-CERT,Certificado médico,Certificado para terceiros,OUTRO,15000,1

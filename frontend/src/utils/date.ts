@@ -24,6 +24,14 @@ export function getAgeFromDisplayDate(value: string): number | null {
   return age;
 }
 
+/** Converte DD/MM/AAAA para AAAA-MM-DD (API). Aceita já ISO. */
+export function displayDateToApi(value: string): string {
+  const trimmed = value.trim();
+  const match = DATE_REGEX.exec(trimmed);
+  if (!match) return trimmed;
+  return `${match[3]}-${match[2]}-${match[1]}`;
+}
+
 /** Converte idade em anos para data de nascimento aproximada (DD/MM/AAAA). */
 export function ageToBirthDateDisplay(age: number): string {
   const today = new Date();

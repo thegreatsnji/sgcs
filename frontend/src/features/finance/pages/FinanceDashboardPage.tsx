@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { ErrorState } from "@/design-system";
 import { FinanceCharts } from "@/features/finance/components/FinanceCharts";
+import { RoleDashboardHero } from "@/components/dashboards/RoleDashboardHero";
 import { FinanceDashboardCards } from "@/features/finance/components/FinanceDashboardCards";
 import { FinanceDashboardSkeleton } from "@/features/finance/components/FinanceSkeleton";
 import { FinanceSubNav } from "@/features/finance/components/FinanceSubNav";
@@ -32,12 +33,14 @@ export function FinanceDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Financeiro</h1>
-        <p className="mt-1 text-slate-500">
-          Contabilidade executiva — fluxo de caixa, despesas e comparação de períodos.
-        </p>
-      </div>
+      <RoleDashboardHero
+        tone="slate"
+        eyebrow="Direcção / tesouraria"
+        title="Painel financeiro"
+        description="Fluxo de caixa, despesas e caixas — visão para gestão."
+        primaryAction={{ to: "/finance/cash-registers", label: "Caixas" }}
+        secondaryAction={{ to: "/finance/expenses", label: "Despesas" }}
+      />
 
       <FinanceSubNav />
       <FinanceDashboardCards data={data} />

@@ -450,6 +450,20 @@ class PatientCreateSerializer(serializers.ModelSerializer):
             "occupation",
             "emergency_contacts",
         )
+        extra_kwargs = {
+            "document_type": {"required": False, "allow_blank": True},
+            "document_number": {"required": False, "allow_blank": True},
+            "email": {"required": False, "allow_blank": True},
+            "address_street": {"required": False, "allow_blank": True},
+            "address_city": {"required": False, "allow_blank": True},
+            "address_region": {"required": False, "allow_blank": True},
+            "address_country": {"required": False, "allow_blank": True},
+            "address_postal_code": {"required": False, "allow_blank": True},
+            "nationality": {"required": False, "allow_blank": True},
+            "blood_type": {"required": False, "allow_blank": True},
+            "marital_status": {"required": False, "allow_blank": True},
+            "occupation": {"required": False, "allow_blank": True},
+        }
 
     def validate_phone(self, value):
         return validate_patient_phone(value)

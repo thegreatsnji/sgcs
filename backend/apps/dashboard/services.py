@@ -174,21 +174,33 @@ class DashboardService:
         )
         waiting_count = waiting_qs.count()
 
-        completed_today = ReceptionCheckIn.objects.filter(
-            status=CheckInStatus.COMPLETED,
-            check_in_time__gte=today_start,
-        ).count()
-
         emergencies = WaitingQueue.objects.filter(
             status__in=[QueueStatus.WAITING, QueueStatus.CALLED, QueueStatus.IN_SERVICE],
             check_in__priority=QueuePriority.EMERGENCY,
         ).count()
 
+        # Tempo médio: só utentes em espera activa, ignorar fila abandonada (>24h)
+        stale_cutoff = now - timedelta(hours=24)
+        waiting_for_avg = waiting_qs.filter(
+            status=QueueStatus.WAITING,
+            check_in__check_in_time__gte=stale_cutoff,
+        )
         wait_minutes = []
-        for entry in waiting_qs.select_related("check_in"):
+        for entry in waiting_for_avg.select_related("check_in"):
             delta = now - entry.check_in.check_in_time
-            wait_minutes.append(int(delta.total_seconds() // 60))
+            wait_minutes.append(max(0, int(delta.total_seconds() // 60)))
         avg_wait = round(sum(wait_minutes) / len(wait_minutes), 1) if wait_minutes else 0
+
+        completed_today = max(
+            ReceptionCheckIn.objects.filter(
+                status=CheckInStatus.COMPLETED,
+                check_in_time__gte=today_start,
+            ).count(),
+            WaitingQueue.objects.filter(
+                status=QueueStatus.COMPLETED,
+                updated_at__gte=today_start,
+            ).count(),
+        )
 
         recent_queue = list(
             WaitingQueue.objects.filter(
@@ -201,9 +213,12 @@ class DashboardService:
                 "position",
                 "status",
                 "estimated_wait_minutes",
+                "patient__id",
                 "patient__full_name",
                 "patient__patient_number",
                 "check_in__priority",
+                "check_in__triage_color",
+                "check_in__visit_purpose",
             )
         )
 

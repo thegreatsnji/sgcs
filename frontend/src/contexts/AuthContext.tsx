@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { getCurrentUser, login as loginRequest, logout as logoutRequest } from "@/services/auth-service";
 import type { LoginCredentials, User } from "@/types/auth";
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   const refreshUser = useCallback(async () => {
     const auth = getStoredAuth();
@@ -50,12 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredAuth({ access: response.access, refresh: response.refresh });
     if (response.user) {
       setUser(response.user);
+      void queryClient.invalidateQueries({ queryKey: ["profile-permissions"] });
       return response.user;
     }
     const currentUser = await getCurrentUser();
     setUser(currentUser);
+    void queryClient.invalidateQueries({ queryKey: ["profile-permissions"] });
     return currentUser;
-  }, []);
+  }, [queryClient]);
 
   const logout = useCallback(async () => {
     const auth = getStoredAuth();
@@ -68,7 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     clearStoredAuth();
     setUser(null);
-  }, []);
+    void queryClient.invalidateQueries({ queryKey: ["profile-permissions"] });
+  }, [queryClient]);
 
   const value = useMemo(
     () => ({

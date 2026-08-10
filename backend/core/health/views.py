@@ -40,3 +40,21 @@ class ReadyView(View):
         is_ready = status_payload["status"] == "ready"
         status_code = 200 if is_ready else 503
         return JsonResponse(status_payload, status=status_code)
+
+
+class ApiRootView(View):
+    """Raiz da API — evita 404 ao abrir http://localhost:8000/ no browser."""
+
+    def get(self, request):
+        return JsonResponse(
+            {
+                "app": APP_CODE,
+                "version": APP_VERSION,
+                "message": "SGCS API. A interface web corre no frontend (ex.: http://localhost:5173).",
+                "links": {
+                    "docs": request.build_absolute_uri("/api/docs/"),
+                    "health": request.build_absolute_uri("/health/"),
+                    "api_v1": request.build_absolute_uri("/api/v1/"),
+                },
+            }
+        )

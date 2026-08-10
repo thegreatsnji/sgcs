@@ -1,24 +1,8 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import { Card as DesignSystemCard } from "@/design-system/Card";
 
-export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  title?: string;
-  description?: string;
-  children?: ReactNode;
-}
+export type { CardProps } from "@/design-system/Card";
 
-export function Card({ title, description, children, className = "", ...props }: CardProps) {
-  return (
-    <div
-      className={`rounded-xl border border-border bg-surface p-6 shadow-sm ${className}`}
-      {...props}
-    >
-      {(title || description) && (
-        <div className="mb-4">
-          {title && <h3 className="text-lg font-semibold text-text">{title}</h3>}
-          {description && <p className="mt-1 text-sm text-text-muted">{description}</p>}
-        </div>
-      )}
-      {children}
-    </div>
-  );
+/** @deprecated Prefer import from `@/design-system`. */
+export function Card(props: import("@/design-system/Card").CardProps) {
+  return <DesignSystemCard {...props} />;
 }

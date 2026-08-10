@@ -54,10 +54,14 @@ Consulte [docs/Arquitetura.md](docs/Arquitetura.md) para a descrição detalhada
 
 **Requisitos:** Docker Desktop + Node.js 20+ (para `npm` na raiz).
 
-```bash
-cd SGCS
+**Directório:** raiz do projeto (onde está `docker-compose.yml`).
+
+```powershell
+cd C:\PROJECTS\SGCS
 npm run start
 ```
+
+Pastas e mais comandos: [docs/DEV_RUNBOOK.md](docs/DEV_RUNBOOK.md#onde-correr-cada-comando-pastas).
 
 Isto cria `.env` se faltar, constrói os contentores e sobe a stack completa. O backend executa `migrate`, `seed_rbac` e `seed_demo` (utilizadores e dados demo).
 

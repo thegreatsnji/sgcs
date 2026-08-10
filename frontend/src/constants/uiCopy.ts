@@ -28,7 +28,8 @@ export const UI_COPY = {
     featureFlags: "Funcionalidades experimentais",
     checkIn: "Triagem",
     fastReception: "Atendimento rápido",
-    queue: "Fila de espera",
+    pharmacyUrgent: "Farmácia de urgência",
+    queue: "Fila de atendimento",
     referrals: "Encaminhamentos",
     templates: "Modelos",
     preferences: "Preferências",
@@ -79,6 +80,29 @@ export const UI_COPY = {
     performCheckIn: "Registar entrada",
     systemHealth: "Estado do sistema",
     cache: "Memória cache",
+  },
+
+  reception: {
+    dashboardTitle: "Receção",
+    queueSection: "Fila de atendimento",
+    queueEmpty: "Nenhum utente em espera.",
+    queueEmptyHint: "Registe entrada e triagem para adicionar à fila.",
+    startAtendimento: "Iniciar atendimento",
+    openQueue: "Abrir fila",
+    continueAtendimento: "Continuar",
+    viewPatient: "Ver utente",
+    waitLabel: "Tempo de espera",
+    emergencyInQueue: "Emergência na fila",
+    kpiWaiting: "Em espera",
+    kpiAvgWait: "Tempo médio de espera",
+    kpiAttendedToday: "Atendidos hoje",
+  },
+
+  states: {
+    loading: "A carregar…",
+    loadError: "Não foi possível carregar os dados.",
+    loadErrorReception: "Não foi possível carregar o painel de receção.",
+    retry: "Tentar novamente",
   },
 } as const;
 

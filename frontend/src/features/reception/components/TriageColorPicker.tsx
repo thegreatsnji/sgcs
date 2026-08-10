@@ -1,20 +1,25 @@
-import {
-  TRIAGE_COLOR_LABELS,
-  TRIAGE_COLOR_OPTIONS,
-  TRIAGE_WAIT_LABELS,
-} from "@/constants/reception";
+import { TRIAGE_COLOR_OPTIONS } from "@/constants/reception";
 import type { TriageColor } from "@/types/reception";
 
-const INDICATOR: Record<TriageColor, string> = {
-  GREEN: "bg-emerald-500",
-  YELLOW: "bg-yellow-400",
-  RED: "bg-red-500",
-};
-
-const SELECTED: Record<TriageColor, string> = {
-  GREEN: "border-emerald-500 ring-emerald-500/20",
-  YELLOW: "border-yellow-500 ring-yellow-500/20",
-  RED: "border-red-500 ring-red-500/20",
+const SWATCH: Record<TriageColor, { fill: string; ring: string; border: string; tint: string }> = {
+  GREEN: {
+    fill: "bg-emerald-500",
+    ring: "ring-emerald-500/35",
+    border: "border-emerald-500",
+    tint: "bg-emerald-50/80 dark:bg-emerald-950/25",
+  },
+  YELLOW: {
+    fill: "bg-amber-400",
+    ring: "ring-amber-400/40",
+    border: "border-amber-500",
+    tint: "bg-amber-50/80 dark:bg-amber-950/25",
+  },
+  RED: {
+    fill: "bg-red-500",
+    ring: "ring-red-500/35",
+    border: "border-red-500",
+    tint: "bg-red-50/80 dark:bg-red-950/25",
+  },
 };
 
 interface TriageColorPickerProps {
@@ -25,9 +30,9 @@ interface TriageColorPickerProps {
 
 export function TriageColorPicker({ value, onChange, error }: TriageColorPickerProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 text-center">
       <div>
-        <p className="text-sm font-semibold text-text">Classificação de urgência</p>
+        <p className="text-sm font-semibold text-text">Cor de triagem</p>
         <p className="mt-0.5 text-sm text-text-muted">
           Escolha a cor que melhor reflecte o estado do paciente.
         </p>
@@ -36,6 +41,7 @@ export function TriageColorPicker({ value, onChange, error }: TriageColorPickerP
       <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Cor de triagem">
         {TRIAGE_COLOR_OPTIONS.map((option) => {
           const selected = value === option.value;
+          const swatch = SWATCH[option.value];
 
           return (
             <button
@@ -44,30 +50,29 @@ export function TriageColorPicker({ value, onChange, error }: TriageColorPickerP
               role="radio"
               aria-checked={selected}
               onClick={() => onChange(option.value)}
-              className={`flex h-full min-h-[132px] flex-col rounded-xl border bg-surface p-4 text-left shadow-sm transition focus-ring ${
+              className={`flex h-full flex-col items-center rounded-2xl border p-5 text-center shadow-sm transition focus-ring ${
                 selected
-                  ? `border-2 ring-2 ${SELECTED[option.value]}`
-                  : "border-border hover:border-primary-300 hover:shadow-md dark:hover:border-primary-700"
+                  ? `border-2 ${swatch.border} ring-2 ${swatch.ring} ${swatch.tint}`
+                  : "border-border bg-surface hover:border-primary-300 hover:shadow-md dark:hover:border-primary-700"
               }`}
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span
-                    className={`h-3 w-3 shrink-0 rounded-full ${INDICATOR[option.value]}`}
-                    aria-hidden
-                  />
-                  <span className="truncate text-sm font-semibold text-text">
-                    {TRIAGE_COLOR_LABELS[option.value]}
-                  </span>
-                </div>
-                <span className="shrink-0 rounded-md bg-surface-muted px-2 py-1 text-xs font-medium text-text-muted">
-                  {TRIAGE_WAIT_LABELS[option.value]}
-                </span>
-              </div>
+              <span
+                className={`h-9 w-14 shrink-0 rounded-full border-2 transition ${
+                  selected
+                    ? `${swatch.fill} ${swatch.border} ring-2 ring-offset-2 ring-offset-surface ${swatch.ring}`
+                    : `border-border bg-surface ${swatch.border}/40`
+                }`}
+                aria-hidden
+              />
 
-              <p className="mt-1 text-xs font-medium text-text-muted">{option.summary}</p>
+              <span className="mt-3 rounded-lg bg-surface-muted px-2.5 py-1 text-xs font-semibold text-text-muted">
+                {option.waitLabel}
+              </span>
 
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-text-muted">
+              <p className="mt-3 text-base font-semibold leading-snug text-text">{option.summary}</p>
+              <p className="mt-1 text-xs font-medium text-text-muted">{option.label}</p>
+
+              <p className="mt-2 max-w-[16rem] text-sm leading-relaxed text-text-muted">
                 {option.description}
               </p>
             </button>

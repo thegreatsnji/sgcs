@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
+import { RoleDashboardHero } from "@/components/dashboards/RoleDashboardHero";
 import { IconLab } from "@/components/icons";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Card, ErrorState, SkeletonCard } from "@/design-system";
@@ -34,11 +35,14 @@ export function LaboratoryRoleDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-amber-500 to-slate-900 p-6 text-white shadow-lg sm:p-8">
-        <p className="text-xs font-semibold tracking-widest text-amber-100 uppercase">Laboratório Diagnóstico</p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Painel Laboratorial</h1>
-        <p className="mt-2 text-sm text-amber-100">Pedidos pendentes, colheitas e processamento.</p>
-      </div>
+      <RoleDashboardHero
+        tone="amber"
+        eyebrow="Laboratório diagnóstico"
+        title="Painel laboratorial"
+        description="Pedidos pendentes, colheitas e validação de resultados."
+        primaryAction={{ to: "/laboratory/pending", label: "Pedidos pendentes" }}
+        secondaryAction={{ to: "/laboratory/results", label: "Resultados" }}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Pendentes" value={data.indicadores.pedidos_pendentes} badge={{ text: "Aguardam receção", variant: "warning" }} icon={<IconLab />} />

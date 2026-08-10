@@ -9,6 +9,7 @@ import {
   type InvoiceLineDraft,
 } from "@/features/billing/components/ServiceSearchPicker";
 import { MOTIVOS_REDUCAO } from "@/features/billing/constants/reducao";
+import { ReceptionAtendimentoBanner } from "@/features/reception/components/ReceptionAtendimentoBanner";
 import { PatientSearchSelect } from "@/features/reception/components/PatientSearchSelect";
 import { billingService } from "@/services/billing/billing.service";
 import { getApiErrorMessage } from "@/utils/api-error";
@@ -44,6 +45,7 @@ export function InvoiceCreatePage() {
   const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const initialPatient = Number(searchParams.get("paciente")) || null;
+  const retorno = searchParams.get("retorno");
 
   const [patientId, setPatientId] = useState<number | null>(
     Number.isFinite(initialPatient) && initialPatient ? initialPatient : null,
@@ -88,10 +90,11 @@ export function InvoiceCreatePage() {
       ...(observacoes.trim() ? { observacoes: observacoes.trim() } : {}),
     });
     showToast("Fatura criada.", "success");
+    const retornoQs = retorno ? `&retorno=${encodeURIComponent(retorno)}` : "";
     if (goReceipt) {
-      void navigate(`/billing/invoices/${inv.id}?pagar=1`);
+      void navigate(`/billing/invoices/${inv.id}?pagar=1${retornoQs}`);
     } else {
-      void navigate(`/billing/invoices/${inv.id}`);
+      void navigate(`/billing/invoices/${inv.id}${retorno ? `?retorno=${encodeURIComponent(retorno)}` : ""}`);
     }
   }
 
@@ -101,16 +104,21 @@ export function InvoiceCreatePage() {
 
   return (
     <div className="space-y-6">
+      <ReceptionAtendimentoBanner retorno={retorno} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">Nova fatura</h1>
           <p className="mt-1 text-sm text-text-muted">
-            Catálogo SauVida V1 · preço oficial e valor cobrado na mesma vista.
+            {retorno
+              ? "Adicione os serviços e registe o pagamento integral na receção."
+              : "Catálogo SauVida V1 · preço oficial e valor cobrado na mesma vista."}
           </p>
         </div>
-        <Link to="/billing/invoices" className="text-sm font-medium text-primary-600 hover:text-primary-700">
-          ← Voltar à lista
-        </Link>
+        {retorno ? null : (
+          <Link to="/billing/invoices" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+            ← Voltar à lista
+          </Link>
+        )}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">

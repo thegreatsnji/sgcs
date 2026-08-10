@@ -188,7 +188,7 @@ export function LoginPage() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="font-display flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full bg-[#2563eb] text-[15px] font-semibold text-white shadow-lg shadow-[#2563eb]/25 transition hover:bg-[#1d4ed8] hover:shadow-[#2563eb]/35 disabled:cursor-not-allowed disabled:opacity-60 focus-ring active:scale-[0.99]"
+        className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full bg-primary-600 text-[15px] font-semibold text-white shadow-lg shadow-primary-600/25 transition hover:bg-primary-700 hover:shadow-primary-600/35 disabled:cursor-not-allowed disabled:opacity-60 focus-ring active:scale-[0.99]"
       >
         {isSubmitting ? (
           <>

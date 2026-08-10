@@ -155,7 +155,7 @@ class AppointmentService:
 
     @staticmethod
     @transaction.atomic
-    def create_from_handoff(referral: Referral, user, request=None) -> Appointment:
+    def create_from_handoff(referral: Referral, user, request=None, doctor_id: int | None = None) -> Appointment:
         if Appointment.objects.filter(
             referral=referral,
             status__in=ACTIVE_APPOINTMENT_STATUSES,
@@ -168,8 +168,17 @@ class AppointmentService:
         if referral.check_in_id:
             priority = referral.check_in.priority
 
+        check_in = referral.check_in
+        triage_complaint = ""
+        if check_in is not None:
+            triage_complaint = (check_in.symptoms or "").strip()
+        referral_reason = (referral.reason or "").strip()
+        chief_complaint = triage_complaint or referral_reason or "Encaminhamento para consulta médica."
+        notes = referral_reason or triage_complaint
+
         appointment = Appointment.objects.create(
             patient=referral.patient,
+            doctor_id=doctor_id or getattr(referral, "assigned_doctor_id", None),
             check_in=referral.check_in,
             referral=referral,
             queue_entry=queue_entry,
@@ -179,8 +188,8 @@ class AppointmentService:
             consultation_date=now.date(),
             status=AppointmentStatus.EM_ESPERA,
             priority=priority,
-            notes=referral.reason,
-            chief_complaint=referral.reason,
+            notes=notes,
+            chief_complaint=chief_complaint,
             created_by=user,
         )
         AppointmentService._log_consulta(

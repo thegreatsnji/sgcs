@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 /* Class-based dark mode (ThemeContext toggles .dark on <html>) */
@@ -6,7 +6,11 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #0284c7;
 
   --color-primary-50: #eff6ff;
   --color-primary-100: #dbeafe;
@@ -80,10 +84,6 @@ body {
 
   .animate-slide-up {
     animation: slideUp 0.45s ease-out;
-  }
-
-  .font-display {
-    font-family: var(--font-display);
   }
 
   .auth-ambient {

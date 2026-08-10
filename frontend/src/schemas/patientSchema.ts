@@ -28,8 +28,7 @@ export const emergencyContactSchema = z.object({
 
 export const patientFormSchema = z
   .object({
-    first_name: z.string().min(1, "O nome é obrigatório."),
-    last_name: z.string().min(1, "O apelido é obrigatório."),
+    full_name: z.string().min(1, "O nome completo é obrigatório."),
     document_type: z.enum(["BI", "PASSAPORTE", "CARTAO_RESIDENTE", "OUTRO"]).optional().or(z.literal("")),
     document_number: z.string().optional(),
     birth_date: displayDateSchema,

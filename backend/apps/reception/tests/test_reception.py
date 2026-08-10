@@ -1,6 +1,7 @@
 """Testes do módulo de receção."""
 
 import pytest
+from datetime import timedelta
 from django.contrib.auth import get_user_model
 from rest_framework import status
 
@@ -214,8 +215,25 @@ class TestReceptionDashboard:
         assert response.status_code == status.HTTP_200_OK
         cards = response.data["data"]["cards"]
         assert cards["patients_waiting"] == 1
+        assert cards["average_wait_minutes"] < 60
         assert "average_wait_minutes" in cards
         assert "active_emergencies" in cards
+
+    def test_reception_dashboard_ignores_stale_queue_for_avg_wait(
+        self, api_client, receptionist_user, patient, db
+    ):
+        from django.utils import timezone
+
+        ReceptionService.check_in(patient.pk, receptionist_user)
+        stale = WaitingQueue.objects.select_related("check_in").first()
+        stale.check_in.check_in_time = timezone.now() - timedelta(days=12)
+        stale.check_in.save(update_fields=["check_in_time"])
+        stale.status = QueueStatus.CALLED
+        stale.save(update_fields=["status", "updated_at"])
+
+        api_client.force_authenticate(user=receptionist_user)
+        cards = api_client.get("/api/v1/dashboard/reception/").data["data"]["cards"]
+        assert cards["average_wait_minutes"] < 120
 
     def test_doctor_cannot_view_reception_dashboard(self, api_client, doctor_user):
         """Médicos não têm reception.view — dashboard de receção é exclusivo da receção/admin."""

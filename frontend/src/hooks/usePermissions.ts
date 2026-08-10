@@ -8,7 +8,7 @@ export function usePermissions() {
   const { user } = useAuth();
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile-permissions"],
+    queryKey: ["profile-permissions", user?.id],
     queryFn: usersService.getProfile,
     enabled: Boolean(user),
     staleTime: 5 * 60_000,

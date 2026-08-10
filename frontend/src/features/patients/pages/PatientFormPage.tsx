@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import {
   Button,
@@ -13,13 +13,14 @@ import {
   useToast,
 } from "@/design-system";
 import { PhoneInput } from "@/components/forms";
+import { ComputedAgeHint } from "@/components/forms/ComputedAgeHint";
+import { DisplayDateInput } from "@/components/forms/DisplayDateInput";
 import { DuplicateAlert } from "@/features/patients/components/DuplicateAlert";
 import { EmergencyContactForm } from "@/features/patients/components/EmergencyContactForm";
 import { SelectField } from "@/features/patients/components/SelectField";
 import {
   BLOOD_TYPE_LABELS,
   DOCUMENT_TYPE_LABELS,
-  MARITAL_STATUS_LABELS,
   PATIENT_GENDER_LABELS,
 } from "@/constants/patients";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -29,42 +30,38 @@ import { patientsService } from "@/services/patients";
 import type {
   BloodType,
   DocumentType,
-  MaritalStatus,
   PatientGender,
   PatientPayload,
 } from "@/types/patient";
 import { getApiErrorMessage } from "@/utils/api-error";
-import { stripCountryCode, toFullPhone } from "@/utils/phone";
+import { displayDateToApi, isValidDisplayDate } from "@/utils/date";
+import { joinFullName, splitFullName } from "@/utils/fullName";
+import { stripCountryCode, toFullPhone, isValidLocalPhone } from "@/utils/phone";
 
 function toPayload(data: PatientFormData): PatientPayload {
+  const { first_name, last_name } = splitFullName(data.full_name);
   return {
-    first_name: data.first_name,
-    last_name: data.last_name,
-    document_type: data.document_type || null,
-    document_number: data.document_number || null,
+    first_name,
+    last_name,
+    document_type: data.document_type || undefined,
+    document_number: data.document_number || undefined,
     birth_date: data.birth_date,
     gender: data.gender,
     phone: toFullPhone(data.phone),
-    email: data.email || null,
-    address_street: data.address_street || null,
-    address_city: data.address_city || null,
-    address_region: data.address_region || null,
-    address_country: data.address_country || null,
-    address_postal_code: data.address_postal_code || null,
-    nationality: data.nationality || null,
-    blood_type: data.blood_type || null,
-    marital_status: data.marital_status || null,
-    occupation: data.occupation || null,
+    address_street: data.address_street || undefined,
+    blood_type: data.blood_type || undefined,
     emergency_contacts: data.emergency_contacts.map((contact) => ({
       ...contact,
       phone: toFullPhone(contact.phone),
-      email: contact.email || null,
+      email: contact.email || undefined,
     })),
   };
 }
 
 export function PatientFormPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get("retorno");
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -91,23 +88,14 @@ export function PatientFormPage() {
     resolver: zodResolver(patientFormSchema),
     values: patient
       ? {
-          first_name: patient.first_name,
-          last_name: patient.last_name,
+          full_name: joinFullName(patient.first_name, patient.last_name),
           document_type: patient.document_type ?? "",
           document_number: patient.document_number ?? "",
           birth_date: patient.birth_date ?? "",
           gender: patient.gender ?? "M",
           phone: stripCountryCode(patient.phone ?? ""),
-          email: patient.email ?? "",
           address_street: patient.address_street ?? "",
-          address_city: patient.address_city ?? "",
-          address_region: patient.address_region ?? "",
-          address_country: patient.address_country ?? "",
-          address_postal_code: patient.address_postal_code ?? "",
-          nationality: patient.nationality ?? "",
           blood_type: patient.blood_type ?? "",
-          marital_status: patient.marital_status ?? "",
-          occupation: patient.occupation ?? "",
           emergency_contacts:
             patient.emergency_contacts?.map((contact) => ({
               name: contact.name,
@@ -119,34 +107,31 @@ export function PatientFormPage() {
         }
       : undefined,
     defaultValues: {
-      first_name: "",
-      last_name: "",
+      full_name: "",
       document_type: "",
       document_number: "",
       birth_date: "",
       gender: "M",
       phone: "",
-      email: "",
       address_street: "",
-      address_city: "",
-      address_region: "",
-      address_country: "",
-      address_postal_code: "",
-      nationality: "",
       blood_type: "",
-      marital_status: "",
-      occupation: "",
       emergency_contacts: [],
     },
   });
 
-  const watched = watch(["first_name", "last_name", "birth_date", "phone", "document_number"]);
+  const watchedBirthDate = watch("birth_date");
+
+  const watched = watch(["full_name", "birth_date", "phone", "document_number"]);
+  const nameParts = splitFullName(watched[0] ?? "");
+  const birthDateValid = Boolean(watched[1] && isValidDisplayDate(watched[1]));
+  const phoneLocal = watched[2] ?? "";
+  const phoneValid = isValidLocalPhone(phoneLocal);
   const duplicateParams = {
-    first_name: watched[0],
-    last_name: watched[1],
-    birth_date: watched[2],
-    phone: watched[3] ? toFullPhone(watched[3]) : undefined,
-    document_number: watched[4] || undefined,
+    first_name: nameParts.first_name,
+    last_name: nameParts.last_name,
+    birth_date: birthDateValid ? displayDateToApi(watched[1]!) : "",
+    phone: phoneValid ? toFullPhone(phoneLocal) : undefined,
+    document_number: watched[3] || undefined,
   };
   const debouncedDuplicateParams = useDebouncedValue(duplicateParams, 500);
 
@@ -155,7 +140,8 @@ export function PatientFormPage() {
     queryFn: () => patientsService.checkDuplicate(debouncedDuplicateParams),
     enabled:
       !isEdit &&
-      Boolean(debouncedDuplicateParams.first_name && debouncedDuplicateParams.last_name && debouncedDuplicateParams.birth_date),
+      Boolean(nameParts.first_name && birthDateValid && debouncedDuplicateParams.birth_date),
+    retry: false,
   });
 
   const mutation = useMutation({
@@ -168,7 +154,7 @@ export function PatientFormPage() {
       showToast(isEdit ? "Paciente atualizado com sucesso." : "Paciente registado com sucesso.", "success");
       void queryClient.invalidateQueries({ queryKey: ["patients"] });
       void queryClient.invalidateQueries({ queryKey: ["patient", String(saved.id)] });
-      navigate(`/patients/${saved.id}`);
+      navigate(returnTo && returnTo.startsWith("/") ? returnTo : `/patients/${saved.id}`);
     },
     onError: (error) => showToast(getApiErrorMessage(error), "error"),
   });
@@ -203,62 +189,39 @@ export function PatientFormPage() {
           {isEdit ? "Editar Paciente" : "Novo Paciente"}
         </h2>
         <p className="text-sm text-slate-500">
-          {isEdit ? `Processo ${patient?.patient_number}` : "Registo de novo utente"}
+          {isEdit
+            ? `Processo ${patient?.patient_number}`
+            : "Dados guardados na ficha do utente — triagem e consulta usam a mesma informação."}
         </p>
       </div>
 
-      {!isEdit && duplicateResult?.has_duplicates && (
+      {!isEdit && duplicateResult?.has_duplicates && duplicateResult.matches?.length > 0 && (
         <DuplicateAlert matches={duplicateResult.matches} />
       )}
 
       <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-6">
-        <Card title="Dados pessoais" description="Informação de identificação do paciente">
+        <Card title="Dados do utente" description="Nome, contacto e identificação mínima">
           <div className="grid gap-4 md:grid-cols-2">
             <input type="text" className="hidden" autoComplete="off" />
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Nome</label>
+            <div className="md:col-span-2">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Nome completo</label>
               <input
-                className={`w-full rounded-lg border px-3 py-2 text-sm ${errors.first_name ? "border-red-500" : "border-slate-300"}`}
-                {...register("first_name")}
+                className={`w-full rounded-lg border px-3 py-2 text-sm ${errors.full_name ? "border-red-500" : "border-slate-300"}`}
+                placeholder="Ex.: Maria Santos ou João Pedro Camará"
+                autoComplete="name"
+                {...register("full_name")}
               />
-              {errors.first_name?.message && <p className="mt-1 text-xs text-red-600">{errors.first_name.message}</p>}
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Apelido</label>
-              <input
-                className={`w-full rounded-lg border px-3 py-2 text-sm ${errors.last_name ? "border-red-500" : "border-slate-300"}`}
-                {...register("last_name")}
-              />
-              {errors.last_name?.message && <p className="mt-1 text-xs text-red-600">{errors.last_name.message}</p>}
-            </div>
-            <SelectField
-              label="Tipo de documento"
-              placeholder="Selecionar"
-              options={(Object.entries(DOCUMENT_TYPE_LABELS) as [DocumentType, string][]).map(([value, label]) => ({
-                value,
-                label,
-              }))}
-              error={errors.document_type?.message}
-              {...register("document_type")}
-            />
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">N.º documento</label>
-              <input
-                className={`w-full rounded-lg border px-3 py-2 text-sm ${errors.document_number ? "border-red-500" : "border-slate-300"}`}
-                {...register("document_number")}
-              />
-              {errors.document_number?.message && (
-                <p className="mt-1 text-xs text-red-600">{errors.document_number.message}</p>
+              {errors.full_name?.message && (
+                <p className="mt-1 text-xs text-red-600">{errors.full_name.message}</p>
               )}
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Data de nascimento</label>
-              <input
-                placeholder="DD/MM/AAAA"
-                className={`w-full rounded-lg border px-3 py-2 text-sm ${errors.birth_date ? "border-red-500" : "border-slate-300"}`}
+              <DisplayDateInput
+                label="Data de nascimento"
+                error={errors.birth_date?.message}
                 {...register("birth_date")}
               />
-              {errors.birth_date?.message && <p className="mt-1 text-xs text-red-600">{errors.birth_date.message}</p>}
+              <ComputedAgeHint birthDate={watchedBirthDate} className="mt-1.5" />
             </div>
             <SelectField
               label="Género"
@@ -269,8 +232,16 @@ export function PatientFormPage() {
               error={errors.gender?.message}
               {...register("gender")}
             />
+            <div>
+              <PhoneInput
+                label="Telefone de contacto"
+                error={errors.phone?.message}
+                hint="Introduza 7 a 9 dígitos após +245"
+                {...register("phone")}
+              />
+            </div>
             <SelectField
-              label="Grupo sanguíneo"
+              label="Grupo sanguíneo (opcional)"
               placeholder="Selecionar"
               options={(Object.entries(BLOOD_TYPE_LABELS) as [BloodType, string][]).map(([value, label]) => ({
                 value,
@@ -280,54 +251,33 @@ export function PatientFormPage() {
               {...register("blood_type")}
             />
             <SelectField
-              label="Estado civil"
+              label="Tipo de documento (opcional)"
               placeholder="Selecionar"
-              options={(Object.entries(MARITAL_STATUS_LABELS) as [MaritalStatus, string][]).map(([value, label]) => ({
+              options={(Object.entries(DOCUMENT_TYPE_LABELS) as [DocumentType, string][]).map(([value, label]) => ({
                 value,
                 label,
               }))}
-              error={errors.marital_status?.message}
-              {...register("marital_status")}
+              error={errors.document_type?.message}
+              {...register("document_type")}
             />
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Nacionalidade</label>
-              <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" {...register("nationality")} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Profissão</label>
-              <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" {...register("occupation")} />
-            </div>
-          </div>
-        </Card>
-
-        <Card title="Contactos" description="Telefone e e-mail do paciente">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <PhoneInput
-                label="Telefone"
-                error={errors.phone?.message}
-                hint="Introduza apenas os dígitos após +245"
-                {...register("phone")}
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">E-mail</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">N.º documento (opcional)</label>
               <input
-                className={`w-full rounded-lg border px-3 py-2 text-sm ${errors.email ? "border-red-500" : "border-slate-300"}`}
-                {...register("email")}
+                className={`w-full rounded-lg border px-3 py-2 text-sm ${errors.document_number ? "border-red-500" : "border-slate-300"}`}
+                {...register("document_number")}
               />
-              {errors.email?.message && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
+              {errors.document_number?.message && (
+                <p className="mt-1 text-xs text-red-600">{errors.document_number.message}</p>
+              )}
             </div>
-          </div>
-        </Card>
-
-        <Card title="Morada">
-          <div className="grid gap-4 md:grid-cols-2">
-            <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2" placeholder="Rua" {...register("address_street")} />
-            <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Cidade" {...register("address_city")} />
-            <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Região" {...register("address_region")} />
-            <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="País" {...register("address_country")} />
-            <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Código postal" {...register("address_postal_code")} />
+            <div className="md:col-span-2">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Morada (opcional)</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                placeholder="Bairro ou rua"
+                {...register("address_street")}
+              />
+            </div>
           </div>
         </Card>
 

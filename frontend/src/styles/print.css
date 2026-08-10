@@ -11,6 +11,20 @@
     -webkit-print-color-adjust: exact;
   }
 
+  .app-chrome,
+  .no-print {
+    display: none !important;
+  }
+
+  .receipt-page {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .receipt-print-root {
+    margin: 0 auto !important;
+  }
+
   .print-hidden,
   .no-print {
     display: none !important;
@@ -43,6 +57,29 @@
   a[href]::after {
     content: none !important;
   }
+
+  .receipt-sauvida {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .receipt-format-a5 {
+    max-width: 148mm;
+  }
+
+  .receipt-format-termico_80 {
+    max-width: 80mm;
+    font-size: 10px;
+  }
+
+  @page receipt-a5 {
+    size: A5;
+    margin: 10mm;
+  }
+
+  .receipt-format-a5 {
+    page: receipt-a5;
+  }
 }
 
 @media screen {
@@ -50,4 +87,249 @@
     max-width: 210mm;
     margin-inline: auto;
   }
+
+  .receipt-print-surface {
+    max-width: 210mm;
+    margin-inline: auto;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 1.75rem 2rem;
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
+  }
+
+  .receipt-format-a5.receipt-print-surface {
+    max-width: 148mm;
+  }
+
+  .receipt-format-termico_80.receipt-print-surface {
+    max-width: 80mm;
+    padding: 1rem;
+    font-size: 11px;
+  }
+}
+
+/* —— Recibo SauVida (livro de papel) —— */
+
+.receipt-sauvida__header {
+  border-bottom: 2px solid #0d9488;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.receipt-sauvida__header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.receipt-sauvida__brand-left {
+  flex: 0 1 45%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.receipt-sauvida__brand-right {
+  flex: 0 1 52%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  text-align: right;
+}
+
+.receipt-sauvida__emblem {
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.receipt-sauvida__state-lines {
+  text-align: right;
+}
+
+.receipt-sauvida__republica {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.receipt-sauvida__ministerio {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 0.1rem;
+  line-height: 1.35;
+}
+
+.receipt-sauvida__clinic-logo {
+  max-height: 88px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.receipt-sauvida__clinic-name {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #047857;
+  margin-top: 0.2rem;
+}
+
+.receipt-sauvida__clinic-contacts {
+  font-size: 0.65rem;
+  color: #64748b;
+  margin-top: 0.35rem;
+  text-align: center;
+}
+
+.receipt-sauvida__recibo-line {
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.receipt-sauvida__recibo-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.receipt-sauvida__recibo-number {
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.receipt-sauvida__num-seq {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt-sauvida__segunda-via {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #b45309;
+}
+
+.receipt-sauvida__body {
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.receipt-sauvida__field {
+  margin-top: 0.85rem;
+}
+
+.receipt-sauvida__fill {
+  font-weight: 600;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 0.1rem;
+}
+
+.receipt-sauvida__amount {
+  color: #0f766e;
+}
+
+.receipt-sauvida__extenso,
+.receipt-sauvida__muted {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.receipt-sauvida__table {
+  width: 100%;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  border-collapse: collapse;
+}
+
+.receipt-sauvida__table th,
+.receipt-sauvida__table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.35rem 0.25rem;
+  text-align: left;
+}
+
+.receipt-sauvida__table th {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.receipt-sauvida__totals,
+.receipt-sauvida__meta {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.receipt-sauvida__footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.receipt-sauvida__sign-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.receipt-sauvida__sign-block {
+  flex: 1;
+  min-width: 140px;
+}
+
+.receipt-sauvida__sign-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.receipt-sauvida__sign-name {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  min-height: 1.25rem;
+}
+
+.receipt-sauvida__sign-line {
+  margin-top: 1.5rem;
+  border-bottom: 1px solid #334155;
+  max-width: 220px;
+}
+
+.receipt-sauvida__date-value {
+  margin-top: 0.35rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt-sauvida__footer-msg {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.receipt-sauvida__tagline {
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.65rem;
+  font-style: italic;
+  color: #059669;
+}
+
+.receipt-sauvida__ref {
+  margin-top: 0.35rem;
+  text-align: center;
+  font-size: 0.6rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
 }

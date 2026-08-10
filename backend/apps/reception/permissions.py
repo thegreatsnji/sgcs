@@ -7,6 +7,7 @@ RECEPTION_PERMISSION_MAP = {
     "queue": "reception.view",
     "update_queue": "reception.edit",
     "assign_to_doctor": "reception.edit",
+    "doctor_assignment_options": "reception.view",
     "history": "reception.view",
     "create_referral": "reception.edit",
 }

@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { PageHeader } from "@/components/layout/PageHeader";
+import { RoleDashboardHero } from "@/components/dashboards/RoleDashboardHero";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Badge, Card, ErrorState, SkeletonCard } from "@/design-system";
 import { ROLE_LABELS } from "@/constants/roles";
@@ -118,19 +118,13 @@ export function AdminRoleDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        variant="hero"
+      <RoleDashboardHero
+        tone="slate"
         eyebrow="Administração do sistema"
-        title="Painel do Administrador"
+        title="Painel do administrador"
         description="Utilizadores, sessões, monitorização e segurança da plataforma SauVida."
-        actions={
-          <Link
-            to="/admin/users"
-            className="inline-flex h-11 items-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
-          >
-            Gerir utilizadores
-          </Link>
-        }
+        primaryAction={{ to: "/admin/users", label: "Gerir utilizadores" }}
+        secondaryAction={{ to: "/settings/system", label: "Monitorização" }}
       />
 
       {/* System health strip */}

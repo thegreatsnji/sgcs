@@ -18,6 +18,7 @@ import type {
   PatientPhoto,
 } from "@/types/patient";
 import { unwrapApiData } from "@/utils/api-response";
+import { normalizePatientCreatePayload, normalizePatientPayload } from "@/utils/patientPayload";
 
 function patientPath(patientId: number) {
   return `/patients/${patientId}`;
@@ -48,10 +49,11 @@ export const patientsService = {
 
   get: async (id: number) => getOne<PatientDetail>(`/patients/${id}/`),
 
-  create: async (payload: PatientPayload) => postOne<PatientDetail>("/patients/", payload),
+  create: async (payload: PatientPayload) =>
+    postOne<PatientDetail>("/patients/", normalizePatientCreatePayload(payload)),
 
   update: async (id: number, payload: Partial<PatientPayload>) =>
-    patchOne<PatientDetail>(`/patients/${id}/`, payload),
+    patchOne<PatientDetail>(`/patients/${id}/`, normalizePatientPayload(payload)),
 
   remove: async (id: number) => {
     const { data } = await api.delete<ApiEnvelope<null>>(`/patients/${id}/`);

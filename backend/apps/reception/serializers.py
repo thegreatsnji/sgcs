@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from apps.reception.constants import QueuePriority, QueueStatus, ReferralDepartment, TriageColor
+from apps.reception.constants import QueuePriority, QueueStatus, ReferralDepartment, TriageColor, VisitPurpose
 from apps.reception.models import ReceptionCheckIn, Referral, WaitingQueue
 from apps.reception.services.reception_service import ReceptionService
 
@@ -27,6 +27,16 @@ class CheckInCreateSerializer(serializers.Serializer):
     weight = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, allow_null=True)
     temperature = serializers.DecimalField(max_digits=4, decimal_places=1, required=False, allow_null=True)
     blood_pressure = serializers.CharField(required=False, allow_blank=True, default="", max_length=20)
+    height_cm = serializers.IntegerField(required=False, allow_null=True, min_value=30, max_value=250)
+    spo2 = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=100)
+    heart_rate = serializers.IntegerField(required=False, allow_null=True, min_value=20, max_value=250)
+    respiratory_rate = serializers.IntegerField(required=False, allow_null=True, min_value=5, max_value=80)
+    race = serializers.CharField(required=False, allow_blank=True, default="", max_length=80)
+    visit_purpose = serializers.ChoiceField(
+        choices=VisitPurpose.choices,
+        required=False,
+        default=VisitPurpose.CONSULTA,
+    )
     symptoms = serializers.CharField(required=False, allow_blank=True, default="")
     notes = serializers.CharField(required=False, allow_blank=True, default="")
 
@@ -58,6 +68,12 @@ class CheckInCreateSerializer(serializers.Serializer):
                 weight=validated_data.get("weight"),
                 temperature=validated_data.get("temperature"),
                 blood_pressure=validated_data.get("blood_pressure", ""),
+                height_cm=validated_data.get("height_cm"),
+                spo2=validated_data.get("spo2"),
+                heart_rate=validated_data.get("heart_rate"),
+                respiratory_rate=validated_data.get("respiratory_rate"),
+                race=validated_data.get("race", ""),
+                visit_purpose=validated_data.get("visit_purpose", VisitPurpose.CONSULTA),
                 symptoms=validated_data.get("symptoms", ""),
                 notes=validated_data.get("notes", ""),
                 request=request,
@@ -123,6 +139,7 @@ class WaitingQueueUpdateSerializer(serializers.ModelSerializer):
 class AssignToDoctorSerializer(serializers.Serializer):
     queue_id = serializers.IntegerField(required=False)
     check_in_id = serializers.IntegerField(required=False)
+    doctor_id = serializers.IntegerField(required=False)
     reason = serializers.CharField(required=False, allow_blank=True, default="")
 
     def validate(self, attrs):
@@ -139,6 +156,7 @@ class AssignToDoctorSerializer(serializers.Serializer):
                 check_in_id=validated_data.get("check_in_id"),
                 user=user,
                 reason=validated_data.get("reason", ""),
+                doctor_id=validated_data.get("doctor_id"),
                 request=request,
             )
         except ValueError as exc:
@@ -218,9 +236,16 @@ class ReceptionCheckInSerializer(serializers.ModelSerializer):
             "priority",
             "triage_color",
             "age_at_check_in",
+            "age_category_at_check_in",
             "weight",
             "temperature",
             "blood_pressure",
+            "height_cm",
+            "spo2",
+            "heart_rate",
+            "respiratory_rate",
+            "race",
+            "visit_purpose",
             "symptoms",
             "notes",
             "created_at",

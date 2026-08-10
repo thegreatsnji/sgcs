@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { Badge, Button, Card, useToast } from "@/design-system";
 import { BillingSubNav } from "@/features/billing/components/BillingSubNav";
 import { InvoiceDetailSkeleton } from "@/features/billing/components/BillingSkeleton";
 import { InvoiceStatusBadge } from "@/features/billing/components/InvoiceStatusBadge";
 import { PaymentForm } from "@/features/billing/components/PaymentForm";
+import { ReceptionAtendimentoBanner } from "@/features/reception/components/ReceptionAtendimentoBanner";
 import {
   METODO_PAGAMENTO_LABEL,
   PAGAMENTO_ESTADO_LABEL,
@@ -18,6 +20,11 @@ import { formatDisplayDateTime } from "@/utils/date";
 export function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const invoiceId = Number(id);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const pagarFocus = searchParams.get("pagar") === "1";
+  const retorno = searchParams.get("retorno");
+  const paymentSectionRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
   const queryClient = useQueryClient();
 
@@ -39,19 +46,36 @@ export function InvoiceDetailPage() {
       showToast("Pagamento registado.", "success");
       void queryClient.invalidateQueries({ queryKey: ["billing-invoice", invoiceId] });
       void queryClient.invalidateQueries({ queryKey: ["billing-receipts"] });
+      void queryClient.invalidateQueries({ queryKey: ["billing-invoices", "payment-gate"] });
     },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
 
   const confirmMutation = useMutation({
     mutationFn: billingService.confirmPayment,
-    onSuccess: () => {
-      showToast("Pagamento confirmado.", "success");
+    onSuccess: async (_payment, paymentId) => {
+      showToast("Pagamento confirmado. Pode imprimir o recibo.", "success");
       void queryClient.invalidateQueries({ queryKey: ["billing-invoice", invoiceId] });
       void queryClient.invalidateQueries({ queryKey: ["billing-receipts"] });
+      void queryClient.invalidateQueries({ queryKey: ["billing-invoices", "payment-gate"] });
+      try {
+        const receipts = await billingService.listReceipts({ page: 1, page_size: 100 });
+        const recibo = receipts.results.find((r) => r.pagamento === paymentId);
+        if (recibo) {
+          const retornoQs = retorno ? `&retorno=${encodeURIComponent(retorno)}` : "";
+          void navigate(`/billing/receipts/${recibo.id}?imprimir=1${retornoQs}`);
+        }
+      } catch {
+        /* lista de recibos opcional para redireccionamento */
+      }
     },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
+
+  useEffect(() => {
+    if (!pagarFocus || isLoading || !data) return;
+    paymentSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [pagarFocus, isLoading, data]);
 
   if (isLoading || !data) return <InvoiceDetailSkeleton />;
 
@@ -62,6 +86,7 @@ export function InvoiceDetailPage() {
 
   return (
     <div className="space-y-6">
+      <ReceptionAtendimentoBanner retorno={retorno} />
       <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
@@ -117,7 +142,7 @@ export function InvoiceDetailPage() {
         </dl>
       </div>
 
-      <BillingSubNav />
+      {!retorno ? <BillingSubNav /> : null}
 
       <Card title="Itens">
         {data.itens.length === 0 ? (
@@ -151,14 +176,16 @@ export function InvoiceDetailPage() {
       </Card>
 
       {data.editavel && (
-        <Card title="Registar pagamento">
-          <PaymentForm
-            faturaId={invoiceId}
-            valorSugerido={pendente > 0 ? String(pendente) : data.total}
-            onSubmit={(v) => payMutation.mutate(v)}
-            isPending={payMutation.isPending}
-          />
-        </Card>
+        <div ref={paymentSectionRef} id="registar-pagamento">
+          <Card title="Registar pagamento">
+            <PaymentForm
+              faturaId={invoiceId}
+              valorSugerido={pendente > 0 ? String(pendente) : data.total}
+              onSubmit={(v) => payMutation.mutate(v)}
+              isPending={payMutation.isPending}
+            />
+          </Card>
+        </div>
       )}
 
       <Card title="Pagamentos">
@@ -176,7 +203,7 @@ export function InvoiceDetailPage() {
                     {payment.referencia && ` · Ref. ${payment.referencia}`}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={payment.estado === "CONFIRMADO" ? "success" : payment.estado === "PENDENTE" ? "warning" : "default"}>
                     {PAGAMENTO_ESTADO_LABEL[payment.estado]}
                   </Badge>
@@ -186,7 +213,7 @@ export function InvoiceDetailPage() {
                       onClick={() => confirmMutation.mutate(payment.id)}
                       disabled={confirmMutation.isPending}
                     >
-                      Confirmar
+                      Confirmar e emitir recibo
                     </Button>
                   )}
                 </div>
@@ -214,7 +241,14 @@ export function InvoiceDetailPage() {
                     {receipt.metodo_pagamento} · {formatDisplayDateTime(receipt.emitido_em)}
                   </p>
                 </div>
-                <p className="font-semibold text-slate-900">{formatCurrency(receipt.pagamento_valor)}</p>
+                <div className="flex flex-col items-start gap-2 sm:items-end">
+                  <p className="font-semibold text-slate-900">{formatCurrency(receipt.pagamento_valor)}</p>
+                  <Link to={`/billing/receipts/${receipt.id}?imprimir=1`}>
+                    <Button size="sm" variant="secondary">
+                      Imprimir
+                    </Button>
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

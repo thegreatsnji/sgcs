@@ -42,7 +42,7 @@ export function Button({
     <button
       type="button"
       disabled={disabled || isLoading}
-      className={`inline-flex items-center justify-center gap-2 font-semibold transition focus-ring disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 font-medium transition focus-ring disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     >
       {leftIcon}

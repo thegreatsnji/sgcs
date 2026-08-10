@@ -38,6 +38,18 @@ class TriageColor(models.TextChoices):
     RED = "RED", "Vermelho"
 
 
+class PatientAgeCategory(models.TextChoices):
+    ADULT = "ADULT", "Adulto"
+    MINOR = "MINOR", "Menor de idade"
+
+
+MINOR_AGE_THRESHOLD = 18
+
+
+class VisitPurpose(models.TextChoices):
+    CONSULTA = "CONSULTA", "Consulta"
+    CONTROLE = "CONTROLE", "Controlo"
+
 TRIAGE_PRIORITY_MAP = {
     TriageColor.GREEN: QueuePriority.NORMAL,
     TriageColor.YELLOW: QueuePriority.HIGH,

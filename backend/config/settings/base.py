@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.audit_logs",
     "apps.common",
     "apps.settings",
+    "apps.pharmacy",
     "apps.files",
     "apps.analytics",
 ]
