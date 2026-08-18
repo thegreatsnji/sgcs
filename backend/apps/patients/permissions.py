@@ -23,6 +23,7 @@ PATIENT_PERMISSION_MAP = {
     "set_primary": "patients.edit",
     "pin": "patients.edit",
     "unpin": "patients.edit",
+    "confirm_imported_data": "patients.edit",
 }
 
 CLINICAL_NESTED_BASENAMES = {

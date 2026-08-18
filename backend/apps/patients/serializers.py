@@ -356,7 +356,10 @@ class PatientDetailSerializer(serializers.ModelSerializer):
     allergies_count = serializers.SerializerMethodField()
     chronic_diseases_count = serializers.SerializerMethodField()
     primary_photo_url = serializers.SerializerMethodField()
-    age = serializers.IntegerField(read_only=True)
+    age = serializers.IntegerField(read_only=True, allow_null=True)
+    import_origin = serializers.SerializerMethodField()
+    verification_state = serializers.SerializerMethodField()
+    dados_verificados = serializers.SerializerMethodField()
 
     class Meta:
         model = Patient
@@ -393,6 +396,9 @@ class PatientDetailSerializer(serializers.ModelSerializer):
             "allergies_count",
             "chronic_diseases_count",
             "primary_photo_url",
+            "import_origin",
+            "verification_state",
+            "dados_verificados",
         )
         read_only_fields = (
             "id",
@@ -405,6 +411,9 @@ class PatientDetailSerializer(serializers.ModelSerializer):
             "created_by",
             "updated_by",
             "age",
+            "import_origin",
+            "verification_state",
+            "dados_verificados",
         )
 
     def get_allergies_count(self, obj) -> int:
@@ -423,6 +432,18 @@ class PatientDetailSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(photo.stored_file.file.url)
             return photo.stored_file.file.url
         return None
+
+    def get_import_origin(self, obj) -> str:
+        meta = obj.metadata if isinstance(obj.metadata, dict) else {}
+        return str(meta.get("source") or "")
+
+    def get_verification_state(self, obj) -> str:
+        meta = obj.metadata if isinstance(obj.metadata, dict) else {}
+        return str(meta.get("verification_state") or "")
+
+    def get_dados_verificados(self, obj) -> bool:
+        meta = obj.metadata if isinstance(obj.metadata, dict) else {}
+        return bool(meta.get("dados_verificados"))
 
 
 class PatientCreateSerializer(serializers.ModelSerializer):

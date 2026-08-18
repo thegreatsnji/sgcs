@@ -77,7 +77,7 @@ export function buildSidebarConfig(
         { to: "/laboratory", label: nav.laboratory, icon: icons.lab },
         { to: "/billing", label: nav.billing, icon: icons.billing },
         ...(hasPermission("pharmacy.view")
-          ? [{ to: "/pharmacy/urgent-stock", label: nav.pharmacyUrgent, icon: icons.lab }]
+          ? [{ to: "/stock", label: nav.pharmacyUrgent, icon: icons.lab }]
           : []),
         { to: "/finance", label: nav.finance, icon: icons.billing },
         { to: "/reports", label: nav.reports, icon: icons.dashboard },
@@ -95,7 +95,7 @@ export function buildSidebarConfig(
         { to: "/consultations", label: nav.clinicalRecords, icon: icons.calendar },
         { to: "/laboratory/results", label: nav.labResultsShort, icon: icons.lab },
         ...(hasPermission("pharmacy.view")
-          ? [{ to: "/pharmacy/urgent-stock", label: nav.pharmacyUrgent, icon: icons.lab }]
+          ? [{ to: "/stock", label: nav.pharmacyUrgent, icon: icons.lab }]
           : []),
         { to: "/consultations/history", label: nav.followUps, icon: icons.calendar },
         { to: "/notifications", label: nav.notifications, icon: icons.bell },
@@ -130,7 +130,7 @@ export function buildSidebarConfig(
             ]
           : []),
         ...(hasPermission("pharmacy.view")
-          ? [{ to: "/pharmacy/urgent-stock", label: nav.pharmacyUrgent, icon: icons.lab }]
+          ? [{ to: "/stock", label: nav.pharmacyUrgent, icon: icons.lab }]
           : []),
         { to: "/patients", label: nav.patients, icon: icons.patients },
         { to: "/appointments", label: nav.appointments, icon: icons.calendar },
@@ -158,8 +158,8 @@ export function buildSidebarConfig(
       ...(hasPermission("appointments.view") ? [{ to: "/appointments", label: nav.appointments, icon: icons.calendar }] : []),
       ...(hasPermission("laboratory.view") ? [{ to: "/laboratory", label: nav.laboratory, icon: icons.lab }] : []),
       ...(hasPermission("billing.view") ? [{ to: "/billing", label: nav.billing, icon: icons.billing }] : []),
-      ...(hasPermission("pharmacy.view")
-        ? [{ to: "/pharmacy/urgent-stock", label: nav.pharmacyUrgent, icon: icons.lab }]
+      ...(hasPermission("pharmacy.view") || hasPermission("stock.view")
+        ? [{ to: "/stock", label: nav.pharmacyUrgent, icon: icons.lab }]
         : []),
       ...(hasPermission("finance.view") ? [{ to: "/finance", label: nav.finance, icon: icons.billing }] : []),
       ...(hasPermission("reports.view") ? [{ to: "/reports", label: nav.reports, icon: icons.dashboard }] : []),

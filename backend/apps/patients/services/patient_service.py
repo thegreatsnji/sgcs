@@ -42,7 +42,7 @@ class PatientService:
                 **contact_data,
             )
 
-        if patient.age < 18 and not patient.emergency_contacts.filter(is_active=True).exists():
+        if patient.birth_date and patient.age is not None and patient.age < 18 and not patient.emergency_contacts.filter(is_active=True).exists():
             raise ValueError(
                 "Paciente menor de idade requer pelo menos um contacto de emergência."
             )

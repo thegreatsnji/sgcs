@@ -49,6 +49,9 @@ export const patientsService = {
 
   get: async (id: number) => getOne<PatientDetail>(`/patients/${id}/`),
 
+  confirmImportedData: async (id: number) =>
+    postOne<PatientDetail>(`/patients/${id}/confirm-imported-data/`),
+
   create: async (payload: PatientPayload) =>
     postOne<PatientDetail>("/patients/", normalizePatientCreatePayload(payload)),
 

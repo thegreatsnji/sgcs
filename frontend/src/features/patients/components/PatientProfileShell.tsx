@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Avatar, Badge, Button, useToast } from "@/design-system";
 import {
@@ -21,6 +22,20 @@ interface PatientProfileShellProps {
 export function PatientProfileShell({ patient, children }: PatientProfileShellProps) {
   const { hasPermission } = usePermissions();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  const isHistorical = patient.import_origin === "MIGRACAO_EXCEL_SAUVIDA";
+  const needsConfirmation = isHistorical && !patient.dados_verificados;
+
+  const confirmMutation = useMutation({
+    mutationFn: () => patientsService.confirmImportedData(patient.id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["patient", String(patient.id)] });
+      showToast("Dados verificados", "success");
+    },
+    onError: (error) => {
+      showToast(getApiErrorMessage(error), "error");
+    },
+  });
 
   const primaryContact = patient.emergency_contacts?.find((c) => c.is_primary) ?? patient.emergency_contacts?.[0];
 
@@ -38,6 +53,32 @@ export function PatientProfileShell({ patient, children }: PatientProfileShellPr
 
   return (
     <div className="space-y-6">
+      {needsConfirmation && (
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          role="status"
+        >
+          <p>
+            Dados provenientes do registo anterior da clínica. Confirme as informações do utente.
+          </p>
+          {hasPermission("patients.edit") && (
+            <Button
+              type="button"
+              variant="outline"
+              className="border-amber-300 bg-white"
+              disabled={confirmMutation.isPending}
+              onClick={() => confirmMutation.mutate()}
+            >
+              Confirmar dados
+            </Button>
+          )}
+        </div>
+      )}
+      {isHistorical && patient.dados_verificados && (
+        <p className="text-sm text-slate-600" role="status">
+          Dados verificados
+        </p>
+      )}
       <div className="grid gap-6 xl:grid-cols-[300px_1fr]">
         {/* Left panel — patient identity */}
         <aside className="space-y-4">

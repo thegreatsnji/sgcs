@@ -77,7 +77,7 @@ export function NurseRoleDashboardPage() {
           canTriage
             ? { to: "/nursing/triage", label: "Nova triagem" }
             : hasPermission("pharmacy.view")
-              ? { to: "/pharmacy/urgent-stock", label: "Farmácia de urgência" }
+              ? { to: "/stock", label: "Stock de urgência" }
               : { to: "/patients", label: "Pacientes" }
         }
         secondaryAction={
@@ -129,7 +129,7 @@ export function NurseRoleDashboardPage() {
       </div>
 
       {hasPermission("pharmacy.view") && lowStock > 0 ? (
-        <Card title="Stock crítico" description="Registe entradas na farmácia de urgência.">
+        <Card title="Stock crítico" description="Registe entradas no stock de urgência.">
           <ul className="space-y-2 text-sm">
             {pharmacy.data?.results
               .filter((m) => Number(m.quantidade_stock) <= 0)
@@ -142,7 +142,7 @@ export function NurseRoleDashboardPage() {
               ))}
           </ul>
           <Link
-            to="/pharmacy/urgent-stock"
+            to="/stock"
             className="mt-4 inline-block text-sm font-semibold text-primary-600 hover:text-primary-700"
           >
             Gerir stock →
@@ -180,10 +180,10 @@ export function NurseRoleDashboardPage() {
             </Link>
           ) : hasPermission("pharmacy.view") ? (
             <Link
-              to="/pharmacy/urgent-stock"
+              to="/stock"
               className="rounded-xl bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-primary-700"
             >
-              Farmácia de urgência
+              Stock de urgência
             </Link>
           ) : null}
           <Link

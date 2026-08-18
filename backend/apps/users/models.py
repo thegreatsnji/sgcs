@@ -51,6 +51,9 @@ class PermissionAction(models.TextChoices):
     TEMPLATE = "template", "Templates"
     SETTINGS = "settings", "Configurações"
     HISTORY = "history", "Histórico"
+    ENTRY = "entry", "Entrada de stock"
+    EXIT = "exit", "Saída de stock"
+    ADJUST = "adjust", "Ajuste de stock"
 
 
 class SystemModule(models.TextChoices):
@@ -66,7 +69,8 @@ class SystemModule(models.TextChoices):
     RECEPTION = "reception", "Receção"
     DOCTORS = "doctors", "Médicos"
     NOTIFICATIONS = "notifications", "Notificações"
-    PHARMACY = "pharmacy", "Farmácia de urgência"
+    PHARMACY = "pharmacy", "Stock de urgência"
+    STOCK = "stock", "Stock de urgência"
 
 
 class ModulePermission(models.Model):

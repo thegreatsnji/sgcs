@@ -106,6 +106,12 @@ class AuditAction(models.TextChoices):
     TENTATIVA_ALTERAR_PRECO_OFICIAL = "TENTATIVA_ALTERAR_PRECO_OFICIAL", "Tentativa de alterar preço oficial"
     CATALOGO_REAL_IMPORTADO = "CATALOGO_REAL_IMPORTADO", "Catálogo real importado"
     CONFLITO_CATALOGO_RESOLVIDO = "CONFLITO_CATALOGO_RESOLVIDO", "Conflito de catálogo resolvido"
+    STOCK_ITEM_CRIADO = "STOCK_ITEM_CRIADO", "Item de stock de urgência criado"
+    STOCK_ENTRADA = "STOCK_ENTRADA", "Entrada de stock de urgência"
+    STOCK_SAIDA = "STOCK_SAIDA", "Saída de stock de urgência"
+    STOCK_AJUSTE = "STOCK_AJUSTE", "Ajuste de stock de urgência"
+    STOCK_PERDA_EXPIRACAO = "STOCK_PERDA_EXPIRACAO", "Perda/expiração de stock"
+    STOCK_ITEM_DESACTIVADO = "STOCK_ITEM_DESACTIVADO", "Item de stock desactivado"
 
 
 class AuditLog(models.Model):

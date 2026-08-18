@@ -19,6 +19,7 @@ MODULES = [
     SystemModule.DOCTORS,
     SystemModule.NOTIFICATIONS,
     SystemModule.PHARMACY,
+    SystemModule.STOCK,
 ]
 
 ACTIONS = [
@@ -103,6 +104,13 @@ NOTIFICATIONS_EXTRA_ACTIONS = [
     PermissionAction.HISTORY,
 ]
 
+STOCK_EXTRA_ACTIONS = [
+    PermissionAction.ENTRY,
+    PermissionAction.EXIT,
+    PermissionAction.ADJUST,
+    PermissionAction.HISTORY,
+]
+
 DEFAULT_ROLE_PERMISSIONS = {
     UserRole.ADMINISTRADOR: "__all__",
     UserRole.RECECIONISTA: [
@@ -130,6 +138,7 @@ DEFAULT_ROLE_PERMISSIONS = {
         "laboratory.results.view", "laboratory.results.download",
         "billing.view",
         "pharmacy.view",
+        "stock.view",
         "dashboard.view",
         "doctors.prescription", "doctors.treatment", "doctors.evolution",
         "doctors.discharge", "doctors.followup",
@@ -140,6 +149,8 @@ DEFAULT_ROLE_PERMISSIONS = {
         "appointments.view", "appointments.edit",
         "reception.view", "reception.create", "reception.edit",
         "pharmacy.view", "pharmacy.edit", "pharmacy.create",
+        "stock.view", "stock.create", "stock.edit",
+        "stock.entry", "stock.exit", "stock.adjust", "stock.history",
         "dashboard.view",
     ],
     UserRole.LABORATORIO: [
@@ -181,6 +192,7 @@ DEFAULT_ROLE_PERMISSIONS = {
         "reports.view", "reports.export", "reports.dashboard", "reports.statistics",
         "dashboard.view",
         "pharmacy.view",
+        "stock.view", "stock.history",
         "notifications.view", "notifications.send", "notifications.template",
         "notifications.settings", "notifications.history",
     ],
@@ -218,6 +230,8 @@ class Command(BaseCommand):
                 module_actions.extend(DOCTORS_EXTRA_ACTIONS)
             if module == SystemModule.NOTIFICATIONS:
                 module_actions.extend(NOTIFICATIONS_EXTRA_ACTIONS)
+            if module == SystemModule.STOCK:
+                module_actions.extend(STOCK_EXTRA_ACTIONS)
             for action in module_actions:
                 codename = f"{module}.{action}"
                 permission, _ = ModulePermission.objects.get_or_create(

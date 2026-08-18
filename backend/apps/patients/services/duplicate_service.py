@@ -26,12 +26,17 @@ class DuplicateService:
                 return [DuplicateService._to_match(p, 1.0) for p in doc_match[:5]]
 
         matches = queryset.filter(
-            birth_date=birth_date,
-        ).filter(
             Q(first_name__iexact=first_name.strip())
             | Q(last_name__iexact=last_name.strip())
             | Q(phone=phone)
-        )[:10]
+        )
+        if birth_date:
+            matches = queryset.filter(birth_date=birth_date).filter(
+                Q(first_name__iexact=first_name.strip())
+                | Q(last_name__iexact=last_name.strip())
+                | Q(phone=phone)
+            )
+        matches = matches[:10]
 
         results = []
         for patient in matches:

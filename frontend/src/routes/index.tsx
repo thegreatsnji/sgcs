@@ -36,6 +36,7 @@ import { BillingDashboardPage } from "@/features/billing/pages/BillingDashboardP
 import { InvoiceCreatePage } from "@/features/billing/pages/InvoiceCreatePage";
 import { PendingReductionsPage } from "@/features/billing/pages/PendingReductionsPage";
 import { UrgentStockPage } from "@/features/pharmacy/pages/UrgentStockPage";
+import { UrgentStockHistoryPage } from "@/features/pharmacy/pages/UrgentStockHistoryPage";
 import { InvoiceDetailPage } from "@/features/billing/pages/InvoiceDetailPage";
 import { InvoicesListPage } from "@/features/billing/pages/InvoicesListPage";
 import { PatientHistoryPage as BillingPatientHistoryPage } from "@/features/billing/pages/PatientHistoryPage";
@@ -247,7 +248,11 @@ export const router = createBrowserRouter([
           },
           {
             element: <PermissionRoute permission="pharmacy.view" fallback="/" />,
-            children: [{ path: "pharmacy/urgent-stock", element: <UrgentStockPage /> }],
+            children: [
+              { path: "stock", element: <UrgentStockPage /> },
+              { path: "stock/historico", element: <UrgentStockHistoryPage /> },
+              { path: "pharmacy/urgent-stock", element: <UrgentStockPage /> },
+            ],
           },
           {
             element: <PermissionRoute permission="reports.view" fallback="/" />,

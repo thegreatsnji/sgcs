@@ -28,7 +28,7 @@ export const UI_COPY = {
     featureFlags: "Funcionalidades experimentais",
     checkIn: "Triagem",
     fastReception: "Atendimento rápido",
-    pharmacyUrgent: "Farmácia de urgência",
+    pharmacyUrgent: "Stock de urgência",
     queue: "Fila de atendimento",
     referrals: "Encaminhamentos",
     templates: "Modelos",

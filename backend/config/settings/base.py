@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.settings",
     "apps.pharmacy",
+    "apps.data_migration",
     "apps.files",
     "apps.analytics",
 ]
@@ -255,3 +256,5 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 SECURE_CONTENT_SECURITY_POLICY = os.getenv("CSP_HEADER", "")
+
+STOCK_URGENCIA_DIAS_PROXIMA_VALIDADE = int(os.getenv("STOCK_URGENCIA_DIAS_PROXIMA_VALIDADE", "30"))

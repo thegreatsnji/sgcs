@@ -32,9 +32,10 @@ class Patient(TimestampMixin, SoftDeleteMixin, models.Model):
         blank=True,
     )
     document_number = models.CharField("Nº documento", max_length=50, blank=True)
-    birth_date = models.DateField("Data de nascimento")
-    gender = models.CharField("Sexo", max_length=1, choices=PatientGender.choices)
-    phone = models.CharField("Telefone", max_length=20)
+    birth_date = models.DateField("Data de nascimento", null=True, blank=True)
+    gender = models.CharField("Sexo", max_length=1, choices=PatientGender.choices, blank=True)
+    phone = models.CharField("Telefone", max_length=20, blank=True)
+    metadata = models.JSONField("Metadados", default=dict, blank=True)
     email = models.EmailField("E-mail", blank=True)
     address_street = models.CharField("Morada", max_length=255, blank=True)
     address_city = models.CharField("Cidade", max_length=100, blank=True)
@@ -115,7 +116,9 @@ class Patient(TimestampMixin, SoftDeleteMixin, models.Model):
         self.save(update_fields=["is_deleted", "deleted_at", "is_active", "updated_at"])
 
     @property
-    def age(self) -> int:
+    def age(self) -> int | None:
+        if not self.birth_date:
+            return None
         today = timezone.localdate()
         years = today.year - self.birth_date.year
         if (today.month, today.day) < (self.birth_date.month, self.birth_date.day):

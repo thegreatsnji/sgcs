@@ -63,3 +63,10 @@ staticfiles/
 *.pem
 *.key
 secrets/
+
+# Dados clínicos privados / migração histórica
+backend/data/private/
+backend/data/migration/
+backups/
+*.patient-data.csv
+*.patient-data.xlsx

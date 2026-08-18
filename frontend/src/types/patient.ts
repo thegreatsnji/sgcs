@@ -91,6 +91,9 @@ export interface PatientDetail extends PatientListItem {
   allergies_count?: number;
   chronic_diseases_count?: number;
   primary_photo_url?: string | null;
+  import_origin?: string | null;
+  verification_state?: string | null;
+  dados_verificados?: boolean;
 }
 
 export interface PatientPayload {

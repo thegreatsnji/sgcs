@@ -178,6 +178,37 @@ class PatientViewSet(PatientPermissionMixin, viewsets.ModelViewSet):
             message="Paciente desativado com sucesso.",
         )
 
+    @extend_schema(request=None, responses={200: dict}, tags=["Pacientes"])
+    @action(detail=True, methods=["post"], url_path="confirm-imported-data")
+    def confirm_imported_data(self, request, pk=None):
+        instance = self.get_object()
+        meta = dict(instance.metadata or {})
+        if meta.get("source") != "MIGRACAO_EXCEL_SAUVIDA":
+            return error_response("Este utente não é um registo histórico importado.", status=status.HTTP_400_BAD_REQUEST)
+        provenance = {
+            key: meta.get(key)
+            for key in ("source", "import_batch", "migration_id", "created_via", "record_class")
+        }
+        meta["dados_verificados"] = True
+        meta["verification_state"] = "VERIFICADO"
+        for key, value in provenance.items():
+            if value not in (None, ""):
+                meta[key] = value
+        instance.metadata = meta
+        instance.updated_by = request.user
+        instance.save(update_fields=["metadata", "updated_by", "updated_at"])
+        AuditService.log(
+            action=AuditAction.PATIENT_UPDATE,
+            user=request.user,
+            request=request,
+            description="Dados históricos do utente confirmados na receção.",
+            resource_type="patient",
+            resource_id=str(instance.pk),
+            metadata={"verification_state": "VERIFICADO", "source": meta.get("source")},
+        )
+        data = PatientDetailSerializer(instance, context={"request": request}).data
+        return success_response(data=data, message="Dados verificados.")
+
     @extend_schema(
         parameters=[
             OpenApiParameter("first_name", str, required=True),
