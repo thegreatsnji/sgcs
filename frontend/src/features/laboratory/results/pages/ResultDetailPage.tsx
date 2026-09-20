@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 
+import { LabResultPrint } from "@/components/print/LabResultPrint";
 import { Button, Card, ErrorState, useToast } from "@/design-system";
 import { LaboratorySubNav } from "@/features/laboratory/components/LaboratorySubNav";
 import { LaboratoryTableSkeleton } from "@/features/laboratory/components/LaboratorySkeleton";
@@ -15,7 +16,7 @@ import { UploadResultado } from "@/features/laboratory/results/components/Upload
 import { usePermissions } from "@/hooks/usePermissions";
 import { laboratoryResultsService } from "@/services/laboratory";
 import { getApiErrorMessage } from "@/utils/api-error";
-import { formatDisplayDateTime } from "@/utils/date";
+import { formatDisplayDate, formatDisplayDateTime } from "@/utils/date";
 
 export function ResultDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -37,20 +38,29 @@ export function ResultDetailPage() {
 
   const validateMutation = useMutation({
     mutationFn: () => laboratoryResultsService.validate(resultId),
-    onSuccess: () => { showToast("Resultado validado.", "success"); invalidate(); },
+    onSuccess: () => {
+      showToast("Resultado validado. Já disponível para consulta clínica.", "success");
+      invalidate();
+    },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
 
-  const publishMutation = useMutation({
+  const deliverMutation = useMutation({
     mutationFn: () => laboratoryResultsService.publish(resultId),
-    onSuccess: () => { showToast("Resultado publicado ao médico.", "success"); invalidate(); },
+    onSuccess: () => {
+      showToast("Resultado marcado como entregue.", "success");
+      invalidate();
+    },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
 
   const uploadMutation = useMutation({
     mutationFn: ({ file, descricao }: { file: File; descricao: string }) =>
       laboratoryResultsService.uploadAttachment(resultId, file, descricao),
-    onSuccess: () => { showToast("Anexo adicionado.", "success"); invalidate(); },
+    onSuccess: () => {
+      showToast("Anexo adicionado.", "success");
+      invalidate();
+    },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
 
@@ -59,12 +69,17 @@ export function ResultDetailPage() {
   if (isError) return <ErrorState message="Erro ao carregar." onRetry={() => void refetch()} />;
 
   const canEdit = hasPermission("laboratory.results.edit") && data.editavel;
-  const canValidate = hasPermission("laboratory.results.validate") && data.estado === "RESULTADO_PENDENTE";
-  const canPublish = hasPermission("laboratory.results.publish") && data.estado === "VALIDADO";
+  const canValidate =
+    hasPermission("laboratory.results.validate") && data.estado === "RESULTADO_PENDENTE";
+  const canMarkDelivered =
+    hasPermission("laboratory.results.publish") && data.estado === "VALIDADO";
+  const isValidated = data.estado === "VALIDADO" || data.estado === "ENTREGUE";
 
   const validationStatus = (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-      <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Estado de validação</p>
+      <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
+        Estado de validação
+      </p>
       <div className="mt-2">
         <ResultadoStatusBadge status={data.estado} />
       </div>
@@ -90,13 +105,34 @@ export function ResultDetailPage() {
             </Link>
           )}
           {canValidate && (
-            <Button variant="primary" onClick={() => validateMutation.mutate()} isLoading={validateMutation.isPending}>
+            <Button
+              variant="primary"
+              isLoading={validateMutation.isPending}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Validar este resultado?\n\nO resultado ficará disponível para consulta clínica e deixará de poder ser editado.",
+                  )
+                ) {
+                  validateMutation.mutate();
+                }
+              }}
+            >
               Validar resultado
             </Button>
           )}
-          {canPublish && (
-            <Button variant="primary" onClick={() => publishMutation.mutate()} isLoading={publishMutation.isPending}>
-              Publicar ao médico
+          {isValidated && (
+            <Button variant="outline" type="button" onClick={() => window.print()}>
+              Imprimir
+            </Button>
+          )}
+          {canMarkDelivered && (
+            <Button
+              variant="ghost"
+              onClick={() => deliverMutation.mutate()}
+              isLoading={deliverMutation.isPending}
+            >
+              Marcar entregue
             </Button>
           )}
         </div>
@@ -104,10 +140,14 @@ export function ResultDetailPage() {
 
       <LaboratorySubNav />
 
-      <div className="grid gap-6 xl:grid-cols-[240px_1fr_280px]">
+      <div className="grid gap-6 print:hidden xl:grid-cols-[240px_1fr_280px]">
         <LabPatientPanel
           patient={{
             full_name: data.paciente_nome,
+            patient_number: data.paciente_codigo,
+            gender_label: data.paciente_sexo_label,
+            birth_date: data.paciente_birth_date,
+            age_years: data.paciente_idade,
             numero_pedido: data.numero_pedido,
             medico_nome: data.medico_nome,
             estado: data.estado,
@@ -127,11 +167,13 @@ export function ResultDetailPage() {
       </div>
 
       {data.anexos.length > 0 && (
-        <Card title="Anexos">
+        <Card title="Anexos" className="print:hidden">
           <ul className="divide-y divide-slate-100">
             {data.anexos.map((anexo) => (
               <li key={anexo.id} className="flex items-center justify-between gap-2 py-3 first:pt-0">
-                <span className="text-sm text-slate-700">{anexo.nome_ficheiro || anexo.descricao || anexo.tipo}</span>
+                <span className="text-sm text-slate-700">
+                  {anexo.nome_ficheiro || anexo.descricao || anexo.tipo}
+                </span>
                 <a
                   href={laboratoryResultsService.downloadUrl(resultId, anexo.id)}
                   className="text-sm font-medium text-primary-600 hover:text-primary-700"
@@ -147,12 +189,86 @@ export function ResultDetailPage() {
       )}
 
       {canEdit && hasPermission("laboratory.results.create") && (
-        <Card title="Anexar documento">
+        <Card title="Anexar documento" className="print:hidden">
           <UploadResultado
             onUpload={(file, descricao) => uploadMutation.mutate({ file, descricao })}
             isPending={uploadMutation.isPending}
           />
         </Card>
+      )}
+
+      {isValidated && (
+        <div className="hidden print:block">
+          <LabResultPrint
+            patientName={data.paciente_nome}
+            orderNumber={data.numero_pedido}
+            documentNumber={data.numero_pedido}
+            documentDate={
+              data.data_validacao
+                ? formatDisplayDate(data.data_validacao)
+                : formatDisplayDate(data.data_resultado)
+            }
+            validatedBy={data.validado_por_nome ?? undefined}
+            results={
+              <div className="space-y-4 text-sm">
+                <p>
+                  <span className="text-slate-500">Código:</span> {data.paciente_codigo ?? "—"}
+                </p>
+                <p>
+                  <span className="text-slate-500">Sexo / idade:</span>{" "}
+                  {[data.paciente_sexo_label, data.paciente_idade != null ? `${data.paciente_idade} anos` : null]
+                    .filter(Boolean)
+                    .join(" · ") || "—"}
+                </p>
+                <p>
+                  <span className="text-slate-500">Exame(s):</span>{" "}
+                  {(data.exames_nomes ?? []).join(", ") || "—"}
+                </p>
+                <p>
+                  <span className="text-slate-500">Médico:</span> {data.medico_nome ?? "—"}
+                </p>
+                <p>
+                  <span className="text-slate-500">Técnico:</span> {data.responsavel_nome ?? "—"}
+                </p>
+                {data.parametros.length > 0 && (
+                  <table className="mt-4 w-full border-collapse text-left text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-1">Parâmetro</th>
+                        <th className="py-1">Valor</th>
+                        <th className="py-1">Unidade</th>
+                        <th className="py-1">Referência</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.parametros.map((p) => (
+                        <tr key={p.id ?? p.nome} className="border-b border-slate-100">
+                          <td className="py-1">{p.nome}</td>
+                          <td className="py-1">{p.valor}</td>
+                          <td className="py-1">{p.unidade || "—"}</td>
+                          <td className="py-1">
+                            {[p.valor_minimo, p.valor_maximo].filter(Boolean).join(" – ") || "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+                {data.conclusao && (
+                  <p className="mt-4">
+                    <span className="font-semibold">Conclusão:</span> {data.conclusao}
+                  </p>
+                )}
+                {data.observacoes && (
+                  <p>
+                    <span className="font-semibold">Observações:</span> {data.observacoes}
+                  </p>
+                )}
+                <p className="mt-4 text-xs text-slate-500">Estado: Validado</p>
+              </div>
+            }
+          />
+        </div>
       )}
     </div>
   );

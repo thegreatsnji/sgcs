@@ -70,6 +70,7 @@ export function PatientFormPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const canAccess = isEdit ? hasPermission("patients.edit") : hasPermission("patients.create");
+  const canEditBloodType = hasPermission("appointments.clinical");
   const patientId = Number(id);
 
   const { data: patient, isLoading, isError, refetch } = useQuery({
@@ -191,7 +192,7 @@ export function PatientFormPage() {
         <p className="text-sm text-slate-500">
           {isEdit
             ? `Processo ${patient?.patient_number}`
-            : "Dados guardados na ficha do utente — triagem e consulta usam a mesma informação."}
+            : "Dados guardados na ficha do utente. A triagem e a consulta usam a mesma informação."}
         </p>
       </div>
 
@@ -240,16 +241,18 @@ export function PatientFormPage() {
                 {...register("phone")}
               />
             </div>
-            <SelectField
-              label="Grupo sanguíneo (opcional)"
-              placeholder="Selecionar"
-              options={(Object.entries(BLOOD_TYPE_LABELS) as [BloodType, string][]).map(([value, label]) => ({
-                value,
-                label,
-              }))}
-              error={errors.blood_type?.message}
-              {...register("blood_type")}
-            />
+            {canEditBloodType && (
+              <SelectField
+                label="Grupo sanguíneo (opcional)"
+                placeholder="Selecionar"
+                options={(Object.entries(BLOOD_TYPE_LABELS) as [BloodType, string][]).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
+                error={errors.blood_type?.message}
+                {...register("blood_type")}
+              />
+            )}
             <SelectField
               label="Tipo de documento (opcional)"
               placeholder="Selecionar"

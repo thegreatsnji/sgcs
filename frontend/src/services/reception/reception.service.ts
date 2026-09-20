@@ -26,8 +26,25 @@ export const receptionService = {
     return unwrapApiData(data);
   },
 
-  getQueue: async (params?: { status?: string; priority?: string; page?: number }) =>
-    getPaginated<WaitingQueueEntry>("/reception/queue/", params),
+  getQueue: async (params?: {
+    status?: string;
+    priority?: string;
+    page?: number;
+    doctor?: number | "unassigned";
+    unassigned?: boolean;
+  }) => {
+    const query: Record<string, string | number | boolean | undefined> = {
+      status: params?.status,
+      priority: params?.priority,
+      page: params?.page,
+    };
+    if (params?.doctor === "unassigned" || params?.unassigned) {
+      query.unassigned = true;
+    } else if (typeof params?.doctor === "number") {
+      query.doctor = params.doctor;
+    }
+    return getPaginated<WaitingQueueEntry>("/reception/queue/", query);
+  },
 
   updateQueueEntry: async (queueId: number, payload: { status: string }) => {
     const { data } = await api.patch<ApiEnvelope<WaitingQueueEntry>>(
@@ -45,10 +62,19 @@ export const receptionService = {
     return unwrapApiData(data);
   },
 
-  getDoctorAssignmentOptions: async (patientId: number) => {
+  getDoctorAssignmentOptions: async (
+    patientId?: number,
+    extra?: { queue_id?: number; check_in_id?: number },
+  ) => {
     const { data } = await api.get<ApiEnvelope<import("@/types/reception").DoctorAssignmentOptions>>(
       "/reception/doctor-assignment-options/",
-      { params: { patient_id: patientId } },
+      {
+        params: {
+          patient_id: patientId,
+          queue_id: extra?.queue_id,
+          check_in_id: extra?.check_in_id,
+        },
+      },
     );
     return unwrapApiData(data);
   },
@@ -58,6 +84,33 @@ export const receptionService = {
 
   createReferral: async (payload: ReferralPayload) => {
     const { data } = await api.post<ApiEnvelope<Referral>>("/reception/referrals/", payload);
+    return unwrapApiData(data);
+  },
+
+  getPendingClinicalLabOrders: async (params?: { estado_faturacao?: string }) => {
+    const { data } = await api.get<
+      ApiEnvelope<
+        Array<{
+          id: number;
+          paciente_id: number;
+          paciente_nome: string;
+          paciente_codigo: string;
+          tipo_exame: string;
+          estado_faturacao: string;
+          estado_faturacao_label: string;
+          prioridade: string;
+          created_at: string;
+          servico: { id: number; codigo: string; nome: string } | null;
+        }>
+      >
+    >("/reception/pending-clinical-lab-orders/", { params });
+    return unwrapApiData(data);
+  },
+
+  markLabOrderBilled: async (orderId: number) => {
+    const { data } = await api.post<
+      ApiEnvelope<{ id: number; estado_faturacao: string; already_regularized: boolean }>
+    >(`/reception/mark-lab-order-billed/${orderId}/`);
     return unwrapApiData(data);
   },
 };

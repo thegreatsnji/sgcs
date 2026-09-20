@@ -71,17 +71,16 @@ export function buildSidebarConfig(
     return {
       main: [
         { to: dashboardPath, label: nav.dashboard, icon: icons.dashboard, end: true },
-        { to: "/patients", label: nav.patients, icon: icons.patients },
-        { to: "/appointments", label: nav.appointments, icon: icons.calendar },
-        { to: "/doctor", label: nav.doctors, icon: icons.calendar },
-        { to: "/laboratory", label: nav.laboratory, icon: icons.lab },
-        { to: "/billing", label: nav.billing, icon: icons.billing },
-        ...(hasPermission("pharmacy.view")
+        { to: "/reports", label: nav.reports, icon: icons.dashboard },
+        ...(hasPermission("billing.view")
+          ? [{ to: "/billing/invoices", label: nav.billing, icon: icons.billing }]
+          : []),
+        ...(hasPermission("patients.view")
+          ? [{ to: "/patients", label: nav.patients, icon: icons.patients }]
+          : []),
+        ...(hasPermission("pharmacy.view") || hasPermission("stock.view")
           ? [{ to: "/stock", label: nav.pharmacyUrgent, icon: icons.lab }]
           : []),
-        { to: "/finance", label: nav.finance, icon: icons.billing },
-        { to: "/reports", label: nav.reports, icon: icons.dashboard },
-        { to: "/notifications", label: nav.notifications, icon: icons.bell },
       ],
     };
   }
@@ -114,7 +113,6 @@ export function buildSidebarConfig(
           : []),
         { to: "/patients", label: nav.patients, icon: icons.patients },
         { to: "/appointments", label: nav.appointmentsSchedule, icon: icons.calendar },
-        { to: "/notifications", label: nav.notifications, icon: icons.bell },
       ],
     };
   }
@@ -123,17 +121,13 @@ export function buildSidebarConfig(
     return {
       main: [
         { to: dashboardPath, label: nav.dashboard, icon: icons.dashboard, end: true },
-        ...(hasPermission("reception.view")
-          ? [
-              { to: "/nursing/triage", label: nav.checkIn, icon: icons.patients },
-              { to: "/reception/queue", label: nav.queue, icon: icons.patients },
-            ]
+        ...(hasPermission("reception.create")
+          ? [{ to: "/nursing/triage", label: nav.checkIn, icon: icons.patients }]
           : []),
-        ...(hasPermission("pharmacy.view")
+        ...(hasPermission("pharmacy.view") || hasPermission("stock.view")
           ? [{ to: "/stock", label: nav.pharmacyUrgent, icon: icons.lab }]
           : []),
         { to: "/patients", label: nav.patients, icon: icons.patients },
-        { to: "/appointments", label: nav.appointments, icon: icons.calendar },
       ],
     };
   }
@@ -143,9 +137,9 @@ export function buildSidebarConfig(
       main: [
         { to: dashboardPath, label: nav.dashboard, icon: icons.dashboard, end: true },
         { to: "/laboratory/pending", label: nav.pending, icon: icons.lab },
+        { to: "/laboratory/today", label: nav.processing ?? "Processamento", icon: icons.lab },
         { to: "/laboratory/collection", label: nav.collection, icon: icons.lab },
         { to: "/laboratory/results", label: nav.results, icon: icons.lab },
-        { to: "/laboratory/results/history", label: nav.history, icon: icons.lab },
         { to: "/notifications", label: nav.notifications, icon: icons.bell },
       ],
     };

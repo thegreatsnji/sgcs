@@ -67,24 +67,25 @@ function TabelaResultadosComponent({
                 <td className="px-4 py-3.5 text-slate-600">{row.responsavel_nome ?? "—"}</td>
                 <td className="px-4 py-3.5">
                   <div className="flex flex-wrap gap-1.5">
-                    <Link to={`/laboratory/results/${row.id}/edit`}>
-                      <Button variant="ghost" className="!px-2 !py-1 text-xs">
-                        Editar
-                      </Button>
-                    </Link>
+                    {row.editavel && (
+                      <Link to={`/laboratory/results/${row.id}/edit`}>
+                        <Button variant="ghost" className="!px-2 !py-1 text-xs">
+                          Editar
+                        </Button>
+                      </Link>
+                    )}
                     <Link to={`/laboratory/results/${row.id}`}>
                       <Button variant="outline" className="!px-2 !py-1 text-xs">
-                        Validar
+                        {row.estado === "RESULTADO_PENDENTE" ? "Validar" : "Abrir"}
                       </Button>
                     </Link>
-                    <Button
-                      variant="ghost"
-                      className="!px-2 !py-1 text-xs"
-                      onClick={() => window.print()}
-                      type="button"
-                    >
-                      Imprimir
-                    </Button>
+                    {(row.estado === "VALIDADO" || row.estado === "ENTREGUE") && (
+                      <Link to={`/laboratory/results/${row.id}`}>
+                        <Button variant="ghost" className="!px-2 !py-1 text-xs">
+                          Imprimir
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </td>
               </tr>

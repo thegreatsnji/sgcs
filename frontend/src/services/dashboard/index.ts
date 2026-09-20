@@ -1,1 +1,6 @@
-export { dashboardService } from "./dashboard.service";
+export {
+  dashboardService,
+  type DirectorDashboardData,
+  type DirectorDashboardParams,
+  type DirectorSection,
+} from "./dashboard.service";

@@ -142,10 +142,18 @@ export function PatientClinicalPage() {
   const allergyRows = allergies?.results ?? [];
   const diseaseRows = diseases?.results ?? [];
   const observationRows = observations?.results ?? [];
-  const canEdit = hasPermission("patients.edit");
+  const canEditClinical = hasPermission("appointments.clinical");
+  const canEdit = canEditClinical;
 
   return (
     <PatientProfileShell patient={patient}>
+      {!canEdit && (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          Vista operacional: alergias visíveis para segurança no balcão. Edição clínica e conteúdo
+          médico detalhado estão reservados à equipa clínica.
+        </div>
+      )}
+
       <AllergyAlertBanner allergies={allergyRows} />
 
       <Card

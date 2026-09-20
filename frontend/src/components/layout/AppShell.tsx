@@ -38,7 +38,7 @@ export function AppShell({ children }: AppShellProps) {
         </div>
         <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>
         <footer className="app-chrome flex flex-col items-center justify-between gap-2 border-t border-border bg-surface px-6 py-3 text-xs text-text-muted sm:flex-row">
-          <span>© 2026 SauVida · Sistema de Gestão Clínica</span>
+          <span>© 2026 Clínica SauVida</span>
           <span className="inline-flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
             Servidores operacionais

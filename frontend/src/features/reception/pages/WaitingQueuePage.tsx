@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
@@ -11,41 +11,47 @@ import {
 } from "@/design-system";
 import { RECEPTION_PAGE_SIZE } from "@/constants/reception";
 import { QueueTable } from "@/features/reception/components/QueueTable";
+import { ReceptionDoctorNotifyPanel } from "@/features/reception/components/ReceptionDoctorNotifyPanel";
 import { ReceptionSubNav } from "@/features/reception/components/ReceptionSubNav";
 import { useReceptionQueue } from "@/features/reception/hooks/useReceptionQueue";
 import { receptionService } from "@/services/reception";
 import type { WaitingQueueEntry } from "@/types/reception";
 import { getApiErrorMessage } from "@/utils/api-error";
 
+type DoctorFilter = "all" | "unassigned" | number;
+
 export function WaitingQueuePage() {
   const { showToast } = useToast();
-  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [doctorFilter, setDoctorFilter] = useState<DoctorFilter>("all");
   const [assignTarget, setAssignTarget] = useState<WaitingQueueEntry | null>(null);
 
-  const { data, isLoading, isError, refetch } = useReceptionQueue(page);
+  const queueParams =
+    doctorFilter === "all"
+      ? { page }
+      : doctorFilter === "unassigned"
+        ? { page, unassigned: true as const }
+        : { page, doctor: doctorFilter };
 
-  const assignMutation = useMutation({
-    mutationFn: (entry: WaitingQueueEntry) =>
-      receptionService.assignToDoctor({ queue_id: entry.id }),
-    onSuccess: () => {
-      showToast("Paciente encaminhado para médico.", "success");
-      setAssignTarget(null);
-      void queryClient.invalidateQueries({ queryKey: ["reception-queue"] });
-      void queryClient.invalidateQueries({ queryKey: ["reception-dashboard"] });
+  const { data, isLoading, isError, refetch } = useReceptionQueue(queueParams);
+
+  const { data: doctorOptions } = useQuery({
+    queryKey: ["reception-queue-doctor-filter"],
+    queryFn: async () => {
+      const opts = await receptionService.getDoctorAssignmentOptions();
+      return { doctors: opts.doctors.map((d) => ({ id: d.id, full_name: d.full_name })) };
     },
-    onError: (error) => showToast(getApiErrorMessage(error), "error"),
   });
 
-  const callMutation = useMutation({
-    mutationFn: (entry: WaitingQueueEntry) =>
-      receptionService.updateQueueEntry(entry.id, { status: "CALLED" }),
-    onSuccess: () => {
+  const callMutationStatus = async (entry: WaitingQueueEntry) => {
+    try {
+      await receptionService.updateQueueEntry(entry.id, { status: "CALLED" });
       showToast("Utente chamado.", "success");
-      void queryClient.invalidateQueries({ queryKey: ["reception-queue"] });
-    },
-    onError: (error) => showToast(getApiErrorMessage(error), "error"),
-  });
+      void refetch();
+    } catch (error) {
+      showToast(getApiErrorMessage(error), "error");
+    }
+  };
 
   const entries = data?.results ?? [];
   const totalPages = Math.max(1, Math.ceil((data?.count ?? 0) / RECEPTION_PAGE_SIZE));
@@ -60,6 +66,33 @@ export function WaitingQueuePage() {
       <ReceptionSubNav />
 
       <Card>
+        <div className="mb-4 flex flex-wrap items-end gap-3">
+          <div className="min-w-[14rem]">
+            <label htmlFor="queue-doctor-filter" className="mb-1 block text-sm font-medium text-slate-700">
+              Filtrar por médico
+            </label>
+            <select
+              id="queue-doctor-filter"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+              value={doctorFilter === "all" || doctorFilter === "unassigned" ? doctorFilter : String(doctorFilter)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setPage(1);
+                if (v === "all" || v === "unassigned") setDoctorFilter(v);
+                else setDoctorFilter(Number(v));
+              }}
+            >
+              <option value="all">Todos os médicos</option>
+              <option value="unassigned">Por atribuir</option>
+              {(doctorOptions?.doctors ?? []).map((doc) => (
+                <option key={doc.id} value={doc.id}>
+                  {doc.full_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {isLoading ? (
           <LoadingState message="A carregar fila..." />
         ) : isError ? (
@@ -69,7 +102,7 @@ export function WaitingQueuePage() {
             <QueueTable
               entries={entries}
               onAssign={(entry) => setAssignTarget(entry)}
-              onUpdateStatus={(entry) => callMutation.mutate(entry)}
+              onUpdateStatus={(entry) => void callMutationStatus(entry)}
             />
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
               <span className="text-sm text-slate-600">Total: {data?.count ?? 0}</span>
@@ -81,12 +114,31 @@ export function WaitingQueuePage() {
 
       <Modal
         open={Boolean(assignTarget)}
-        title="Encaminhar para médico"
-        description={`Confirma o encaminhamento de ${assignTarget?.patient.full_name} para consulta médica?`}
-        confirmLabel="Encaminhar"
-        onConfirm={() => assignTarget && assignMutation.mutate(assignTarget)}
+        title={assignTarget?.assigned_doctor ? "Alterar médico" : "Encaminhar para médico"}
+        description={
+          assignTarget
+            ? `${assignTarget.patient.full_name} · ${assignTarget.patient.patient_number}`
+            : undefined
+        }
+        cancelLabel="Fechar"
         onClose={() => setAssignTarget(null)}
-      />
+      >
+        {assignTarget ? (
+          <ReceptionDoctorNotifyPanel
+            queueEntryId={assignTarget.id}
+            patientId={assignTarget.patient.id}
+            patientName={assignTarget.patient.full_name}
+            checkInId={assignTarget.check_in_id}
+            paymentConfirmed
+            reassign={Boolean(assignTarget.assigned_doctor)}
+            onNotified={() => {
+              setAssignTarget(null);
+              void refetch();
+            }}
+            onSkip={() => setAssignTarget(null)}
+          />
+        ) : null}
+      </Modal>
     </div>
   );
 }

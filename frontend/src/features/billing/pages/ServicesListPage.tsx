@@ -51,7 +51,7 @@ export function ServicesListPage() {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
-  const canEditCatalog = hasPermission("billing.edit");
+  const canEditCatalog = hasPermission("billing.delete");
   const [searchParams, setSearchParams] = useSearchParams();
 
   const search = searchParams.get("search") ?? "";
@@ -319,7 +319,7 @@ export function ServicesListPage() {
             {data.count > 25 ? (
               <div className="mt-4 flex justify-between text-sm">
                 <span>
-                  Página {page} — {data.count} serviços
+                  Página {page}: {data.count} serviços
                 </span>
                 <div className="flex gap-2">
                   <Button

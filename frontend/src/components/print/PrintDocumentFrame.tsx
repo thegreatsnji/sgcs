@@ -21,7 +21,7 @@ export function PrintDocumentFrame({
   operatorName,
   printedAt = new Date(),
   children,
-  footerNote = "Documento emitido pelo SGCS — Clínica SauVida",
+  footerNote = "Documento emitido pelo SGCS da Clínica SauVida",
   pageNumber,
   pageTotal,
 }: PrintDocumentFrameProps) {

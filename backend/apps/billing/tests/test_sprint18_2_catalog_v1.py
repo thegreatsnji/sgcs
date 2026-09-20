@@ -120,6 +120,11 @@ class TestReciboImpressao:
         assert ctx["textos"]["importancia_de"] == "Importância de"
         assert ctx["exator"]["nome"]
         assert ctx["recibo"]["numero_livro"]["ano"]
+        assert len(ctx["itens"]) == 1
+        assert ctx["itens"][0]["nome"] == "Consulta"
+        assert ctx["itens"][0]["quantidade"] == 1
+        assert ctx["itens"][0]["preco_cobrado"] == "3000.00"
+        assert ctx["itens"][0]["subtotal_cobrado"] == "3000.00"
 
 
 @pytest.mark.django_db

@@ -59,7 +59,9 @@ def patient(db, receptionist_user):
 def _criar_pedido_via_consulta(receptionist_user, doctor_user, patient):
     check_in = ReceptionService.check_in(patient.pk, receptionist_user)
     entry = WaitingQueue.objects.get(check_in=check_in)
-    ReceptionService.assign_to_doctor(queue_id=entry.pk, user=receptionist_user)
+    ReceptionService.assign_to_doctor(
+        queue_id=entry.pk, user=receptionist_user, doctor_id=doctor_user.pk
+    )
     from apps.appointments.models import Appointment
     from apps.appointments.services.appointment_service import AppointmentService
 
@@ -95,6 +97,10 @@ class TestLaboratorioServico:
         pedido.refresh_from_db()
         assert pedido.data_colheita is not None
 
+        # Sprint 25: processamento exige regularização financeira.
+        pedido.pedido_consulta.estado_faturacao = "REGULARIZADO"
+        pedido.pedido_consulta.save(update_fields=["estado_faturacao", "updated_at"])
+
         LaboratoryService.iniciar_processamento(pedido.pk, lab_user)
         pedido.refresh_from_db()
         assert pedido.estado == PedidoLaboratorialEstado.EM_PROCESSAMENTO
@@ -102,11 +108,14 @@ class TestLaboratorioServico:
         LaboratoryService.concluir_exame(pedido.pk, lab_user)
         pedido.refresh_from_db()
         assert pedido.estado == PedidoLaboratorialEstado.CONCLUIDO
-        assert pedido.pedido_consulta.estado == "CONCLUIDO"
+        # Pedido clínico só conclui na validação do resultado (Sprint 25).
+        assert pedido.pedido_consulta.estado == "PENDENTE"
 
     def test_nao_altera_concluido(self, lab_user, receptionist_user, doctor_user, patient):
         pedido = _criar_pedido_via_consulta(receptionist_user, doctor_user, patient)
         LaboratoryService.receber_pedido(pedido.pk, lab_user)
+        pedido.pedido_consulta.estado_faturacao = "REGULARIZADO"
+        pedido.pedido_consulta.save(update_fields=["estado_faturacao", "updated_at"])
         LaboratoryService.iniciar_processamento(pedido.pk, lab_user)
         LaboratoryService.concluir_exame(pedido.pk, lab_user)
         with pytest.raises(ValueError, match="concluído"):
@@ -131,6 +140,8 @@ class TestLaboratorioAPI:
 
     def test_workflow_api(self, api_client, lab_user, receptionist_user, doctor_user, patient, seed_rbac):
         pedido = _criar_pedido_via_consulta(receptionist_user, doctor_user, patient)
+        pedido.pedido_consulta.estado_faturacao = "REGULARIZADO"
+        pedido.pedido_consulta.save(update_fields=["estado_faturacao", "updated_at"])
         api_client.force_authenticate(user=lab_user)
         api_client.post(f"/api/v1/laboratory/{pedido.pk}/receive/")
         api_client.post(f"/api/v1/laboratory/{pedido.pk}/collect/")

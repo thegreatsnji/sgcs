@@ -47,7 +47,7 @@ class LaboratoryResultViewSet(LaboratoryResultPermissionMixin, viewsets.ModelVie
         return ResultadoLaboratorialSerializer
 
     def get_queryset(self):
-        return LaboratoryResultService.listar_resultados()
+        return LaboratoryResultService.listar_resultados(user=self.request.user)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

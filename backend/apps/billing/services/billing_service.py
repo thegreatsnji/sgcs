@@ -344,6 +344,40 @@ class BillingService:
         return item
 
     @staticmethod
+    def _comprometido_pagamentos(fatura: Fatura, *, exclude_pagamento_id: int | None = None) -> Decimal:
+        """Soma valores que ocupam saldo: confirmados, pendentes e processados."""
+        qs = fatura.pagamentos.filter(
+            estado__in={
+                PagamentoEstado.PENDENTE,
+                PagamentoEstado.PROCESSADO,
+                PagamentoEstado.CONFIRMADO,
+            }
+        )
+        if exclude_pagamento_id:
+            qs = qs.exclude(pk=exclude_pagamento_id)
+        return qs.aggregate(s=Sum("valor"))["s"] or Decimal("0.00")
+
+    @staticmethod
+    def _saldo_disponivel(fatura: Fatura, *, exclude_pagamento_id: int | None = None) -> Decimal:
+        comprometido = BillingService._comprometido_pagamentos(
+            fatura, exclude_pagamento_id=exclude_pagamento_id
+        )
+        return max(fatura.total - comprometido, Decimal("0.00"))
+
+    @staticmethod
+    def _validar_valor_pagamento(
+        fatura: Fatura,
+        valor: Decimal,
+        *,
+        exclude_pagamento_id: int | None = None,
+    ) -> None:
+        if valor <= 0:
+            raise ValueError("O valor do pagamento deve ser positivo.")
+        saldo = BillingService._saldo_disponivel(fatura, exclude_pagamento_id=exclude_pagamento_id)
+        if valor > saldo:
+            raise ValueError("O valor do pagamento não pode ser superior ao saldo da fatura.")
+
+    @staticmethod
     @transaction.atomic
     def cancelar_fatura(fatura_id: int, user, request=None) -> Fatura:
         fatura = Fatura.objects.select_for_update().get(pk=fatura_id)
@@ -382,8 +416,7 @@ class BillingService:
             raise ValueError("Não é possível registar pagamento numa fatura cancelada.")
         if fatura.estado == FaturaEstado.PAGA:
             raise ValueError("A fatura já está totalmente paga.")
-        if valor <= 0:
-            raise ValueError("O valor do pagamento deve ser positivo.")
+        BillingService._validar_valor_pagamento(fatura, valor)
 
         pagamento = Pagamento.objects.create(
             fatura=fatura,
@@ -417,13 +450,21 @@ class BillingService:
         if pagamento.estado != PagamentoEstado.PENDENTE:
             raise ValueError("Apenas pagamentos pendentes podem ser confirmados.")
 
+        fatura = Fatura.objects.select_for_update().get(pk=pagamento.fatura_id)
+        if fatura.estado == FaturaEstado.CANCELADA:
+            raise ValueError("Não é possível confirmar pagamento numa fatura cancelada.")
+        BillingService._validar_valor_pagamento(
+            fatura,
+            pagamento.valor,
+            exclude_pagamento_id=pagamento.pk,
+        )
+
         now = timezone.now()
         pagamento.estado = PagamentoEstado.CONFIRMADO
         pagamento.data_pagamento = now
         pagamento.recebido_por = user
         pagamento.save(update_fields=["estado", "data_pagamento", "recebido_por", "updated_at"])
 
-        fatura = pagamento.fatura
         BillingService._actualizar_estado_fatura(fatura)
         BillingService.emitir_recibo(pagamento.pk, user, request=request)
 

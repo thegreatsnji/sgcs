@@ -60,7 +60,9 @@ def patient(db, receptionist_user):
 def _pedido_em_processamento(receptionist_user, doctor_user, patient, lab_user):
     check_in = ReceptionService.check_in(patient.pk, receptionist_user)
     entry = WaitingQueue.objects.get(check_in=check_in)
-    ReceptionService.assign_to_doctor(queue_id=entry.pk, user=receptionist_user)
+    ReceptionService.assign_to_doctor(
+        queue_id=entry.pk, user=receptionist_user, doctor_id=doctor_user.pk
+    )
     from apps.appointments.models import Appointment
     from apps.appointments.services.appointment_service import AppointmentService
 
@@ -72,6 +74,8 @@ def _pedido_em_processamento(receptionist_user, doctor_user, patient, lab_user):
         {"tipo_exame": "Hemograma completo", "prioridade": "NORMAL"},
     )
     pedido = PedidoLaboratorial.objects.get(pedido_consulta=pedido_consulta)
+    pedido_consulta.estado_faturacao = "REGULARIZADO"
+    pedido_consulta.save(update_fields=["estado_faturacao", "updated_at"])
     LaboratoryService.receber_pedido(pedido.pk, lab_user)
     LaboratoryService.iniciar_processamento(pedido.pk, lab_user)
     return pedido, appointment
@@ -125,6 +129,40 @@ class TestResultadoServico:
         assert "Hemograma" in appointment.clinical_notes
         assert AuditLog.objects.filter(action=AuditAction.RESULTADO_VALIDADO).exists()
 
+    def test_validar_notifica_medico_solicitante(
+        self, lab_user, receptionist_user, doctor_user, patient, db
+    ):
+        from apps.authentication.models import UserRole
+        from apps.notifications.models import Notificacao
+        from core.events.events import EventNames
+
+        other_doctor = User.objects.create_user(
+            email="outro.medico@test.gw",
+            password="Medico@123",
+            first_name="Outro",
+            last_name="Médico",
+            role=UserRole.MEDICO,
+        )
+        pedido, _ = _pedido_em_processamento(receptionist_user, doctor_user, patient, lab_user)
+        assert pedido.medico_id == doctor_user.pk
+        resultado = _criar_resultado_com_parametros(pedido, lab_user)
+        LaboratoryResultService.validar_resultado(resultado.pk, lab_user)
+
+        notifs = Notificacao.objects.filter(
+            evento_origem=EventNames.LABORATORY_RESULT_VALIDATED,
+            utilizador=doctor_user,
+        )
+        assert notifs.count() == 1
+        notif = notifs.get()
+        assert "Resultado validado" in notif.titulo
+        assert patient.full_name in notif.mensagem
+        assert notif.metadados.get("url") == f"/laboratory/results/{resultado.pk}"
+        assert notif.metadados.get("resultado_id") == resultado.pk
+        assert not Notificacao.objects.filter(
+            evento_origem=EventNames.LABORATORY_RESULT_VALIDATED,
+            utilizador=other_doctor,
+        ).exists()
+
 
 @pytest.mark.django_db
 class TestResultadoAPI:
@@ -164,12 +202,14 @@ class TestResultadoAPI:
         assert list_resp.status_code == 200
         assert list_resp.data["data"]["count"] >= 1
 
-    def test_medico_pode_ver(self, api_client, lab_user, doctor_user, receptionist_user, patient, seed_rbac):
+    def test_medico_nao_pode_ver_resultado_pendente(
+        self, api_client, lab_user, doctor_user, receptionist_user, patient, seed_rbac
+    ):
         pedido, _ = _pedido_em_processamento(receptionist_user, doctor_user, patient, lab_user)
         resultado = _criar_resultado_com_parametros(pedido, lab_user)
         api_client.force_authenticate(user=doctor_user)
         response = api_client.get(f"/api/v1/laboratory/results/{resultado.pk}/")
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.django_db

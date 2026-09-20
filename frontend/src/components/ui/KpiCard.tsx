@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 import { Badge } from "@/design-system";
 
@@ -8,11 +9,16 @@ interface KpiCardProps {
   badge?: { text: string; variant?: "success" | "warning" | "danger" | "info" | "default" };
   icon?: ReactNode;
   trend?: string;
+  to?: string;
 }
 
-export function KpiCard({ label, value, badge, icon, trend }: KpiCardProps) {
-  return (
-    <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+export function KpiCard({ label, value, badge, icon, trend, to }: KpiCardProps) {
+  const body = (
+    <div
+      className={`rounded-xl border border-border bg-surface p-4 shadow-sm ${
+        to ? "transition hover:border-primary-300 hover:shadow-md" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-text-muted">{label}</p>
@@ -32,4 +38,14 @@ export function KpiCard({ label, value, badge, icon, trend }: KpiCardProps) {
       )}
     </div>
   );
+
+  if (to) {
+    return (
+      <Link to={to} className="block rounded-xl focus-ring">
+        {body}
+      </Link>
+    );
+  }
+
+  return body;
 }

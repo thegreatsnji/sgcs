@@ -47,7 +47,7 @@ export function ReceiptDetailPage() {
         {retorno ? (
           <Link to={decodeURIComponent(retorno)}>
             <Button type="button" variant="primary">
-              Continuar — notificar médico →
+              Continuar: notificar médico →
             </Button>
           </Link>
         ) : (

@@ -5,6 +5,8 @@ export interface Notificacao {
   tipo: string;
   canal: string;
   estado: string;
+  evento_origem?: string;
+  metadados?: Record<string, unknown>;
   lida: boolean;
   arquivada: boolean;
   created_at: string;

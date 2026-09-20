@@ -36,6 +36,8 @@ export interface WaitingQueueEntry {
   symptoms?: string;
   check_in_time: string;
   receptionist: ReceptionUserSummary;
+  assigned_doctor?: ReceptionUserSummary | null;
+  can_reassign_doctor?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -91,6 +93,7 @@ export interface CheckInPayload {
   blood_pressure?: string;
   symptoms?: string;
   notes?: string;
+  unusual_vitals_confirmed?: boolean;
 }
 
 export interface CheckInResponse {
@@ -111,10 +114,12 @@ export interface DoctorAssignmentOption {
   available: boolean;
   waiting_count: number;
   is_preferred: boolean;
+  availability_label?: string;
 }
 
 export interface DoctorAssignmentOptions {
   preferred_doctor: { id: number; full_name: string; available: boolean } | null;
+  scheduled_doctor?: { id: number; full_name: string; available: boolean } | null;
   suggested_doctor_id: number | null;
   doctors: DoctorAssignmentOption[];
 }
@@ -156,6 +161,8 @@ export interface ReceptionDashboardData {
     check_in__priority: QueuePriority;
     check_in__triage_color?: string;
     check_in__visit_purpose?: string;
+    assigned_doctor__id?: number | null;
+    assigned_doctor__full_name?: string | null;
   }>;
   recent_reception_activity: Array<{
     action: string;

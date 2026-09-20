@@ -37,7 +37,7 @@ export function FinanceDashboardPage() {
         tone="slate"
         eyebrow="Direcção / tesouraria"
         title="Painel financeiro"
-        description="Fluxo de caixa, despesas e caixas — visão para gestão."
+        description="Fluxo de caixa, despesas e caixas."
         primaryAction={{ to: "/finance/cash-registers", label: "Caixas" }}
         secondaryAction={{ to: "/finance/expenses", label: "Despesas" }}
       />

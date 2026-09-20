@@ -47,7 +47,7 @@ export function LaboratoryDashboardPage() {
         <KpiCard
           label="Pendentes"
           value={data.indicadores.pedidos_pendentes}
-          badge={{ text: "Aguardam receção", variant: "warning" }}
+          badge={{ text: "Na fila", variant: "warning" }}
         />
         <KpiCard
           label="Em Processamento"

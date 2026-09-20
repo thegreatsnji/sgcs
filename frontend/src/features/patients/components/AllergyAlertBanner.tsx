@@ -19,7 +19,7 @@ export function AllergyAlertBanner({ allergies }: AllergyAlertBannerProps) {
       <div className="mt-2 flex flex-wrap gap-2">
         {severe.map((allergy) => (
           <Badge key={allergy.id} variant="danger">
-            {allergy.allergen} — {ALLERGY_SEVERITY_LABELS[allergy.severity]}
+            {allergy.allergen}: {ALLERGY_SEVERITY_LABELS[allergy.severity]}
           </Badge>
         ))}
       </div>

@@ -93,7 +93,7 @@ export function LoginPage() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">Acesso seguro</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
-          Conecte-se à gestão clínica da SauVida.
+          Inicie sessão para aceder ao sistema.
         </p>
       </div>
 

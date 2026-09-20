@@ -298,6 +298,22 @@ class PatientHistorySerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
+    def to_representation(self, instance):
+        from apps.patients.privacy import (
+            CLINICAL_HISTORY_EVENT_TYPES,
+            REDACTED_HISTORY_DESCRIPTION,
+            user_can_access_clinical_content,
+        )
+
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        user = getattr(request, "user", None) if request else None
+        if not user_can_access_clinical_content(user):
+            if instance.event_type in CLINICAL_HISTORY_EVENT_TYPES:
+                data["description"] = REDACTED_HISTORY_DESCRIPTION
+                data["metadata"] = {}
+        return data
+
 
 class PatientObservationSerializer(serializers.ModelSerializer):
     created_by = UserSummarySerializer(read_only=True)
@@ -445,6 +461,17 @@ class PatientDetailSerializer(serializers.ModelSerializer):
         meta = obj.metadata if isinstance(obj.metadata, dict) else {}
         return bool(meta.get("dados_verificados"))
 
+    def to_representation(self, instance):
+        from apps.patients.privacy import user_can_access_clinical_content
+
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        user = getattr(request, "user", None) if request else None
+        if not user_can_access_clinical_content(user):
+            data.pop("blood_type", None)
+            data["chronic_diseases_count"] = 0
+        return data
+
 
 class PatientCreateSerializer(serializers.ModelSerializer):
     emergency_contacts = PatientEmergencyContactSerializer(many=True, required=False)
@@ -499,6 +526,15 @@ class PatientCreateSerializer(serializers.ModelSerializer):
             )
         return value
 
+    def validate(self, attrs):
+        from apps.patients.privacy import user_can_access_clinical_content
+
+        request = self.context.get("request")
+        user = getattr(request, "user", None) if request else None
+        if not user_can_access_clinical_content(user):
+            attrs.pop("blood_type", None)
+        return attrs
+
     def create(self, validated_data):
         emergency_contacts = validated_data.pop("emergency_contacts", [])
         user = self.context["request"].user
@@ -536,6 +572,15 @@ class PatientUpdateSerializer(serializers.ModelSerializer):
             "marital_status",
             "occupation",
         )
+
+    def validate(self, attrs):
+        from apps.patients.privacy import user_can_access_clinical_content
+
+        request = self.context.get("request")
+        user = getattr(request, "user", None) if request else None
+        if not user_can_access_clinical_content(user):
+            attrs.pop("blood_type", None)
+        return attrs
 
     def validate_phone(self, value):
         return validate_patient_phone(value)

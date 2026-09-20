@@ -11,6 +11,7 @@ import { ReceptionDashboardPage } from "@/features/reception/pages/ReceptionDash
 import { ReceptionWorkflowPage } from "@/features/reception/pages/ReceptionWorkflowPage";
 import { ReferralPage } from "@/features/reception/pages/ReferralPage";
 import { WaitingQueuePage } from "@/features/reception/pages/WaitingQueuePage";
+import { PendingLabOrdersPage } from "@/features/reception/pages/PendingLabOrdersPage";
 import { ConsultationDashboardPage } from "@/features/appointments/pages/ConsultationDashboardPage";
 import { ConsultationDetailPage } from "@/features/appointments/pages/ConsultationDetailPage";
 import { ConsultationHistoryPage } from "@/features/appointments/pages/ConsultationHistoryPage";
@@ -139,7 +140,7 @@ export const router = createBrowserRouter([
           {
             element: (
               <RoleGuard allowed="ENFERMEIRO">
-                <PermissionRoute permission="reception.view" fallback="/" />
+                <PermissionRoute permission="reception.create" fallback="/" />
               </RoleGuard>
             ),
             children: [{ path: "nursing/triage", element: <NurseTriagePage /> }],
@@ -156,12 +157,17 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            element: <PermissionRoute permission="reception.view" />,
+            element: (
+              <RoleGuard allowed={["RECECIONISTA", "ADMINISTRADOR"]}>
+                <PermissionRoute permission="reception.view" />
+              </RoleGuard>
+            ),
             children: [
               { path: "reception", element: <ReceptionDashboardPage /> },
               { path: "reception/atendimento", element: <ReceptionWorkflowPage /> },
               { path: "reception/check-in", element: <CheckInPage /> },
               { path: "reception/queue", element: <WaitingQueuePage /> },
+              { path: "reception/lab-orders", element: <PendingLabOrdersPage /> },
               { path: "reception/referrals", element: <ReferralPage /> },
             ],
           },
@@ -223,13 +229,19 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            element: <PermissionRoute permission="billing.create" fallback="/billing" />,
+            element: <PermissionRoute permission="billing.delete" fallback="/billing/services" />,
             children: [
               { path: "billing/services/new", element: <ServiceFormPage /> },
               { path: "billing/services/:id/edit", element: <ServiceFormPage /> },
-              { path: "billing/quotes/new", element: <QuoteCreatePage /> },
-              { path: "billing/invoices/new", element: <InvoiceCreatePage /> },
             ],
+          },
+          {
+            element: <PermissionRoute permission="billing.quote" fallback="/billing" />,
+            children: [{ path: "billing/quotes/new", element: <QuoteCreatePage /> }],
+          },
+          {
+            element: <PermissionRoute permission="billing.create" fallback="/billing" />,
+            children: [{ path: "billing/invoices/new", element: <InvoiceCreatePage /> }],
           },
           {
             element: <PermissionRoute permission="finance.view" fallback="/" />,
@@ -350,5 +362,5 @@ export const router = createBrowserRouter([
     ],
   },
   { path: "/404", element: <NotFoundPage /> },
-  { path: "*", element: <Navigate to="/404" replace /> },
+  { path: "*", element: <NotFoundPage /> },
 ]);

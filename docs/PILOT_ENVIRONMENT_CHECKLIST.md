@@ -46,10 +46,10 @@ Marcar **SIM/NÃO/N/A** e data. Responsável: Administrador + fornecedor TI.
 
 | Gate | OK | Data | Log |
 |------|----|------|-----|
-| `manage.py check` | SIM | 2026-08-02 | `docs/logs/sprint20_manage_check.txt` |
-| `makemigrations --check` | SIM | 2026-08-02 | `docs/logs/sprint20_migrations.txt` |
-| `pytest -q --reuse-db` | SIM (315) | 2026-08-02 | `docs/logs/sprint20_pytest.txt` |
-| `npm run build` | SIM | 2026-08-02 | `docs/logs/sprint20_build.txt` |
-| `npm run lint` | SIM (0 erros) | 2026-08-02 | `docs/logs/sprint20_lint.txt` |
+| `manage.py check` | SIM | 2026-08-25 | Sprint 28 |
+| `makemigrations --check` | SIM | 2026-08-25 | Sprint 28 |
+| `pytest -q --reuse-db` | SIM (530 passed, 2 skipped) | 2026-08-25 | Sprint 28 |
+| `npm run build` | SIM | 2026-08-25 | Sprint 28 |
+| `npm run lint` | SIM (0 erros) | 2026-08-25 | Sprint 28 |
 
 **Aprovação ambiente piloto:** _________________ **Data:** __________

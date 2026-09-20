@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from apps.audit_logs.models import AuditAction
 from apps.audit_logs.services import AuditService
+from apps.laboratory.billing import ensure_pode_processar
 from apps.laboratory.constants import (
     COLLECTION_QUEUE_STATUSES,
     DEFAULT_EXAM_CATEGORY,
@@ -12,18 +13,32 @@ from apps.laboratory.constants import (
     PedidoLaboratorialEstado,
 )
 from apps.laboratory.models import ExameLaboratorial, PedidoLaboratorial
+from apps.laboratory.ordering import priority_order_case
 from apps.laboratory.services.number_service import LaboratoryNumberService
 from apps.laboratory.validators import validate_pedido_editavel, validate_transicao
 
 
 class LaboratoryService:
     @staticmethod
+    def _base_queryset():
+        return (
+            PedidoLaboratorial.objects.select_related(
+                "paciente",
+                "medico",
+                "consulta",
+                "pedido_consulta",
+                "pedido_consulta__servico",
+            )
+            .prefetch_related("exames", "resultado")
+        )
+
+    @staticmethod
     def _log(action, user, request, pedido, description, metadata=None):
         AuditService.log(
             action=action,
+            description=description,
             user=user,
             request=request,
-            description=description,
             resource_type="laboratory_order",
             resource_id=str(pedido.pk),
             metadata=metadata
@@ -67,34 +82,35 @@ class LaboratoryService:
     @staticmethod
     def listar_pendentes():
         return (
-            PedidoLaboratorial.objects.filter(estado__in=PENDING_STATUSES)
-            .select_related("paciente", "medico", "consulta")
-            .prefetch_related("exames")
-            .order_by("-prioridade", "data_pedido")
+            LaboratoryService._base_queryset()
+            .filter(estado__in=PENDING_STATUSES)
+            .annotate(_prio=priority_order_case())
+            .order_by("_prio", "data_pedido")
         )
 
     @staticmethod
     def listar_do_dia(*, day=None):
         target = day or timezone.localdate()
         return (
-            PedidoLaboratorial.objects.filter(data_pedido__date=target)
-            .select_related("paciente", "medico", "consulta")
-            .prefetch_related("exames")
-            .order_by("-data_pedido")
+            LaboratoryService._base_queryset()
+            .filter(data_pedido__date=target)
+            .annotate(_prio=priority_order_case())
+            .order_by("_prio", "-data_pedido")
         )
 
     @staticmethod
     def fila_colheitas():
         return (
-            PedidoLaboratorial.objects.filter(estado__in=COLLECTION_QUEUE_STATUSES)
-            .select_related("paciente", "medico")
-            .order_by("data_pedido")
+            LaboratoryService._base_queryset()
+            .filter(estado__in=COLLECTION_QUEUE_STATUSES)
+            .annotate(_prio=priority_order_case())
+            .order_by("_prio", "data_pedido")
         )
 
     @staticmethod
     @transaction.atomic
     def receber_pedido(pedido_id: int, user, request=None) -> PedidoLaboratorial:
-        pedido = PedidoLaboratorial.objects.select_for_update().get(pk=pedido_id)
+        pedido = PedidoLaboratorial.objects.select_for_update(of=("self",)).get(pk=pedido_id)
         validate_transicao(
             pedido.estado,
             {PedidoLaboratorialEstado.PENDENTE},
@@ -118,7 +134,7 @@ class LaboratoryService:
     @staticmethod
     @transaction.atomic
     def registar_colheita(pedido_id: int, user, request=None) -> PedidoLaboratorial:
-        pedido = PedidoLaboratorial.objects.select_for_update().get(pk=pedido_id)
+        pedido = PedidoLaboratorial.objects.select_for_update(of=("self",)).get(pk=pedido_id)
         validate_transicao(
             pedido.estado,
             {PedidoLaboratorialEstado.RECEBIDO, PedidoLaboratorialEstado.AGUARDANDO_COLHEITA},
@@ -142,7 +158,11 @@ class LaboratoryService:
     @staticmethod
     @transaction.atomic
     def iniciar_processamento(pedido_id: int, user, request=None) -> PedidoLaboratorial:
-        pedido = PedidoLaboratorial.objects.select_for_update().get(pk=pedido_id)
+        pedido = (
+            PedidoLaboratorial.objects.select_for_update(of=("self",))
+            .select_related("pedido_consulta")
+            .get(pk=pedido_id)
+        )
         validate_transicao(
             pedido.estado,
             {
@@ -151,6 +171,7 @@ class LaboratoryService:
             },
             "iniciar processamento",
         )
+        ensure_pode_processar(pedido)
         pedido.estado = PedidoLaboratorialEstado.EM_PROCESSAMENTO
         pedido.save(update_fields=["estado", "updated_at"])
         LaboratoryService._sync_exames_estado(pedido, PedidoLaboratorialEstado.EM_PROCESSAMENTO)
@@ -167,7 +188,12 @@ class LaboratoryService:
     @staticmethod
     @transaction.atomic
     def concluir_exame(pedido_id: int, user, request=None) -> PedidoLaboratorial:
-        pedido = PedidoLaboratorial.objects.select_for_update().get(pk=pedido_id)
+        """Marca processamento técnico do pedido lab como concluído.
+
+        O pedido clínico (`PedidoLaboratorio.estado`) só passa a CONCLUIDO
+        quando o resultado é validado — evita 'Concluído' prematuro.
+        """
+        pedido = PedidoLaboratorial.objects.select_for_update(of=("self",)).get(pk=pedido_id)
         validate_transicao(
             pedido.estado,
             {PedidoLaboratorialEstado.EM_PROCESSAMENTO},
@@ -179,19 +205,12 @@ class LaboratoryService:
         pedido.save(update_fields=["estado", "data_conclusao", "updated_at"])
         LaboratoryService._sync_exames_estado(pedido, PedidoLaboratorialEstado.CONCLUIDO)
 
-        if pedido.pedido_consulta_id:
-            from apps.appointments.constants import PedidoEstado as ConsultaPedidoEstado
-
-            pedido_consulta = pedido.pedido_consulta
-            pedido_consulta.estado = ConsultaPedidoEstado.CONCLUIDO
-            pedido_consulta.save(update_fields=["estado", "updated_at"])
-
         LaboratoryService._log(
             AuditAction.EXAME_CONCLUIDO,
             user,
             request,
             pedido,
-            f"Exame concluído — pedido {pedido.numero_pedido}.",
+            f"Processamento técnico concluído — pedido {pedido.numero_pedido}.",
         )
         return pedido
 
@@ -205,7 +224,7 @@ class LaboratoryService:
         prioridade: str | None = None,
         request=None,
     ) -> PedidoLaboratorial:
-        pedido = PedidoLaboratorial.objects.select_for_update().get(pk=pedido_id)
+        pedido = PedidoLaboratorial.objects.select_for_update(of=("self",)).get(pk=pedido_id)
         validate_pedido_editavel(pedido.estado)
 
         update_fields = ["updated_at"]

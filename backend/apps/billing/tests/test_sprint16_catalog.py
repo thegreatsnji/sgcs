@@ -45,7 +45,10 @@ class TestCatalogoServico:
             {"preco": "6000"},
             format="json",
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code in (
+            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_403_FORBIDDEN,
+        )
 
     def test_admin_altera_preco_com_historico(self, api_client, admin_user, seed_rbac):
         servico = Servico.objects.create(

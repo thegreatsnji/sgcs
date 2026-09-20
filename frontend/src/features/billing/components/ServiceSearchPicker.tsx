@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { CurrencyDisplay, Input } from "@/design-system";
+import { Button, CurrencyDisplay, Input } from "@/design-system";
 import { categoryLabel } from "@/constants/serviceCategories";
 import { MOTIVOS_REDUCAO, calcReducao } from "@/features/billing/constants/reducao";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -28,6 +28,10 @@ interface ServiceSearchPickerProps {
   onChange: (lines: InvoiceLineDraft[]) => void;
   readOnlyPrice?: boolean;
   popularServiceIds?: number[];
+  /** Código exacto do catálogo (ex.: CONS-GERAL) — só sugestão, nunca auto-factura. */
+  suggestedCodigo?: string | null;
+  /** Quando true (fluxo atendimento), adiciona a linha sugerida uma vez se existir no catálogo. */
+  autoAddSuggested?: boolean;
 }
 
 function formatFcfa(preco: string) {
@@ -60,6 +64,8 @@ export function ServiceSearchPicker({
   lines,
   onChange,
   popularServiceIds = [],
+  suggestedCodigo = null,
+  autoAddSuggested = false,
 }: ServiceSearchPickerProps) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 250);
@@ -67,6 +73,7 @@ export function ServiceSearchPicker({
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const listRef = useRef<HTMLUListElement>(null);
+  const autoAddedCodigoRef = useRef<string | null>(null);
 
   const byId = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);
 
@@ -81,6 +88,16 @@ export function ServiceSearchPicker({
         .map((id) => byId.get(id))
         .filter((s): s is BillingService => Boolean(s)),
     [byId, popularServiceIds],
+  );
+
+  const suggestedService = useMemo(() => {
+    const code = (suggestedCodigo || "").trim().toUpperCase();
+    if (!code) return null;
+    return services.find((s) => s.codigo.toUpperCase() === code) ?? null;
+  }, [services, suggestedCodigo]);
+
+  const suggestedAlreadyAdded = Boolean(
+    suggestedService && lines.some((l) => l.servico.id === suggestedService.id),
   );
 
   const filtered = useMemo(() => {
@@ -143,6 +160,21 @@ export function ServiceSearchPicker({
   }, [debouncedQuery, categoria, displayList.length]);
 
   useEffect(() => {
+    if (!autoAddSuggested || !suggestedService || suggestedAlreadyAdded) return;
+    const code = suggestedService.codigo.toUpperCase();
+    if (autoAddedCodigoRef.current === code) return;
+    if (lines.length > 0) return;
+    autoAddedCodigoRef.current = code;
+    addService(suggestedService);
+  }, [
+    autoAddSuggested,
+    suggestedService,
+    suggestedAlreadyAdded,
+    lines.length,
+    addService,
+  ]);
+
+  useEffect(() => {
     const el = listRef.current?.children[highlight] as HTMLElement | undefined;
     el?.scrollIntoView({ block: "nearest" });
   }, [highlight]);
@@ -172,6 +204,41 @@ export function ServiceSearchPicker({
 
   return (
     <div className="space-y-4">
+      {suggestedService && !suggestedAlreadyAdded ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50/70 px-4 py-3 text-sm">
+          <div>
+            <p className="font-medium text-primary-900">Serviço sugerido pelo atendimento</p>
+            <p className="text-primary-800">
+              {suggestedService.nome}{" "}
+              <span className="font-mono text-xs">({suggestedService.codigo})</span> ·{" "}
+              {formatFcfa(suggestedService.preco)}
+            </p>
+            <p className="mt-1 text-xs text-primary-700">
+              {autoAddSuggested
+                ? "Será adicionado automaticamente se ainda não estiver na fatura."
+                : "Confirme antes de adicionar — não é seleccionado automaticamente."}
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="primary"
+            onClick={() => addService(suggestedService)}
+          >
+            Adicionar
+          </Button>
+        </div>
+      ) : null}
+      {suggestedService && suggestedAlreadyAdded && autoAddSuggested ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2 text-sm text-emerald-900">
+          Serviço do tipo de visita já na fatura — pode remover ou acrescentar outros.
+        </p>
+      ) : null}
+      {suggestedCodigo && !suggestedService ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Tipo de visita indicado, mas o serviço de catálogo correspondente não foi encontrado. Pesquise e confirme o serviço.
+        </p>
+      ) : null}
       <div className="flex flex-col gap-3 sm:flex-row">
         <Input
           label="Pesquisar serviço"
@@ -249,8 +316,8 @@ export function ServiceSearchPicker({
                   >
                     <span className="font-medium text-slate-900">{s.nome}</span>
                     <span className="text-xs text-slate-600">
-                      {s.codigo} — {categoryLabel(s.categoria)}
-                      {s.departamento_nome ? ` — ${s.departamento_nome}` : ""} —{" "}
+                      {s.codigo}: {categoryLabel(s.categoria)}
+                      {s.departamento_nome ? ` · ${s.departamento_nome}` : ""} ·{" "}
                       {semPreco ? "Preço pendente" : formatFcfa(s.preco)}
                     </span>
                   </button>

@@ -9,9 +9,10 @@ import { PatientAgeCategoryBadge } from "@/components/patients/PatientAgeCategor
 import { ComputedAgeHint } from "@/components/forms/ComputedAgeHint";
 import { DisplayDateInput } from "@/components/forms/DisplayDateInput";
 import { PhoneInput } from "@/components/forms";
-import { Button, Card, Input, useToast } from "@/design-system";
+import { Button, Card, Input, Modal, useToast } from "@/design-system";
 import { BLOOD_TYPE_LABELS, MARITAL_STATUS_LABELS, PATIENT_GENDER_LABELS } from "@/constants/patients";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { PatientSearchSelect } from "@/features/reception/components/PatientSearchSelect";
 import { TriageColorPicker } from "@/features/reception/components/TriageColorPicker";
 import { TriageWizardSteps, type WizardStep } from "@/features/reception/components/TriageWizardSteps";
@@ -29,12 +30,14 @@ import { patientsService } from "@/services/patients";
 import { receptionService } from "@/services/reception";
 import type { PatientDetail, PatientListItem } from "@/types/patient";
 import type { TriageColor } from "@/types/reception";
-import { getApiErrorMessage } from "@/utils/api-error";
+import { getApiErrorMessage, getApiFieldErrors } from "@/utils/api-error";
 import { formatDisplayDate, getAgeFromDisplayDate } from "@/utils/date";
 import { splitFullName } from "@/utils/fullName";
 import { getPatientAgeCategory } from "@/utils/patientAgeCategory";
-import { getVitalWarnings } from "@/utils/clinicalVitals";
+import { getVitalWarnings, sanitizeOptionalNumber } from "@/utils/clinicalVitals";
 import { toFullPhone } from "@/utils/phone";
+import type { CheckInPayload } from "@/types/reception";
+import type { Path } from "react-hook-form";
 
 interface SelectedPatient {
   id: number;
@@ -56,6 +59,8 @@ export interface TriageCheckInWizardProps {
   /** Não reinicia o assistente após check-in (fluxo de atendimento). */
   onCheckInSuccess?: (result: import("@/types/reception").CheckInResponse) => void;
   hideProgressNav?: boolean;
+  /** Perfil ENFERMEIRO: formulário focado em vitais (sem deep-links de Receção). */
+  nursingMode?: boolean;
 }
 
 function FormSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
@@ -109,16 +114,21 @@ export function TriageCheckInWizard({
   initialPatientSummary = null,
   onCheckInSuccess,
   hideProgressNav = false,
+  nursingMode = false,
 }: TriageCheckInWizardProps = {}) {
   const { showToast } = useToast();
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
+  const isNurse = nursingMode || user?.role === "ENFERMEIRO";
   const [step, setStep] = useState<WizardStep>(
     initialPatientSummary || initialPatientId ? "triage" : "search",
   );
   const [selectedPatient, setSelectedPatient] = useState<SelectedPatient | null>(
     initialPatientSummary,
   );
+  const [confirmUnusualOpen, setConfirmUnusualOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<CheckInPayload | null>(null);
 
   const registerForm = useForm<QuickPatientFormData>({
     resolver: zodResolver(quickPatientSchema),
@@ -188,6 +198,8 @@ export function TriageCheckInWizard({
   const checkInMutation = useMutation({
     mutationFn: receptionService.checkIn,
     onSuccess: (result) => {
+      setConfirmUnusualOpen(false);
+      setPendingPayload(null);
       showToast("Triagem concluída. Paciente adicionado à fila.", "success");
       void queryClient.invalidateQueries({ queryKey: ["reception-queue"] });
       void queryClient.invalidateQueries({ queryKey: ["reception-dashboard"] });
@@ -199,12 +211,46 @@ export function TriageCheckInWizard({
       }
       resetWizard();
     },
-    onError: (error) => showToast(getApiErrorMessage(error), "error"),
+    onError: (error) => {
+      const fieldErrors = getApiFieldErrors(error);
+      const formFields: Path<TriageFormData>[] = [
+        "weight",
+        "height_cm",
+        "temperature",
+        "blood_pressure",
+        "spo2",
+        "heart_rate",
+        "respiratory_rate",
+        "symptoms",
+        "age_at_check_in",
+        "triage_color",
+        "visit_purpose",
+        "notes",
+        "race",
+      ];
+      let mapped = 0;
+      for (const key of formFields) {
+        if (fieldErrors[key]) {
+          triageForm.setError(key, { type: "server", message: fieldErrors[key] });
+          mapped += 1;
+        }
+      }
+      const message =
+        mapped > 1
+          ? "Não foi possível concluir a triagem. Verifique os campos assinalados."
+          : getApiErrorMessage(
+              error,
+              "Não foi possível concluir a triagem. Verifique os dados e tente novamente.",
+            );
+      showToast(message, "error");
+    },
   });
 
   const resetWizard = () => {
     setStep("search");
     setSelectedPatient(null);
+    setConfirmUnusualOpen(false);
+    setPendingPayload(null);
     registerForm.reset();
     triageForm.reset({
       triage_color: "GREEN",
@@ -266,23 +312,41 @@ export function TriageCheckInWizard({
       showToast("Registe a data de nascimento na ficha do utente para calcular a idade.", "error");
       return;
     }
-    checkInMutation.mutate({
+    const payload: CheckInPayload = {
       patient_id: selectedPatient.id,
       triage_color: values.triage_color,
       age_at_check_in: ageAtCheckIn,
       weight: values.weight,
-      height_cm: values.height_cm,
+      height_cm: sanitizeOptionalNumber(values.height_cm),
       race: values.race?.trim() || undefined,
       temperature: values.temperature,
       blood_pressure: values.blood_pressure.trim(),
-      spo2: values.spo2,
-      heart_rate: values.heart_rate,
-      respiratory_rate: values.respiratory_rate,
+      spo2: sanitizeOptionalNumber(values.spo2),
+      heart_rate: sanitizeOptionalNumber(values.heart_rate),
+      respiratory_rate: sanitizeOptionalNumber(values.respiratory_rate),
       symptoms: values.symptoms.trim(),
       visit_purpose: values.visit_purpose,
       notes: values.notes?.trim(),
+    };
+    const warnings = getVitalWarnings({
+      temperature: values.temperature,
+      blood_pressure: values.blood_pressure,
+      spo2: values.spo2,
+      heart_rate: values.heart_rate,
+      respiratory_rate: values.respiratory_rate,
     });
+    if (warnings.length > 0) {
+      setPendingPayload(payload);
+      setConfirmUnusualOpen(true);
+      return;
+    }
+    checkInMutation.mutate(payload);
   });
+
+  function confirmUnusualAndSubmit() {
+    if (!pendingPayload) return;
+    checkInMutation.mutate({ ...pendingPayload, unusual_vitals_confirmed: true });
+  }
 
   const watchedBirthDate = registerForm.watch("birth_date");
   const registerMinorAge = getAgeFromDisplayDate(watchedBirthDate ?? "");
@@ -461,16 +525,18 @@ export function TriageCheckInWizard({
 
               <FormSection
                 title="Dados da ficha clínica"
-                description="Só leitura aqui — altere na ficha do utente (nome, morada, nacionalidade, etc.)."
+                description="Só leitura aqui. Altere na ficha do utente (nome, morada, nacionalidade, etc.)."
               >
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <Link
-                    to={`/patients/${selectedPatient.id}/edit`}
-                    className="text-xs font-semibold text-primary-600 hover:text-primary-700"
-                  >
-                    Abrir ficha para editar →
-                  </Link>
-                </div>
+                {hasPermission("patients.edit") ? (
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <Link
+                      to={`/patients/${selectedPatient.id}/edit`}
+                      className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+                    >
+                      Abrir ficha para editar →
+                    </Link>
+                  </div>
+                ) : null}
                 <div className="grid gap-4 rounded-2xl border border-dashed border-border bg-surface-muted/30 p-4 sm:grid-cols-2 lg:grid-cols-3">
                   <FichaReadonlyField label="Nome" value={selectedPatient.full_name} />
                   <FichaReadonlyField
@@ -510,7 +576,7 @@ export function TriageCheckInWizard({
 
               <FormSection
                 title="Medições nesta triagem"
-                description="Peso, altura e raça — podem mudar em cada visita."
+                description="Peso, altura e raça. Podem mudar em cada visita."
               >
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <Input
@@ -547,8 +613,12 @@ export function TriageCheckInWizard({
               </FormSection>
 
               <FormSection
-                title="Tipo de atendimento (faturação)"
-                description="Consulta e controlo têm preços diferentes no catálogo."
+                title={isNurse ? "Motivo da visita" : "Tipo de atendimento (faturação)"}
+                description={
+                  isNurse
+                    ? "Por defeito Consulta. A Receção confirma o serviço e o pagamento."
+                    : "Consulta e controlo têm preços diferentes no catálogo."
+                }
               >
                 <div className="flex flex-col gap-3 sm:flex-row">
                   {(["CONSULTA", "CONTROLE"] as VisitPurpose[]).map((value) => (
@@ -566,7 +636,13 @@ export function TriageCheckInWizard({
                         value={value}
                         {...triageForm.register("visit_purpose")}
                       />
-                      <span className="text-sm font-medium text-text">{VISIT_PURPOSE_LABELS[value]}</span>
+                      <span className="text-sm font-medium text-text">
+                        {isNurse
+                          ? value === "CONSULTA"
+                            ? "Consulta"
+                            : "Controlo"
+                          : VISIT_PURPOSE_LABELS[value]}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -602,15 +678,15 @@ export function TriageCheckInWizard({
                     className="rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
                     role="status"
                   >
-                    <p className="font-semibold">Confirme os valores — fora do habitual</p>
+                    <p className="font-semibold">Confirme os valores: fora do habitual</p>
                     <ul className="mt-2 list-disc space-y-1 pl-5">
                       {vitalWarnings.map((w) => (
                         <li key={w.field}>{w.message}</li>
                       ))}
                     </ul>
                     <p className="mt-2 text-xs text-amber-800/90 dark:text-amber-200/90">
-                      Pode guardar se a medição está correcta (ex. hipotermia grave, oxímetro em
-                      dedo frio).
+                      Ao concluir, será pedida confirmação explícita de que as medições foram
+                      verificadas. Os valores não são alterados automaticamente.
                     </p>
                   </div>
                 )}
@@ -640,7 +716,7 @@ export function TriageCheckInWizard({
                   <Input
                     label="FC (b/min)"
                     type="number"
-                    hint="Opcional — habitual entre 60 e 100"
+                    hint="Opcional. Habitual entre 60 e 100"
                     error={triageForm.formState.errors.heart_rate?.message}
                     {...triageForm.register("heart_rate", { valueAsNumber: true })}
                   />
@@ -687,6 +763,27 @@ export function TriageCheckInWizard({
           </Card>
         </div>
       )}
+
+      <Modal
+        open={confirmUnusualOpen}
+        title="Valores fora do habitual"
+        description="Existem valores fora do habitual. Confirma que as medições foram verificadas?"
+        cancelLabel="Voltar e verificar"
+        confirmLabel="Confirmar e concluir triagem"
+        onClose={() => {
+          setConfirmUnusualOpen(false);
+          setPendingPayload(null);
+        }}
+        onConfirm={() => confirmUnusualAndSubmit()}
+      >
+        {vitalWarnings.length > 0 ? (
+          <ul className="list-disc space-y-1 pl-5 text-sm text-text">
+            {vitalWarnings.map((w) => (
+              <li key={w.field}>{w.message}</li>
+            ))}
+          </ul>
+        ) : null}
+      </Modal>
     </div>
   );
 }

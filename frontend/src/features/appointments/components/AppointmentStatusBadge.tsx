@@ -13,7 +13,7 @@ export function AppointmentPatientCell({ appointment }: { appointment: Appointme
     <div>
       <p className="font-medium text-slate-900">{appointment.patient.full_name}</p>
       <p className="text-xs text-slate-500">
-        {appointment.appointment_number} — {appointment.patient.patient_number}
+        {appointment.appointment_number}: {appointment.patient.patient_number}
       </p>
     </div>
   );

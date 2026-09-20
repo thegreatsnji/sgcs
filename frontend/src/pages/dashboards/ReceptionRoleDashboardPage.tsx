@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { UI_COPY } from "@/constants/uiCopy";
 import { Button, ErrorState, SkeletonCard } from "@/design-system";
+import { ReceptionFinancialSummary } from "@/features/reception/components/ReceptionFinancialSummary";
 import { ReceptionQueueNowCard } from "@/features/reception/components/ReceptionQueueNowCard";
 import { useReceptionDashboard } from "@/features/reception/hooks/useReceptionDashboard";
 
@@ -14,8 +15,8 @@ export function ReceptionRoleDashboardPage() {
     return (
       <div className="space-y-6">
         <SkeletonCard />
-        <div className="grid gap-4 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
@@ -46,16 +47,8 @@ export function ReceptionRoleDashboardPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <KpiCard label={copy.kpiWaiting} value={waiting} />
-        <KpiCard
-          label={copy.kpiAvgWait}
-          value={
-            waiting > 0 && data.cards.average_wait_minutes > 0
-              ? `${data.cards.average_wait_minutes} min`
-              : "—"
-          }
-        />
         <KpiCard label={copy.kpiAttendedToday} value={data.cards.attended_today} />
       </div>
 
@@ -76,6 +69,8 @@ export function ReceptionRoleDashboardPage() {
           </Link>
         </div>
       )}
+
+      <ReceptionFinancialSummary />
 
       <ReceptionQueueNowCard entries={data.queue_preview} />
     </div>

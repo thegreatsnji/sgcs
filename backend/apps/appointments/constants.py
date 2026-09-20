@@ -52,3 +52,9 @@ class PedidoEstado(models.TextChoices):
     EM_PROCESSAMENTO = "EM_PROCESSAMENTO", "Em processamento"
     CONCLUIDO = "CONCLUIDO", "Concluído"
     CANCELADO = "CANCELADO", "Cancelado"
+
+
+class PedidoLaboratorioEstadoFaturacao(models.TextChoices):
+    AGUARDA_REGULARIZACAO = "AGUARDA_REGULARIZACAO", "Aguarda regularização"
+    REGULARIZADO = "REGULARIZADO", "Regularizado"
+    NAO_APLICAVEL = "NAO_APLICAVEL", "Não aplicável"

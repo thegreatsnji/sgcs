@@ -15,7 +15,6 @@ import {
 import { IconCalendar, IconLab, IconPatients } from "@/components/icons";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { Button, Card, EmptyState, LoadingState, SkeletonCard } from "@/design-system";
-import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { dashboardService } from "@/services/dashboard";
 
@@ -43,7 +42,6 @@ function buildWeeklyTrend(activityDates: string[]) {
 }
 
 export function DashboardPage() {
-  const { user } = useAuth();
   const { hasPermission } = usePermissions();
 
   const { data, isLoading } = useQuery({
@@ -74,8 +72,7 @@ export function DashboardPage() {
             Painel Administrativo
           </h1>
           <p className="mt-1 text-slate-500">
-            Bem-vindo, <span className="font-medium text-slate-700">{user?.full_name}</span>. Visão
-            geral da clínica SauVida.
+            Resumo da actividade da Clínica SauVida.
           </p>
         </div>
         {hasPermission("appointments.create") && (
@@ -127,7 +124,7 @@ export function DashboardPage() {
 
             <div className="grid gap-6 lg:grid-cols-5">
               <Card title="Tendência de Atendimentos" className="lg:col-span-3">
-                <p className="-mt-2 mb-4 text-xs text-slate-500">Actividade de pacientes — últimos 7 dias</p>
+                <p className="-mt-2 mb-4 text-xs text-slate-500">Actividade de pacientes nos últimos 7 dias</p>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} barSize={32}>
@@ -222,7 +219,7 @@ export function DashboardPage() {
               )}
             </Card>
 
-            <Card title="Actividade Recente — Pacientes">
+            <Card title="Actividade recente de pacientes">
               {data.recent_patient_activity.length === 0 ? (
                 <EmptyState title="Sem actividade" description="Nenhuma acção registada recentemente." />
               ) : (

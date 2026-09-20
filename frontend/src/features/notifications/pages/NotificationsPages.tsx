@@ -111,7 +111,7 @@ export function EmailHistoryPage() {
           <ul className="space-y-2 text-sm">
             {(data ?? []).map((item, i) => (
               <li key={i} className="rounded border border-slate-100 px-3 py-2">
-                {(item as { destinatario?: string }).destinatario} — {(item as { estado?: string }).estado}
+                {(item as { destinatario?: string }).destinatario}: {(item as { estado?: string }).estado}
               </li>
             ))}
           </ul>
@@ -138,7 +138,7 @@ export function SMSHistoryPage() {
           <ul className="space-y-2 text-sm">
             {(data ?? []).map((item, i) => (
               <li key={i} className="rounded border border-slate-100 px-3 py-2">
-                {(item as { telefone?: string }).telefone} — {(item as { estado?: string }).estado}
+                {(item as { telefone?: string }).telefone}: {(item as { estado?: string }).estado}
               </li>
             ))}
           </ul>
@@ -165,7 +165,7 @@ export function TemplatesPage() {
           <ul className="space-y-2 text-sm">
             {data?.results.map((t) => (
               <li key={t.id} className="rounded border border-slate-100 px-3 py-2">
-                <strong>{t.nome}</strong> — {t.codigo}
+                <strong>{t.nome}</strong>: {t.codigo}
               </li>
             ))}
           </ul>

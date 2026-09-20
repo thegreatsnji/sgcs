@@ -17,6 +17,7 @@ import { HISTORY_EVENT_TYPE_LABELS, PATIENT_PAGE_SIZE } from "@/constants/patien
 import { patientsService } from "@/services/patients";
 import type { AuditTrailEntry, HistoryEventType } from "@/types/patient";
 import { formatDisplayDate } from "@/utils/date";
+import { isImportedHistory } from "@/utils/historyProvenance";
 
 type HistoryView = "timeline" | "audit";
 
@@ -126,6 +127,9 @@ export function PatientHistoryPage() {
                 <div key={entry.id} className="rounded-lg border border-slate-200 p-4">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <Badge variant="info">{HISTORY_EVENT_TYPE_LABELS[entry.event_type]}</Badge>
+                    <Badge variant={isImportedHistory(entry.source_module) ? "warning" : "default"}>
+                      {isImportedHistory(entry.source_module) ? "Histórico anterior" : "SGCS"}
+                    </Badge>
                     <span className="text-xs text-slate-500">{entry.event_date}</span>
                   </div>
                   <h3 className="font-medium text-slate-900">{entry.title}</h3>

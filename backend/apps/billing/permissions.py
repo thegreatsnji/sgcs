@@ -5,9 +5,9 @@ from apps.users.permissions import HasModulePermission
 SERVICE_PERMISSION_MAP = {
     "list": "billing.view",
     "retrieve": "billing.view",
-    "create": "billing.create",
-    "partial_update": "billing.edit",
-    "update": "billing.edit",
+    "create": "billing.delete",
+    "partial_update": "billing.delete",
+    "update": "billing.delete",
     "destroy": "billing.delete",
 }
 
@@ -29,6 +29,9 @@ INVOICE_PERMISSION_MAP = {
     "update": "billing.edit",
     "cancel": "billing.edit",
     "add_item": "billing.edit",
+    # Autorizações de redução (ViewSet partilha este mixin)
+    "aprovar": "billing.view",
+    "rejeitar": "billing.view",
 }
 
 PAYMENT_PERMISSION_MAP = {

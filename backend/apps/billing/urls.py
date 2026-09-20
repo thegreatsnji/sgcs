@@ -11,6 +11,7 @@ from apps.billing.views import (
     ReciboViewSet,
     ReducaoValorAutorizacaoViewSet,
     RelatorioReducoesView,
+    ResumoOperacionalView,
     ServicoViewSet,
 )
 
@@ -31,5 +32,10 @@ urlpatterns = [
         name="patient-history",
     ),
     path("reports/reducoes/", RelatorioReducoesView.as_view(), name="billing-report-reducoes"),
+    path(
+        "resumo-operacional/",
+        ResumoOperacionalView.as_view(),
+        name="billing-resumo-operacional",
+    ),
     path("", include(router.urls)),
 ]

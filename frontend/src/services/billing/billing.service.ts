@@ -5,6 +5,8 @@ import type {
   BillingDashboardData,
   BillingService,
   Invoice,
+  OperationalBillingSummary,
+  OperationalPeriod,
   PatientFinancialHistory,
   Payment,
   Quote,
@@ -65,6 +67,10 @@ export const billingService = {
     const { data } = await api.post<ApiEnvelope<Invoice>>("/billing/invoices/", payload);
     return unwrapApiData(data);
   },
+  cancelInvoice: async (id: number) => {
+    const { data } = await api.post<ApiEnvelope<Invoice>>(`/billing/invoices/${id}/cancel/`);
+    return unwrapApiData(data);
+  },
 
   listPayments: async (params?: object) => getPaginated<Payment>("/billing/payments/", params),
   createPayment: async (payload: object) => {
@@ -120,6 +126,18 @@ export const billingService = {
 
   getDashboard: async () => {
     const { data } = await api.get<ApiEnvelope<BillingDashboardData>>("/dashboard/billing/");
+    return unwrapApiData(data);
+  },
+
+  getOperationalSummary: async (params: {
+    periodo: OperationalPeriod;
+    data_inicio?: string;
+    data_fim?: string;
+  }) => {
+    const { data } = await api.get<ApiEnvelope<OperationalBillingSummary>>(
+      "/billing/resumo-operacional/",
+      { params },
+    );
     return unwrapApiData(data);
   },
 };

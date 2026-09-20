@@ -1,12 +1,12 @@
 import { PillSubNav } from "@/components/layout/PillSubNav";
 import { UI_COPY } from "@/constants/uiCopy";
 
-const links = [
-  { to: "/reception", label: UI_COPY.nav.dashboard, end: true },
-  { to: "/reception/check-in", label: UI_COPY.nav.checkIn },
-  { to: "/reception/queue", label: UI_COPY.nav.queue },
-  { to: "/reception/referrals", label: UI_COPY.nav.referrals },
-];
+/**
+ * Sub-nav operacional da Receção.
+ * Encaminhamentos removido — atribuição de médico fica no Atendimento passo 4 e na Fila.
+ * Triagem isolada removida — usar Atendimento rápido.
+ */
+const links = [{ to: "/reception/queue", label: UI_COPY.nav.queue }];
 
 export function ReceptionSubNav() {
   return <PillSubNav tabs={links} ariaLabel="Navegação da recepção" />;

@@ -179,13 +179,13 @@ class TestWaitingQueue:
         assert entry.status == QueueStatus.COMPLETED
         assert AuditLog.objects.filter(action=AuditAction.RECEPTION_STATUS_CHANGE).exists()
 
-    def test_assign_to_doctor(self, api_client, receptionist_user, patient):
+    def test_assign_to_doctor(self, api_client, receptionist_user, doctor_user, patient):
         _check_in(api_client, receptionist_user, patient.pk)
         entry = WaitingQueue.objects.get(patient=patient)
         api_client.force_authenticate(user=receptionist_user)
         response = api_client.post(
             "/api/v1/reception/assign-to-doctor/",
-            {"queue_id": entry.pk, "reason": "Consulta geral"},
+            {"queue_id": entry.pk, "reason": "Consulta geral", "doctor_id": doctor_user.pk},
             format="json",
         )
         assert response.status_code == status.HTTP_201_CREATED

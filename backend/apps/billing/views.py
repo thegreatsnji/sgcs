@@ -30,6 +30,8 @@ from apps.billing.serializers import (
 )
 from apps.billing.services.billing_service import BillingService
 from apps.billing.services.cache_service import BillingCacheService
+from apps.billing.period import PERIODO_HOJE, parse_iso_date, resolve_periodo
+from apps.billing.services.resumo_operacional import get_resumo_operacional
 from apps.users.permissions import HasModulePermission
 from core.pagination import StandardPagination
 from core.responses import error_response, success_response
@@ -618,4 +620,30 @@ class RelatorioReducoesView(APIView):
                 },
             },
             message="Relatório de reduções obtido com sucesso.",
+        )
+
+
+class ResumoOperacionalView(APIView):
+    """Resumo financeiro do balcão (Receção) — só métricas operacionais."""
+
+    permission_classes = [HasModulePermission]
+    required_permission = "billing.view"
+
+    @extend_schema(tags=["Faturação — Resumo operacional"])
+    def get(self, request):
+        periodo = request.query_params.get("periodo", PERIODO_HOJE)
+        try:
+            data_inicio = parse_iso_date(request.query_params.get("data_inicio"))
+            data_fim = parse_iso_date(request.query_params.get("data_fim"))
+            inicio, fim = resolve_periodo(
+                periodo, data_inicio=data_inicio, data_fim=data_fim
+            )
+        except ValueError as exc:
+            return error_response(str(exc), status=status.HTTP_400_BAD_REQUEST)
+
+        data = get_resumo_operacional(data_inicio=inicio, data_fim=fim)
+        data["periodo"]["modo"] = (periodo or PERIODO_HOJE).strip().lower()
+        return success_response(
+            data=data,
+            message="Resumo operacional obtido com sucesso.",
         )

@@ -7,6 +7,7 @@ from apps.pharmacy.models import MedicamentoUrgencia, MovimentoStockUrgencia
 class MedicamentoUrgenciaSerializer(serializers.ModelSerializer):
     abaixo_minimo = serializers.BooleanField(read_only=True)
     estado = serializers.CharField(read_only=True)
+    stock_inicial_por_confirmar = serializers.BooleanField(read_only=True)
     servico_codigo = serializers.CharField(source="servico.codigo", read_only=True, default=None)
 
     class Meta:
@@ -29,6 +30,7 @@ class MedicamentoUrgenciaSerializer(serializers.ModelSerializer):
             "observacoes",
             "abaixo_minimo",
             "estado",
+            "stock_inicial_por_confirmar",
             "created_at",
             "updated_at",
         ]
@@ -65,6 +67,7 @@ class MovimentoStockUrgenciaSerializer(serializers.ModelSerializer):
     medicamento_nome = serializers.CharField(source="medicamento.nome", read_only=True)
     operador_nome = serializers.SerializerMethodField()
     paciente_nome = serializers.CharField(source="paciente.full_name", read_only=True, default=None)
+    tipo_label = serializers.SerializerMethodField()
 
     class Meta:
         model = MovimentoStockUrgencia
@@ -73,6 +76,7 @@ class MovimentoStockUrgenciaSerializer(serializers.ModelSerializer):
             "medicamento",
             "medicamento_nome",
             "tipo",
+            "tipo_label",
             "quantidade",
             "quantidade_antes",
             "quantidade_depois",
@@ -93,10 +97,25 @@ class MovimentoStockUrgenciaSerializer(serializers.ModelSerializer):
         name = obj.operador.get_full_name()
         return name or obj.operador.email
 
+    def get_tipo_label(self, obj) -> str:
+        return {
+            "ENTRADA": "Entrada",
+            "SAIDA": "Saída",
+            "AJUSTE": "Ajuste",
+            "PERDA_EXPIRACAO": "Perda / Expiração",
+        }.get(obj.tipo, obj.tipo)
+
 
 class RegistarMovimentoSerializer(serializers.Serializer):
     tipo = serializers.ChoiceField(choices=TipoMovimentoStockUrgencia.choices, required=False)
-    quantidade = serializers.IntegerField(min_value=1)
+    quantidade = serializers.IntegerField(min_value=0)
     motivo = serializers.CharField(required=False, allow_blank=True, max_length=255)
     paciente = serializers.IntegerField(required=False, allow_null=True)
     consulta = serializers.IntegerField(required=False, allow_null=True)
+
+
+class DefinirStockInicialSerializer(serializers.Serializer):
+    quantidade = serializers.IntegerField(min_value=1)
+    stock_minimo = serializers.IntegerField(min_value=0, required=False)
+    validade = serializers.DateField(required=False, allow_null=True)
+    unidade = serializers.CharField(required=False, allow_blank=True, max_length=30)

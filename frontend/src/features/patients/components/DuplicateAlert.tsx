@@ -12,9 +12,9 @@ export function DuplicateAlert({ matches }: DuplicateAlertProps) {
 
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-      <p className="text-sm font-semibold text-amber-900">Possíveis duplicados encontrados</p>
+      <p className="text-sm font-semibold text-amber-900">Pode já existir um utente com estes dados.</p>
       <p className="mt-1 text-sm text-amber-800">
-        Verifique se o paciente já está registado antes de continuar.
+        Verifique a ficha existente ou continue o registo se for outro utente.
       </p>
       <ul className="mt-3 space-y-2">
         {matches.map((match) => (
@@ -27,12 +27,15 @@ export function DuplicateAlert({ matches }: DuplicateAlertProps) {
             </span>
             <Link to={`/patients/${match.id}`}>
               <Button size="sm" variant="outline">
-                Ver ficha
+                Ver utente existente
               </Button>
             </Link>
           </li>
         ))}
       </ul>
+      <p className="mt-3 text-xs text-amber-700">
+        Continuar registo está disponível — o aviso não bloqueia o formulário.
+      </p>
     </div>
   );
 }

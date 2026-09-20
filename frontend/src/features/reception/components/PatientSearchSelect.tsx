@@ -47,6 +47,7 @@ export function PatientSearchSelect({ value, onChange, onSelectPatient }: Patien
         <IconSearch className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
         <input
           type="search"
+          autoFocus
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Nome, telefone ou n.º de processo..."

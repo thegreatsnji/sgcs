@@ -1,6 +1,7 @@
 import { Link, NavLink, useLocation, useParams } from "react-router-dom";
 
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TabItem {
   label: string;
@@ -14,17 +15,28 @@ export function PatientSubNav() {
   const { id } = useParams();
   const location = useLocation();
   const { hasPermission } = usePermissions();
+  const { user } = useAuth();
 
   const tabs: TabItem[] = [
     { label: "Resumo", to: `/patients/${id}`, end: true },
-    { label: "Histórico", to: `/patients/${id}/clinical` },
+    {
+      label: "Alertas clínicos",
+      to: `/patients/${id}/clinical`,
+      permission: "appointments.clinical",
+    },
     { label: "Consultas", to: "/appointments/list", external: true, permission: "appointments.view" },
     { label: "Laboratório", to: "/laboratory/results", external: true, permission: "laboratory.results.view" },
-    { label: "Pagamentos", to: "/billing/history", external: true, permission: "billing.view" },
+    { label: "Pagamentos", to: `/billing/history?paciente=${id}`, external: true, permission: "billing.view" },
     { label: "Documentos", to: `/patients/${id}/documents` },
   ];
 
-  const visibleTabs = tabs.filter((tab) => !tab.permission || hasPermission(tab.permission));
+  const visibleTabs = tabs.filter(
+    (tab) =>
+      !(tab.label === "Pagamentos" && user?.role === "MEDICO") &&
+      !(tab.label === "Consultas" && user?.role === "ENFERMEIRO") &&
+      !(tab.label === "Alertas clínicos" && user?.role === "ENFERMEIRO") &&
+      (!tab.permission || hasPermission(tab.permission)),
+  );
 
   const tabClass = (isActive: boolean) =>
     `shrink-0 rounded-xl px-4 py-2.5 text-sm font-medium transition focus-ring ${

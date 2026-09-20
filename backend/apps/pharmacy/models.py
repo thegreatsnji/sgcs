@@ -66,6 +66,12 @@ class MedicamentoUrgencia(TimestampMixin):
             validade=self.validade,
         )
 
+    @property
+    def stock_inicial_por_confirmar(self) -> bool:
+        from apps.pharmacy.services.stock_service import StockUrgenciaService
+
+        return StockUrgenciaService.stock_inicial_por_confirmar(self)
+
 
 class MovimentoStockUrgencia(TimestampMixin):
     medicamento = models.ForeignKey(

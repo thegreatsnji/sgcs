@@ -32,6 +32,14 @@ export function displayDateToApi(value: string): string {
   return `${match[3]}-${match[2]}-${match[1]}`;
 }
 
+/** Converte AAAA-MM-DD (API) para DD/MM/AAAA. */
+export function apiDateToDisplay(value: string): string {
+  const trimmed = value.trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
+  if (!iso) return trimmed;
+  return `${iso[3]}/${iso[2]}/${iso[1]}`;
+}
+
 /** Converte idade em anos para data de nascimento aproximada (DD/MM/AAAA). */
 export function ageToBirthDateDisplay(age: number): string {
   const today = new Date();
@@ -43,7 +51,11 @@ export function ageToBirthDateDisplay(age: number): string {
 
 export function formatDisplayDate(value?: string | null): string {
   if (!value) return "—";
-  return value;
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+    return apiDateToDisplay(trimmed);
+  }
+  return trimmed;
 }
 
 export function formatDisplayDateTime(value?: string | null): string {

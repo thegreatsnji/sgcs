@@ -13,10 +13,10 @@ const STATUS_STYLE: Record<
   CANCELLED: { variant: "danger", ring: "ring-red-200 dark:ring-red-800" },
 };
 
-/** Estados operacionais visíveis na fila da receção. */
+/** Estados operacionais visíveis na fila da receção (um estado = um rótulo). */
 export const QUEUE_OPERATIONAL_LABELS: Record<string, string> = {
   WAITING: "Aguardando",
-  CALLED: "Em triagem / chamado",
+  CALLED: "Chamado",
   IN_SERVICE: "Na consulta",
   COMPLETED: "Concluído",
   CANCELLED: "Cancelado",

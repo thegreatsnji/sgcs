@@ -1,18 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
-import { LoadingState } from "@/design-system";
+import { Badge, LoadingState } from "@/design-system";
 import { patientsService } from "@/services/patients";
 import { formatDisplayDateTime } from "@/utils/date";
+import { isImportedHistory } from "@/utils/historyProvenance";
 
 interface PatientTimelineProps {
   patientId: number;
+  compact?: boolean;
 }
 
-export function PatientTimeline({ patientId }: PatientTimelineProps) {
+export function PatientTimeline({ patientId, compact = false }: PatientTimelineProps) {
   const { data, isLoading } = useQuery({
-    queryKey: ["patient-history-timeline", patientId],
-    queryFn: () => patientsService.listHistory(patientId, { page_size: 40 }),
+    queryKey: ["patient-history-timeline", patientId, compact],
+    queryFn: () => patientsService.listHistory(patientId, { page_size: compact ? 8 : 40 }),
   });
 
   if (isLoading) return <LoadingState message="A carregar linha temporal…" />;
@@ -44,13 +46,17 @@ export function PatientTimeline({ patientId }: PatientTimelineProps) {
                   {formatDisplayDateTime(entry.event_date)}
                 </time>
               </div>
+              <div className="mt-1">
+                <Badge variant={isImportedHistory(entry.source_module) ? "warning" : "info"}>
+                  {isImportedHistory(entry.source_module) ? "Histórico anterior" : "SGCS"}
+                </Badge>
+              </div>
               {entry.description ? (
                 <p className="mt-2 text-sm text-text-muted">{entry.description}</p>
               ) : null}
-              <p className="mt-2 text-xs text-text-muted">
-                {entry.source_module ? `Módulo: ${entry.source_module}` : null}
-                {entry.recorded_by?.full_name ? ` · ${entry.recorded_by.full_name}` : null}
-              </p>
+              {entry.recorded_by?.full_name ? (
+                <p className="mt-2 text-xs text-text-muted">{entry.recorded_by.full_name}</p>
+              ) : null}
             </div>
           </li>
         ))}

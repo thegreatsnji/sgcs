@@ -29,6 +29,8 @@ from core.responses import error_response, success_response
     assign_to_doctor=extend_schema(tags=["Receção"]),
     history=extend_schema(tags=["Receção"]),
     create_referral=extend_schema(tags=["Receção"]),
+    pending_clinical_lab_orders=extend_schema(tags=["Receção"]),
+    mark_lab_order_billed=extend_schema(tags=["Receção"]),
 )
 class ReceptionViewSet(ReceptionPermissionMixin, viewsets.GenericViewSet):
     pagination_class = StandardPagination
@@ -50,12 +52,16 @@ class ReceptionViewSet(ReceptionPermissionMixin, viewsets.GenericViewSet):
 
     @action(detail=False, methods=["get"], url_path="queue")
     def queue(self, request):
-        queryset = ReceptionService.get_active_queue(use_cache=True)
+        filtering = any(
+            request.query_params.get(key)
+            for key in ("status", "priority", "patient", "doctor", "unassigned")
+        )
+        queryset = ReceptionService.get_active_queue(use_cache=not filtering)
         if hasattr(queryset, "filter"):
             filterset = WaitingQueueFilter(request.query_params, queryset=queryset)
             queryset = filterset.qs
         page = self.paginate_queryset(queryset)
-        serializer = WaitingQueueSerializer(page, many=True)
+        serializer = WaitingQueueSerializer(page, many=True, context={"request": request})
         paginated = self.get_paginated_response(serializer.data)
         return success_response(
             data={
@@ -99,6 +105,12 @@ class ReceptionViewSet(ReceptionPermissionMixin, viewsets.GenericViewSet):
         consulta = (
             Appointment.objects.filter(referral_id=referral.pk).order_by("-pk").first()
         )
+        if not consulta and referral.check_in_id:
+            consulta = (
+                Appointment.objects.filter(check_in_id=referral.check_in_id)
+                .order_by("-pk")
+                .first()
+            )
         consulta_payload = None
         if consulta:
             consulta_payload = {
@@ -121,14 +133,103 @@ class ReceptionViewSet(ReceptionPermissionMixin, viewsets.GenericViewSet):
     @action(detail=False, methods=["get"], url_path="doctor-assignment-options")
     def doctor_assignment_options(self, request):
         patient_id = request.query_params.get("patient_id")
-        if not patient_id:
-            return error_response("Indique patient_id.", status=status.HTTP_400_BAD_REQUEST)
+        check_in_id = request.query_params.get("check_in_id")
+        queue_id = request.query_params.get("queue_id")
         try:
-            patient_id_int = int(patient_id)
+            patient_id_int = int(patient_id) if patient_id else None
+            check_in_id_int = int(check_in_id) if check_in_id else None
+            queue_id_int = int(queue_id) if queue_id else None
         except (TypeError, ValueError):
-            return error_response("patient_id inválido.", status=status.HTTP_400_BAD_REQUEST)
-        data = ReceptionService.get_doctor_assignment_options(patient_id_int)
+            return error_response("Parâmetros inválidos.", status=status.HTTP_400_BAD_REQUEST)
+        data = ReceptionService.get_doctor_assignment_options(
+            patient_id_int or 0,
+            check_in_id=check_in_id_int,
+            queue_id=queue_id_int,
+        )
         return success_response(data=data, message="Opções de médico obtidas com sucesso.")
+
+    @action(detail=False, methods=["get"], url_path="pending-clinical-lab-orders")
+    def pending_clinical_lab_orders(self, request):
+        from apps.appointments.constants import PedidoLaboratorioEstadoFaturacao
+        from apps.appointments.models import PedidoLaboratorio
+
+        estado = request.query_params.get("estado_faturacao", "").strip()
+        qs = PedidoLaboratorio.objects.select_related(
+            "consulta__patient", "servico", "solicitado_por"
+        ).order_by("created_at")
+        if estado in {"", "AGUARDA_REGULARIZACAO"}:
+            qs = qs.filter(
+                estado_faturacao=PedidoLaboratorioEstadoFaturacao.AGUARDA_REGULARIZACAO
+            )
+        elif estado == "TODOS":
+            qs = qs.filter(
+                estado_faturacao__in=[
+                    PedidoLaboratorioEstadoFaturacao.AGUARDA_REGULARIZACAO,
+                    PedidoLaboratorioEstadoFaturacao.REGULARIZADO,
+                ]
+            )
+        else:
+            qs = qs.filter(estado_faturacao=estado)
+        data = [
+            {
+                "id": pedido.pk,
+                "paciente_id": pedido.consulta.patient_id,
+                "paciente_nome": pedido.consulta.patient.full_name,
+                "paciente_codigo": pedido.consulta.patient.patient_number,
+                "tipo_exame": pedido.tipo_exame,
+                "estado_faturacao": pedido.estado_faturacao,
+                "estado_faturacao_label": pedido.get_estado_faturacao_display(),
+                "prioridade": pedido.prioridade,
+                "created_at": pedido.created_at.isoformat(),
+                "servico": (
+                    {
+                        "id": pedido.servico_id,
+                        "codigo": pedido.servico.codigo,
+                        "nome": pedido.servico.nome,
+                    }
+                    if pedido.servico_id
+                    else None
+                ),
+            }
+            for pedido in qs
+        ]
+        return success_response(
+            data=data,
+            message="Pedidos clínicos laboratoriais obtidos com sucesso.",
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path=r"mark-lab-order-billed/(?P<order_id>\d+)",
+    )
+    def mark_lab_order_billed(self, request, order_id=None):
+        from apps.appointments.constants import PedidoLaboratorioEstadoFaturacao
+        from apps.appointments.models import PedidoLaboratorio
+
+        try:
+            pedido = PedidoLaboratorio.objects.get(pk=int(order_id))
+        except (PedidoLaboratorio.DoesNotExist, TypeError, ValueError):
+            return error_response(
+                "Pedido clínico de laboratório não encontrado.",
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        already = pedido.estado_faturacao == PedidoLaboratorioEstadoFaturacao.REGULARIZADO
+        if not already:
+            pedido.estado_faturacao = PedidoLaboratorioEstadoFaturacao.REGULARIZADO
+            pedido.save(update_fields=["estado_faturacao", "updated_at"])
+        return success_response(
+            data={
+                "id": pedido.pk,
+                "estado_faturacao": pedido.estado_faturacao,
+                "already_regularized": already,
+            },
+            message=(
+                "Pedido laboratorial já estava regularizado."
+                if already
+                else "Pedido laboratorial marcado como regularizado."
+            ),
+        )
 
     @action(detail=False, methods=["get"], url_path="history")
     def history(self, request):

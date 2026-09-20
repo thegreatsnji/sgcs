@@ -8,6 +8,7 @@ from .views import (
     ClinicalDashboardView,
     ConsultasDashboardView,
     ConsultationDashboardView,
+    DirectorDashboardView,
     ExecutiveDashboardView,
     FinanceDashboardView,
     LaboratoryDashboardView,
@@ -28,6 +29,7 @@ urlpatterns = [
     path("billing/", BillingDashboardView.as_view(), name="billing"),
     path("finance/", FinanceDashboardView.as_view(), name="finance"),
     path("executive/", ExecutiveDashboardView.as_view(), name="executive"),
+    path("director/", DirectorDashboardView.as_view(), name="director"),
     path("notifications/", NotificationsDashboardView.as_view(), name="notifications"),
     path("system/", SystemDashboardView.as_view(), name="system"),
 ]

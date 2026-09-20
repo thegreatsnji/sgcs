@@ -105,6 +105,12 @@ export function ReceptionWorkflowPage() {
     goToStep(3);
   }, [step, paymentGateLoading, isPaymentReady, patientId, goToStep]);
 
+  /** Já pago: saltar o ecrã intermédio e ir directamente escolher o médico. */
+  useEffect(() => {
+    if (step !== 3 || paymentGateLoading || !isPaymentReady || !patientId) return;
+    goToStep(4);
+  }, [step, paymentGateLoading, isPaymentReady, patientId, goToStep]);
+
   const returnAfterPay = encodeAtendimentoReturn({
     passo: 4,
     paciente: patientId,
@@ -246,7 +252,7 @@ export function ReceptionWorkflowPage() {
           </p>
 
           <p className="mt-2 text-xs text-text-muted">
-            Na fatura pode ajustar o preço (redução) com motivo registado — ex. dificuldade financeira.
+            Na fatura pode ajustar o preço (redução) com motivo registado, por exemplo dificuldade financeira.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -307,7 +313,7 @@ export function ReceptionWorkflowPage() {
                 disabled={!isPaymentReady}
                 onClick={() => goToStep(4)}
               >
-                Pagamento feito — ir para o médico →
+                Pagamento feito. Ir para o médico →
               </Button>
             </div>
           ) : null}
@@ -339,9 +345,11 @@ export function ReceptionWorkflowPage() {
               <Link to={buildAtendimentoUrl({ passo: 1 })}>
                 <Button variant="primary">Novo atendimento</Button>
               </Link>
-              <Button type="button" variant="secondary" onClick={() => goToStep(3)}>
-                ← Pagamento
-              </Button>
+              <Link to="/reception/queue">
+                <Button type="button" variant="secondary">
+                  Abrir fila
+                </Button>
+              </Link>
             </div>
           </Card>
         </>

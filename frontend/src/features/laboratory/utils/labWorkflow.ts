@@ -3,9 +3,9 @@ import type { LaboratoryOrderStatus } from "@/types/laboratory";
 export const LAB_WORKFLOW_STEPS: { status: LaboratoryOrderStatus; label: string }[] = [
   { status: "PENDENTE", label: "Pendente" },
   { status: "RECEBIDO", label: "Recebido" },
-  { status: "AGUARDANDO_COLHEITA", label: "Colheita" },
+  { status: "AGUARDANDO_COLHEITA", label: "Colheita registada" },
   { status: "EM_PROCESSAMENTO", label: "Processamento" },
-  { status: "CONCLUIDO", label: "Concluído" },
+  { status: "CONCLUIDO", label: "Proc. concluído" },
 ];
 
 const STATUS_ORDER: LaboratoryOrderStatus[] = [

@@ -13,7 +13,9 @@ import {
   PAGAMENTO_ESTADO_LABEL,
   formatCurrency,
 } from "@/features/billing/utils/formatBilling";
+import { usePermissions } from "@/hooks/usePermissions";
 import { billingService } from "@/services/billing/billing.service";
+import { receptionService } from "@/services/reception";
 import { getApiErrorMessage } from "@/utils/api-error";
 import { formatDisplayDateTime } from "@/utils/date";
 
@@ -24,9 +26,15 @@ export function InvoiceDetailPage() {
   const [searchParams] = useSearchParams();
   const pagarFocus = searchParams.get("pagar") === "1";
   const retorno = searchParams.get("retorno");
+  const pedidoLabId = Number(searchParams.get("pedido_lab")) || null;
+  /** Fluxo do atendimento / exames a regularizar: um clique regista + confirma + abre recibo. */
+  const oneClickPay = Boolean(pagarFocus || retorno || pedidoLabId);
   const paymentSectionRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
+  const canCancel = hasPermission("billing.edit");
+  const canPay = hasPermission("billing.payment");
 
   const { data, isLoading } = useQuery({
     queryKey: ["billing-invoice", invoiceId],
@@ -40,13 +48,64 @@ export function InvoiceDetailPage() {
     enabled: Number.isFinite(invoiceId) && !!data,
   });
 
+  function invalidatePaymentQueries() {
+    void queryClient.invalidateQueries({ queryKey: ["billing-invoice", invoiceId] });
+    void queryClient.invalidateQueries({ queryKey: ["billing-receipts"] });
+    void queryClient.invalidateQueries({ queryKey: ["billing-invoices", "payment-gate"] });
+    void queryClient.invalidateQueries({ queryKey: ["billing-invoices", "payment-gate-today"] });
+    void queryClient.invalidateQueries({ queryKey: ["pending-clinical-lab-orders"] });
+  }
+
+  async function maybeMarkLabOrderRegularized() {
+    if (!pedidoLabId) return;
+    try {
+      await receptionService.markLabOrderBilled(pedidoLabId);
+      showToast("Exame marcado como regularizado.", "success");
+    } catch (e) {
+      showToast(
+        getApiErrorMessage(e) ||
+          "Pagamento ok, mas não foi possível marcar o exame. Use «Já cobrado» na lista.",
+        "warning",
+      );
+    }
+  }
+
+  async function navigateToReceipt(paymentId: number) {
+    try {
+      const receipts = await billingService.listReceipts({ page: 1, page_size: 100 });
+      const recibo = receipts.results.find((r) => r.pagamento === paymentId);
+      if (recibo) {
+        const parts = ["imprimir=1"];
+        if (retorno) parts.push(`retorno=${encodeURIComponent(retorno)}`);
+        void navigate(`/billing/receipts/${recibo.id}?${parts.join("&")}`);
+      }
+    } catch {
+      /* lista de recibos opcional para redireccionamento */
+    }
+  }
+
   const payMutation = useMutation({
-    mutationFn: billingService.createPayment,
-    onSuccess: () => {
+    mutationFn: async (values: {
+      fatura: number;
+      metodo_pagamento: string;
+      valor: string;
+      referencia?: string;
+    }) => {
+      const payment = await billingService.createPayment(values);
+      if (oneClickPay && payment.estado === "PENDENTE") {
+        return billingService.confirmPayment(payment.id);
+      }
+      return payment;
+    },
+    onSuccess: async (payment) => {
+      invalidatePaymentQueries();
+      if (oneClickPay && payment.estado === "CONFIRMADO") {
+        await maybeMarkLabOrderRegularized();
+        showToast("Pagamento confirmado. A abrir o recibo…", "success");
+        await navigateToReceipt(payment.id);
+        return;
+      }
       showToast("Pagamento registado.", "success");
-      void queryClient.invalidateQueries({ queryKey: ["billing-invoice", invoiceId] });
-      void queryClient.invalidateQueries({ queryKey: ["billing-receipts"] });
-      void queryClient.invalidateQueries({ queryKey: ["billing-invoices", "payment-gate"] });
     },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
@@ -55,19 +114,19 @@ export function InvoiceDetailPage() {
     mutationFn: billingService.confirmPayment,
     onSuccess: async (_payment, paymentId) => {
       showToast("Pagamento confirmado. Pode imprimir o recibo.", "success");
+      invalidatePaymentQueries();
+      await maybeMarkLabOrderRegularized();
+      await navigateToReceipt(paymentId);
+    },
+    onError: (e) => showToast(getApiErrorMessage(e), "error"),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => billingService.cancelInvoice(invoiceId),
+    onSuccess: () => {
+      showToast("Fatura cancelada. O registo mantém-se no histórico.", "success");
       void queryClient.invalidateQueries({ queryKey: ["billing-invoice", invoiceId] });
-      void queryClient.invalidateQueries({ queryKey: ["billing-receipts"] });
-      void queryClient.invalidateQueries({ queryKey: ["billing-invoices", "payment-gate"] });
-      try {
-        const receipts = await billingService.listReceipts({ page: 1, page_size: 100 });
-        const recibo = receipts.results.find((r) => r.pagamento === paymentId);
-        if (recibo) {
-          const retornoQs = retorno ? `&retorno=${encodeURIComponent(retorno)}` : "";
-          void navigate(`/billing/receipts/${recibo.id}?imprimir=1${retornoQs}`);
-        }
-      } catch {
-        /* lista de recibos opcional para redireccionamento */
-      }
+      void queryClient.invalidateQueries({ queryKey: ["billing-invoices"] });
     },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
@@ -81,7 +140,10 @@ export function InvoiceDetailPage() {
 
   const total = Number(data.total);
   const totalPago = Number(data.total_pago);
-  const pendente = totalPago < total ? total - totalPago : 0;
+  const saldo =
+    data.saldo != null ? Math.max(0, Number(data.saldo)) : Math.max(0, total - totalPago);
+  const canShowCancel =
+    canCancel && (data.estado === "PENDENTE" || data.estado === "PARCIAL");
   const receipts = (receiptsData?.results ?? []).filter((r) => r.fatura_numero === data.numero);
 
   return (
@@ -105,14 +167,35 @@ export function InvoiceDetailPage() {
           <div className="flex flex-col items-start gap-3 lg:items-end">
             <InvoiceStatusBadge estado={data.estado} />
             <div className="text-left lg:text-right">
-              <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Valor total</p>
+              <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Total</p>
               <p className="text-3xl font-bold text-slate-900">{formatCurrency(data.total)}</p>
-              {pendente > 0 && (
+              <p className="mt-1 text-sm text-slate-600">
+                Pago: <span className="font-semibold text-emerald-700">{formatCurrency(data.total_pago)}</span>
+              </p>
+              {saldo > 0 ? (
                 <p className="mt-1 text-sm text-amber-700">
-                  Pendente: <span className="font-semibold">{formatCurrency(pendente)}</span>
+                  Saldo: <span className="font-semibold">{formatCurrency(saldo)}</span>
                 </p>
-              )}
+              ) : null}
             </div>
+            {canShowCancel ? (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={cancelMutation.isPending}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Cancelar esta fatura?\n\nO registo mantém-se no histórico e deixa de contar como saldo activo.",
+                    )
+                  ) {
+                    cancelMutation.mutate();
+                  }
+                }}
+              >
+                Cancelar fatura
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -126,12 +209,12 @@ export function InvoiceDetailPage() {
             <dd className="font-medium text-slate-900">{formatCurrency(data.desconto)}</dd>
           </div>
           <div>
-            <dt className="text-slate-500">Imposto</dt>
-            <dd className="font-medium text-slate-900">{formatCurrency(data.imposto)}</dd>
+            <dt className="text-slate-500">Pago</dt>
+            <dd className="font-medium text-green-700">{formatCurrency(data.total_pago)}</dd>
           </div>
           <div>
-            <dt className="text-slate-500">Total pago</dt>
-            <dd className="font-medium text-green-700">{formatCurrency(data.total_pago)}</dd>
+            <dt className="text-slate-500">Saldo</dt>
+            <dd className="font-medium text-slate-900">{formatCurrency(saldo)}</dd>
           </div>
           <div>
             <dt className="text-slate-500">Emitida em</dt>
@@ -175,14 +258,16 @@ export function InvoiceDetailPage() {
         )}
       </Card>
 
-      {data.editavel && (
+      {data.editavel && canPay && (
         <div ref={paymentSectionRef} id="registar-pagamento">
-          <Card title="Registar pagamento">
+          <Card title={oneClickPay ? "Cobrar e emitir recibo" : "Registar pagamento"}>
             <PaymentForm
               faturaId={invoiceId}
-              valorSugerido={pendente > 0 ? String(pendente) : data.total}
+              valorSugerido={saldo > 0 ? String(saldo) : data.total}
+              saldoMaximo={saldo}
               onSubmit={(v) => payMutation.mutate(v)}
               isPending={payMutation.isPending}
+              submitLabel={oneClickPay ? "Cobrar e emitir recibo" : "Registar pagamento"}
             />
           </Card>
         </div>
@@ -207,7 +292,7 @@ export function InvoiceDetailPage() {
                   <Badge variant={payment.estado === "CONFIRMADO" ? "success" : payment.estado === "PENDENTE" ? "warning" : "default"}>
                     {PAGAMENTO_ESTADO_LABEL[payment.estado]}
                   </Badge>
-                  {payment.estado === "PENDENTE" && (
+                  {payment.estado === "PENDENTE" && canPay && (
                     <Button
                       size="sm"
                       onClick={() => confirmMutation.mutate(payment.id)}
@@ -238,7 +323,11 @@ export function InvoiceDetailPage() {
                     {receipt.numero}
                   </Link>
                   <p className="mt-1 text-sm text-slate-500">
-                    {receipt.metodo_pagamento} · {formatDisplayDateTime(receipt.emitido_em)}
+                    {(METODO_PAGAMENTO_LABEL[
+                      receipt.metodo_pagamento as keyof typeof METODO_PAGAMENTO_LABEL
+                    ] ??
+                      receipt.metodo_pagamento)}{" "}
+                    · {formatDisplayDateTime(receipt.emitido_em)}
                   </p>
                 </div>
                 <div className="flex flex-col items-start gap-2 sm:items-end">

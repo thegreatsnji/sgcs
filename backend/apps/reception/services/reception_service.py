@@ -121,6 +121,7 @@ class ReceptionService:
         visit_purpose: str = "",
         symptoms: str = "",
         notes: str = "",
+        unusual_vitals_confirmed: bool = False,
         request=None,
     ) -> ReceptionCheckIn:
         ReceptionService._ensure_receptionist(user)
@@ -187,6 +188,7 @@ class ReceptionService:
                 "patient_id": patient.pk,
                 "priority": resolved_priority,
                 "triage_color": triage_color,
+                "unusual_vitals_confirmed": unusual_vitals_confirmed,
             },
         )
         return check_in
@@ -283,12 +285,19 @@ class ReceptionService:
         ).exists()
 
     @staticmethod
-    def get_doctor_assignment_options(patient_id: int) -> dict:
-        from apps.appointments.constants import AppointmentStatus
+    def get_doctor_assignment_options(
+        patient_id: int,
+        *,
+        check_in_id: int | None = None,
+        queue_id: int | None = None,
+    ) -> dict:
+        from apps.appointments.constants import ACTIVE_APPOINTMENT_STATUSES, AppointmentStatus
         from apps.appointments.models import Appointment
         from apps.authentication.models import User, UserRole
 
-        preferred_id = ReceptionService.get_patient_preferred_doctor_id(patient_id)
+        preferred_id = (
+            ReceptionService.get_patient_preferred_doctor_id(patient_id) if patient_id else None
+        )
         doctors_qs = User.objects.filter(role=UserRole.MEDICO, is_active=True).order_by(
             "first_name", "last_name"
         )
@@ -313,6 +322,15 @@ class ReceptionService:
                     "available": not in_consultation,
                     "waiting_count": waiting_count,
                     "is_preferred": doctor.pk == preferred_id,
+                    "availability_label": (
+                        "Indisponível"
+                        if in_consultation
+                        else (
+                            "Disponível"
+                            if waiting_count == 0
+                            else f"{waiting_count} utente(s) em espera"
+                        )
+                    ),
                 }
             )
 
@@ -326,19 +344,66 @@ class ReceptionService:
                     "available": ReceptionService.is_doctor_available_for_assignment(preferred.pk),
                 }
 
+        resolved_check_in_id = check_in_id
+        if queue_id and not resolved_check_in_id:
+            entry = WaitingQueue.objects.filter(pk=queue_id).only("check_in_id").first()
+            if entry:
+                resolved_check_in_id = entry.check_in_id
+
+        scheduled_doctor = None
+        if resolved_check_in_id:
+            apt = (
+                Appointment.objects.filter(
+                    check_in_id=resolved_check_in_id,
+                    doctor_id__isnull=False,
+                    status__in=ACTIVE_APPOINTMENT_STATUSES,
+                )
+                .select_related("doctor")
+                .order_by("-pk")
+                .first()
+            )
+            if apt and apt.doctor_id:
+                scheduled_doctor = {
+                    "id": apt.doctor_id,
+                    "full_name": apt.doctor.get_full_name(),
+                    "available": ReceptionService.is_doctor_available_for_assignment(apt.doctor_id),
+                }
+
+        # Dica opcional apenas (marcação / habitual) — nunca usado para auto-assign no backend.
         suggested_doctor_id = None
-        if preferred_doctor and preferred_doctor["available"]:
+        if scheduled_doctor and scheduled_doctor["available"]:
+            suggested_doctor_id = scheduled_doctor["id"]
+        elif preferred_doctor and preferred_doctor["available"]:
             suggested_doctor_id = preferred_doctor["id"]
-        else:
-            available = [row for row in doctors if row["available"]]
-            if available:
-                suggested_doctor_id = min(available, key=lambda row: row["waiting_count"])["id"]
 
         return {
             "preferred_doctor": preferred_doctor,
+            "scheduled_doctor": scheduled_doctor,
             "suggested_doctor_id": suggested_doctor_id,
             "doctors": doctors,
         }
+
+    @staticmethod
+    def _resolve_queue_doctor_context(entry: WaitingQueue):
+        from apps.appointments.constants import ACTIVE_APPOINTMENT_STATUSES, AppointmentStatus
+        from apps.appointments.models import Appointment
+
+        # select_for_update sem select_related (FKs nullable → outer join inválido no PostgreSQL).
+        appointment = (
+            Appointment.objects.select_for_update()
+            .filter(
+                check_in_id=entry.check_in_id,
+                status__in=ACTIVE_APPOINTMENT_STATUSES,
+            )
+            .order_by("-pk")
+            .first()
+        )
+        referral = (
+            Referral.objects.filter(check_in_id=entry.check_in_id)
+            .order_by("-pk")
+            .first()
+        )
+        return appointment, referral, AppointmentStatus
 
     @staticmethod
     @transaction.atomic
@@ -363,27 +428,91 @@ class ReceptionService:
         if entry.status not in ReceptionService.ACTIVE_QUEUE_STATUSES:
             raise ValueError("Este utente já não está activo na fila.")
 
+        if not doctor_id:
+            raise ValueError("Seleccione um médico para encaminhar o utente.")
+
+        from apps.authentication.models import User, UserRole
+
+        doctor = User.objects.filter(pk=doctor_id, role=UserRole.MEDICO, is_active=True).first()
+        if not doctor:
+            raise ValueError("Médico inválido ou inactivo.")
+        if not ReceptionService.is_doctor_available_for_assignment(doctor_id):
+            raise ValueError(
+                "Este médico não está disponível neste momento. Seleccione outro médico."
+            )
+
+        appointment, existing_referral, AppointmentStatus = ReceptionService._resolve_queue_doctor_context(
+            entry
+        )
+
+        if appointment is not None:
+            if appointment.status == AppointmentStatus.EM_CONSULTA:
+                raise ValueError(
+                    "A consulta já foi iniciada. Não é possível alterar o médico."
+                )
+            previous_doctor_id = appointment.doctor_id
+            if (
+                previous_doctor_id == doctor_id
+                and existing_referral
+                and existing_referral.assigned_doctor_id == doctor_id
+            ):
+                return existing_referral
+
+            appointment.doctor_id = doctor_id
+            appointment.save(update_fields=["doctor_id", "updated_at"])
+
+            if existing_referral:
+                existing_referral.assigned_doctor = doctor
+                existing_referral.save(update_fields=["assigned_doctor", "updated_at"])
+                referral = existing_referral
+            else:
+                referral = Referral.objects.create(
+                    patient=entry.patient,
+                    check_in=entry.check_in,
+                    from_department=ReferralDepartment.RECEPTION,
+                    to_department=ReferralDepartment.DOCTOR,
+                    reason=reason or "Reatribuição de médico na receção.",
+                    referred_by=user,
+                    assigned_doctor=doctor,
+                )
+                appointment.referral = referral
+                appointment.save(update_fields=["referral", "updated_at"])
+
+            if entry.status in {QueueStatus.WAITING, QueueStatus.CALLED}:
+                entry.status = QueueStatus.IN_SERVICE
+                entry.save(update_fields=["status", "updated_at"])
+                check_in = entry.check_in
+                check_in.status = CheckInStatus.IN_CONSULTATION
+                check_in.save(update_fields=["status", "updated_at"])
+
+            ReceptionService._invalidate_queue_cache()
+            AuditService.log(
+                action=AuditAction.RECEPTION_ASSIGN_DOCTOR,
+                user=user,
+                request=request,
+                description=(
+                    f"Médico alterado para {doctor.get_full_name()} — paciente {entry.patient.full_name}."
+                    if previous_doctor_id and previous_doctor_id != doctor_id
+                    else f"Paciente {entry.patient.full_name} encaminhado para {doctor.get_full_name()}."
+                ),
+                resource_type="referral",
+                resource_id=str(referral.pk),
+                metadata={
+                    "patient_id": entry.patient_id,
+                    "queue_id": entry.pk,
+                    "doctor_id": doctor_id,
+                    "previous_doctor_id": previous_doctor_id,
+                    "reassignment": bool(previous_doctor_id and previous_doctor_id != doctor_id),
+                },
+            )
+            return referral
+
         entry.status = QueueStatus.IN_SERVICE
         entry.save(update_fields=["status", "updated_at"])
 
         check_in = entry.check_in
         check_in.status = CheckInStatus.IN_CONSULTATION
         check_in.save(update_fields=["status", "updated_at"])
-
-        assignment = ReceptionService.get_doctor_assignment_options(entry.patient_id)
-        resolved_doctor_id = doctor_id or assignment.get("suggested_doctor_id")
-        if not resolved_doctor_id:
-            raise ValueError("Seleccione um médico disponível para este utente.")
-
-        from apps.authentication.models import User, UserRole
-
-        doctor = User.objects.filter(pk=resolved_doctor_id, role=UserRole.MEDICO, is_active=True).first()
-        if not doctor:
-            raise ValueError("Médico inválido ou inactivo.")
-        if not ReceptionService.is_doctor_available_for_assignment(resolved_doctor_id):
-            raise ValueError(
-                "O médico seleccionado está em consulta. Escolha outro médico disponível."
-            )
 
         referral = Referral.objects.create(
             patient=entry.patient,
@@ -402,13 +531,15 @@ class ReceptionService:
             action=AuditAction.RECEPTION_ASSIGN_DOCTOR,
             user=user,
             request=request,
-            description=f"Paciente {entry.patient.full_name} encaminhado para médico.",
+            description=f"Paciente {entry.patient.full_name} encaminhado para {doctor.get_full_name()}.",
             resource_type="referral",
             resource_id=str(referral.pk),
             metadata={
                 "patient_id": entry.patient_id,
                 "queue_id": entry.pk,
-                "doctor_id": resolved_doctor_id,
+                "doctor_id": doctor_id,
+                "previous_doctor_id": None,
+                "reassignment": False,
             },
         )
 
@@ -418,7 +549,7 @@ class ReceptionService:
             referral,
             user=user,
             request=request,
-            doctor_id=resolved_doctor_id,
+            doctor_id=doctor_id,
         )
         return referral
 

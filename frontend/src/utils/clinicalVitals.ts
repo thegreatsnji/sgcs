@@ -1,7 +1,7 @@
 /**
  * Referência clínica e validação de sinais vitais.
- * - Limites "duros": impedem valores impossíveis (erro de digitação grosseiro).
- * - Limites "normais": só alertam — valores graves (hipotermia, hipoxia) podem ser guardados.
+ * - Limites "duros" (domínio técnico): alinhados com CheckInCreateSerializer no backend.
+ * - Limites "normais": só alertam — valores graves podem ser guardados após confirmação.
  */
 
 export const VITAL_HARD_LIMITS = {
@@ -9,6 +9,7 @@ export const VITAL_HARD_LIMITS = {
   spo2: { min: 0, max: 100 },
   heartRate: { min: 20, max: 250 },
   respiratoryRate: { min: 5, max: 80 },
+  heightCm: { min: 30, max: 250 },
 } as const;
 
 export type VitalWarning = { field: string; message: string };
@@ -74,4 +75,10 @@ export function getVitalWarnings(input: {
   }
 
   return warnings;
+}
+
+/** Remove NaN/undefined de campos numéricos opcionais antes do POST. */
+export function sanitizeOptionalNumber(value: number | undefined | null): number | undefined {
+  if (value == null || Number.isNaN(value)) return undefined;
+  return value;
 }

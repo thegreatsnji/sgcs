@@ -21,7 +21,7 @@ export function HistoricoClinico({ historico, isLoading }: HistoricoClinicoProps
         <ul className="space-y-1 text-sm">
           {historico.prescricoes.map((p) => (
             <li key={p.id} className="rounded border border-slate-100 px-3 py-2">
-              #{p.id} — {p.estado} — {new Date(p.created_at).toLocaleDateString("pt-PT")}
+              #{p.id}: {p.estado} ({new Date(p.created_at).toLocaleDateString("pt-PT")})
             </li>
           ))}
           {!historico.prescricoes.length && <li className="text-slate-500">Nenhuma prescrição.</li>}
@@ -32,7 +32,7 @@ export function HistoricoClinico({ historico, isLoading }: HistoricoClinicoProps
         <ul className="space-y-1 text-sm">
           {historico.tratamentos.map((t) => (
             <li key={t.id} className="rounded border border-slate-100 px-3 py-2">
-              {t.tipo} — {t.estado}
+              {t.tipo}: {t.estado}
             </li>
           ))}
           {!historico.tratamentos.length && <li className="text-slate-500">Nenhum tratamento.</li>}

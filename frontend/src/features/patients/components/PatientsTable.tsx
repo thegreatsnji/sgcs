@@ -22,7 +22,7 @@ function PatientsTableComponent({ patients, onDeactivate, onActivate }: Patients
         <table className="min-w-full text-sm">
           <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/95 backdrop-blur-sm">
             <tr>
-              {["Paciente", "N.º Processo", "Idade", "Género", "Telefone", "Última visita", "Estado", ""].map(
+              {["Paciente", "N.º Processo", "Idade", "Género", "Telefone", "Última actualização", "Estado", ""].map(
                 (header) => (
                   <th
                     key={header || "actions"}

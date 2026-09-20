@@ -91,7 +91,7 @@ export function ConsultationPatientHeader({ paciente, consulta }: ConsultationPa
           <h2 className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Motivo actual</h2>
           <p className="mt-1 text-sm text-slate-700">{consulta.chief_complaint || "—"}</p>
           <p className="mt-1 text-[11px] text-slate-500">
-            Queixas registadas na triagem/receção — não repetir na ficha do utente.
+            Queixas registadas na triagem/receção. Não repetir na ficha do utente.
           </p>
           <p className="mt-2 text-xs text-slate-500">
             {paciente.phone ?? "—"} · {paciente.email ?? "—"}
@@ -101,7 +101,7 @@ export function ConsultationPatientHeader({ paciente, consulta }: ConsultationPa
 
       {severeAllergies.length > 0 && (
         <div className="mx-5 mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 sm:mx-6">
-          <strong className="font-semibold">Alerta clínico — alergias graves:</strong>{" "}
+          <strong className="font-semibold">Alerta clínico de alergias graves:</strong>{" "}
           {severeAllergies.map((a) => a.allergen).join(", ")}
         </div>
       )}

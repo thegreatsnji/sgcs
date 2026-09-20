@@ -10,7 +10,7 @@ from django.utils import timezone
 from apps.audit_logs.models import AuditAction, AuditLog
 from apps.patients.models import Patient
 from apps.reception.constants import CheckInStatus, QueuePriority, QueueStatus
-from apps.reception.models import ReceptionCheckIn, WaitingQueue
+from apps.reception.models import ReceptionCheckIn, Referral, WaitingQueue
 from apps.users.models import UserSession
 
 User = get_user_model()
@@ -202,25 +202,39 @@ class DashboardService:
             ).count(),
         )
 
-        recent_queue = list(
+        queue_entries = list(
             WaitingQueue.objects.filter(
                 status__in=[QueueStatus.WAITING, QueueStatus.CALLED, QueueStatus.IN_SERVICE]
             )
             .select_related("patient", "check_in")
             .order_by("position")[:10]
-            .values(
-                "id",
-                "position",
-                "status",
-                "estimated_wait_minutes",
-                "patient__id",
-                "patient__full_name",
-                "patient__patient_number",
-                "check_in__priority",
-                "check_in__triage_color",
-                "check_in__visit_purpose",
-            )
         )
+        doctor_by_check_in = {
+            r.check_in_id: r.assigned_doctor
+            for r in Referral.objects.filter(
+                check_in_id__in=[e.check_in_id for e in queue_entries],
+                assigned_doctor_id__isnull=False,
+            ).select_related("assigned_doctor")
+        }
+        recent_queue = []
+        for entry in queue_entries:
+            doctor = doctor_by_check_in.get(entry.check_in_id)
+            recent_queue.append(
+                {
+                    "id": entry.id,
+                    "position": entry.position,
+                    "status": entry.status,
+                    "estimated_wait_minutes": entry.estimated_wait_minutes,
+                    "patient__id": entry.patient_id,
+                    "patient__full_name": entry.patient.full_name,
+                    "patient__patient_number": entry.patient.patient_number,
+                    "check_in__priority": entry.check_in.priority,
+                    "check_in__triage_color": entry.check_in.triage_color,
+                    "check_in__visit_purpose": entry.check_in.visit_purpose,
+                    "assigned_doctor__id": doctor.pk if doctor else None,
+                    "assigned_doctor__full_name": doctor.get_full_name() if doctor else None,
+                }
+            )
 
         return {
             "cards": {
@@ -248,7 +262,7 @@ class DashboardService:
         return DashboardService.get_consultas_summary()
 
     @staticmethod
-    def get_consultas_summary() -> dict:
+    def get_consultas_summary(user=None) -> dict:
         from apps.appointments.constants import AppointmentStatus
         from apps.appointments.models import Appointment
         from apps.authentication.models import UserRole
@@ -257,30 +271,43 @@ class DashboardService:
         User = get_user_model()
         now = timezone.now()
         today = now.date()
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        doctor_scope = (
+            user is not None
+            and getattr(user, "role", None) == UserRole.MEDICO
+            and not getattr(user, "is_superuser", False)
+        )
 
         today_qs = Appointment.objects.filter(consultation_date=today)
+        if doctor_scope:
+            today_qs = today_qs.filter(doctor=user)
+
         consultas_do_dia = today_qs.count()
         consultas_concluidas = today_qs.filter(status=AppointmentStatus.CONCLUIDA).count()
-        consultas_em_espera = Appointment.objects.filter(
-            status__in=[AppointmentStatus.CONFIRMADA, AppointmentStatus.EM_ESPERA]
-        ).count()
-        em_consulta = Appointment.objects.filter(status=AppointmentStatus.EM_CONSULTA).count()
 
-        proxima = (
-            Appointment.objects.filter(
-                consultation_date=today,
-                status__in=[
-                    AppointmentStatus.AGENDADA,
-                    AppointmentStatus.CONFIRMADA,
-                    AppointmentStatus.EM_ESPERA,
-                ],
-                scheduled_at__gte=now,
-            )
-            .select_related("patient", "doctor")
-            .order_by("scheduled_at")
-            .first()
+        waiting_qs = Appointment.objects.filter(
+            status__in=[AppointmentStatus.CONFIRMADA, AppointmentStatus.EM_ESPERA]
         )
+        in_consult_qs = Appointment.objects.filter(status=AppointmentStatus.EM_CONSULTA)
+        if doctor_scope:
+            waiting_qs = waiting_qs.filter(doctor=user)
+            in_consult_qs = in_consult_qs.filter(doctor=user)
+
+        consultas_em_espera = waiting_qs.count()
+        em_consulta = in_consult_qs.count()
+
+        proxima_qs = Appointment.objects.filter(
+            consultation_date=today,
+            status__in=[
+                AppointmentStatus.AGENDADA,
+                AppointmentStatus.CONFIRMADA,
+                AppointmentStatus.EM_ESPERA,
+            ],
+            scheduled_at__gte=now,
+        )
+        if doctor_scope:
+            proxima_qs = proxima_qs.filter(doctor=user)
+        proxima = proxima_qs.select_related("patient", "doctor").order_by("scheduled_at").first()
 
         medicos_em_servico = (
             User.objects.filter(role=UserRole.MEDICO, is_active=True)
@@ -291,22 +318,25 @@ class DashboardService:
 
         from apps.appointments.models import PedidoImagiologia, PedidoLaboratorio
 
-        pedidos_lab_hoje = PedidoLaboratorio.objects.filter(
-            consulta__consultation_date=today,
-        ).count()
-        pedidos_img_hoje = PedidoImagiologia.objects.filter(
-            consulta__consultation_date=today,
-        ).count()
+        pedidos_lab_qs = PedidoLaboratorio.objects.filter(consulta__consultation_date=today)
+        pedidos_img_qs = PedidoImagiologia.objects.filter(consulta__consultation_date=today)
+        if doctor_scope:
+            pedidos_lab_qs = pedidos_lab_qs.filter(consulta__doctor=user)
+            pedidos_img_qs = pedidos_img_qs.filter(consulta__doctor=user)
+        pedidos_lab_hoje = pedidos_lab_qs.count()
+        pedidos_img_hoje = pedidos_img_qs.count()
 
+        queue_qs = Appointment.objects.filter(
+            status__in=[
+                AppointmentStatus.CONFIRMADA,
+                AppointmentStatus.EM_ESPERA,
+                AppointmentStatus.EM_CONSULTA,
+            ]
+        )
+        if doctor_scope:
+            queue_qs = queue_qs.filter(doctor=user)
         queue_preview = list(
-            Appointment.objects.filter(
-                status__in=[
-                    AppointmentStatus.CONFIRMADA,
-                    AppointmentStatus.EM_ESPERA,
-                    AppointmentStatus.EM_CONSULTA,
-                ]
-            )
-            .select_related("patient", "doctor")
+            queue_qs.select_related("patient", "doctor")
             .order_by("scheduled_at")[:10]
             .values(
                 "id",

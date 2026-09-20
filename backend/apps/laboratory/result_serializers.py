@@ -54,10 +54,20 @@ class ResultadoLaboratorialSerializer(serializers.ModelSerializer):
     numero_pedido = serializers.CharField(source="pedido_laboratorial.numero_pedido", read_only=True)
     paciente_nome = serializers.CharField(source="pedido_laboratorial.paciente.full_name", read_only=True)
     paciente_id = serializers.IntegerField(source="pedido_laboratorial.paciente_id", read_only=True)
+    paciente_codigo = serializers.CharField(
+        source="pedido_laboratorial.paciente.patient_number", read_only=True
+    )
+    paciente_sexo = serializers.SerializerMethodField()
+    paciente_sexo_label = serializers.SerializerMethodField()
+    paciente_birth_date = serializers.DateField(
+        source="pedido_laboratorial.paciente.birth_date", read_only=True, allow_null=True
+    )
+    paciente_idade = serializers.SerializerMethodField()
     consulta_id = serializers.IntegerField(source="pedido_laboratorial.consulta_id", read_only=True)
     medico_nome = serializers.SerializerMethodField()
     responsavel_nome = serializers.SerializerMethodField()
     validado_por_nome = serializers.SerializerMethodField()
+    exames_nomes = serializers.SerializerMethodField()
     parametros = ParametroResultadoSerializer(many=True, read_only=True)
     anexos = AnexoResultadoSerializer(many=True, read_only=True)
     editavel = serializers.BooleanField(source="is_editavel", read_only=True)
@@ -70,8 +80,14 @@ class ResultadoLaboratorialSerializer(serializers.ModelSerializer):
             "numero_pedido",
             "paciente_id",
             "paciente_nome",
+            "paciente_codigo",
+            "paciente_sexo",
+            "paciente_sexo_label",
+            "paciente_birth_date",
+            "paciente_idade",
             "consulta_id",
             "medico_nome",
+            "exames_nomes",
             "estado",
             "responsavel",
             "responsavel_nome",
@@ -99,6 +115,33 @@ class ResultadoLaboratorialSerializer(serializers.ModelSerializer):
 
     def get_validado_por_nome(self, obj) -> str | None:
         return obj.validado_por.get_full_name() if obj.validado_por else None
+
+    def get_paciente_sexo(self, obj) -> str | None:
+        return obj.pedido_laboratorial.paciente.gender or None
+
+    def get_paciente_sexo_label(self, obj) -> str | None:
+        from apps.patients.constants import PatientGender
+
+        gender = obj.pedido_laboratorial.paciente.gender
+        if not gender:
+            return None
+        try:
+            return PatientGender(gender).label
+        except ValueError:
+            return gender
+
+    def get_paciente_idade(self, obj) -> int | None:
+        birth = obj.pedido_laboratorial.paciente.birth_date
+        if not birth:
+            return None
+        from django.utils import timezone
+
+        today = timezone.localdate()
+        years = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+        return years if years >= 0 else None
+
+    def get_exames_nomes(self, obj) -> list[str]:
+        return list(obj.pedido_laboratorial.exames.values_list("nome_exame", flat=True))
 
 
 class ResultadoCreateSerializer(serializers.Serializer):

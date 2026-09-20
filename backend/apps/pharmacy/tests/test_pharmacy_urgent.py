@@ -110,14 +110,14 @@ class TestStockUrgenciaService:
 
     def test_ajuste(self, med_urg, nurse_user):
         StockUrgenciaService.registar_movimento(
-            med_urg, tipo="AJUSTE", quantidade=7, operador=nurse_user
+            med_urg, tipo="AJUSTE", quantidade=7, motivo="Contagem física", operador=nurse_user
         )
         med_urg.refresh_from_db()
         assert med_urg.quantidade_stock == 7
 
     def test_perda_expiracao(self, med_urg, nurse_user):
         StockUrgenciaService.registar_movimento(
-            med_urg, tipo="PERDA_EXPIRACAO", quantidade=2, operador=nurse_user
+            med_urg, tipo="PERDA_EXPIRACAO", quantidade=2, motivo="Expirado", operador=nurse_user
         )
         med_urg.refresh_from_db()
         assert med_urg.quantidade_stock == 8
@@ -140,6 +140,30 @@ class TestEstados:
 
     def test_stock_baixo(self):
         assert estado_item(quantidade=3, stock_minimo=5) == "STOCK_BAIXO"
+
+    def test_expirado_precede_stock_baixo(self):
+        from datetime import date, timedelta
+
+        assert (
+            estado_item(
+                quantidade=3,
+                stock_minimo=5,
+                validade=date.today() - timedelta(days=1),
+            )
+            == "EXPIRADO"
+        )
+
+    def test_proximo_validade_antes_stock_baixo(self):
+        from datetime import date, timedelta
+
+        assert (
+            estado_item(
+                quantidade=3,
+                stock_minimo=5,
+                validade=date.today() + timedelta(days=7),
+            )
+            == "PROXIMO_DA_VALIDADE"
+        )
 
 
 @pytest.mark.django_db
@@ -314,12 +338,12 @@ class TestImportStock:
                 med_urg, tipo="SAIDA", quantidade=50, operador=nurse_user
             )
         StockUrgenciaService.registar_movimento(
-            med_urg, tipo="AJUSTE", quantidade=5, operador=nurse_user
+            med_urg, tipo="AJUSTE", quantidade=5, motivo="Contagem UAT", operador=nurse_user
         )
         med_urg.refresh_from_db()
         assert med_urg.quantidade_stock == 5
         StockUrgenciaService.registar_movimento(
-            med_urg, tipo="PERDA_EXPIRACAO", quantidade=5, operador=nurse_user
+            med_urg, tipo="PERDA_EXPIRACAO", quantidade=5, motivo="Expirado", operador=nurse_user
         )
         med_urg.refresh_from_db()
         assert med_urg.quantidade_stock == 0

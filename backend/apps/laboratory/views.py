@@ -30,8 +30,14 @@ from core.responses import error_response, success_response
 )
 class LaboratoryViewSet(LaboratoryPermissionMixin, viewsets.ModelViewSet):
     queryset = (
-        PedidoLaboratorial.objects.select_related("paciente", "medico", "consulta")
-        .prefetch_related("exames")
+        PedidoLaboratorial.objects.select_related(
+            "paciente",
+            "medico",
+            "consulta",
+            "pedido_consulta",
+            "pedido_consulta__servico",
+        )
+        .prefetch_related("exames", "resultado")
         .order_by("-data_pedido")
     )
     serializer_class = PedidoLaboratorialSerializer
@@ -59,7 +65,11 @@ class LaboratoryViewSet(LaboratoryPermissionMixin, viewsets.ModelViewSet):
         )
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        from apps.laboratory.ordering import priority_order_case
+
+        queryset = self.filter_queryset(
+            self.get_queryset().annotate(_prio=priority_order_case()).order_by("_prio", "-data_pedido")
+        )
         return self._paginated(queryset, "Pedidos laboratoriais obtidos com sucesso.")
 
     def retrieve(self, request, *args, **kwargs):
@@ -86,24 +96,18 @@ class LaboratoryViewSet(LaboratoryPermissionMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="pending")
     def pending(self, request):
-        return self._paginated(
-            LaboratoryService.listar_pendentes(),
-            "Pedidos pendentes obtidos com sucesso.",
-        )
+        queryset = self.filter_queryset(LaboratoryService.listar_pendentes())
+        return self._paginated(queryset, "Pedidos pendentes obtidos com sucesso.")
 
     @action(detail=False, methods=["get"], url_path="today")
     def today(self, request):
-        return self._paginated(
-            LaboratoryService.listar_do_dia(),
-            "Pedidos do dia obtidos com sucesso.",
-        )
+        queryset = self.filter_queryset(LaboratoryService.listar_do_dia())
+        return self._paginated(queryset, "Pedidos do dia obtidos com sucesso.")
 
     @action(detail=False, methods=["get"], url_path="collection-queue")
     def collection_queue(self, request):
-        return self._paginated(
-            LaboratoryService.fila_colheitas(),
-            "Fila de colheitas obtida com sucesso.",
-        )
+        queryset = self.filter_queryset(LaboratoryService.fila_colheitas())
+        return self._paginated(queryset, "Fila de colheitas obtida com sucesso.")
 
     @action(detail=True, methods=["post"])
     def receive(self, request, pk=None):

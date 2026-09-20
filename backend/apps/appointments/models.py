@@ -8,6 +8,7 @@ from apps.appointments.constants import (
     DEFAULT_DURATION_MINUTES,
     DiagnosticoTipo,
     PedidoEstado,
+    PedidoLaboratorioEstadoFaturacao,
 )
 from apps.reception.constants import QueuePriority
 from core.mixins import TimestampMixin
@@ -253,6 +254,20 @@ class PedidoLaboratorio(TimestampMixin):
         verbose_name="Consulta",
     )
     tipo_exame = models.CharField("Tipo de exame", max_length=150)
+    servico = models.ForeignKey(
+        "billing.Servico",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pedidos_laboratorio_clinicos",
+        verbose_name="Serviço",
+    )
+    estado_faturacao = models.CharField(
+        "Estado de faturação",
+        max_length=30,
+        choices=PedidoLaboratorioEstadoFaturacao.choices,
+        default=PedidoLaboratorioEstadoFaturacao.AGUARDA_REGULARIZACAO,
+    )
     prioridade = models.CharField(
         "Prioridade",
         max_length=20,

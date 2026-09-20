@@ -54,8 +54,8 @@ export function ResultsDashboardPage() {
       {kpis && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard label="Pendentes" value={kpis.resultados_pendentes} badge={{ text: "Aguardam validação", variant: "warning" }} />
-          <KpiCard label="Validados" value={kpis.resultados_validados} badge={{ text: "Prontos a publicar", variant: "success" }} />
-          <KpiCard label="Entregues Hoje" value={kpis.resultados_entregues_hoje} badge={{ text: "Ao médico", variant: "info" }} />
+          <KpiCard label="Validados" value={kpis.resultados_validados} badge={{ text: "Disponíveis ao clínico", variant: "success" }} />
+          <KpiCard label="Entregues Hoje" value={kpis.resultados_entregues_hoje} badge={{ text: "Hoje", variant: "info" }} />
           <KpiCard label="Tempo de validação" value={`${kpis.tempo_medio_validacao_minutos} min`} badge={{ text: "Médio", variant: "default" }} />
         </div>
       )}

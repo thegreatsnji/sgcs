@@ -256,10 +256,18 @@ class TestQueueAndCelery:
 
 @pytest.mark.django_db
 class TestEventBusIntegration:
-    def test_patient_created_event(self, medico_user):
+    def test_patient_created_event(self, receptionist_user):
         event_bus.publish(EventNames.PATIENT_CREATED, {"patient_id": 1})
-        assert Notificacao.objects.filter(evento_origem=EventNames.PATIENT_CREATED).exists()
+        assert Notificacao.objects.filter(
+            evento_origem=EventNames.PATIENT_CREATED,
+            utilizador=receptionist_user,
+        ).exists()
 
+    def test_lab_published_does_not_broadcast(self, medico_user):
+        event_bus.publish(EventNames.LABORATORY_RESULT_PUBLISHED, {"resultado_id": 99})
+        assert not Notificacao.objects.filter(
+            evento_origem=EventNames.LABORATORY_RESULT_PUBLISHED
+        ).exists()
 
 @pytest.mark.django_db
 class TestNotificationsRBAC:

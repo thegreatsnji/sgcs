@@ -3,8 +3,15 @@ import { useSearchParams } from "react-router-dom";
 
 import { Card, LoadingState } from "@/design-system";
 import { pharmacyService } from "@/services/pharmacy/pharmacy.service";
+import { formatDisplayDateTime } from "@/utils/date";
 
-const TYPES = ["", "ENTRADA", "SAIDA", "AJUSTE", "PERDA_EXPIRACAO"];
+const TYPE_FILTERS = [
+  { id: "", label: "Todos" },
+  { id: "ENTRADA", label: "Entrada" },
+  { id: "SAIDA", label: "Saída" },
+  { id: "AJUSTE", label: "Ajuste" },
+  { id: "PERDA_EXPIRACAO", label: "Perda / Expiração" },
+];
 
 export function UrgentStockHistoryPage() {
   const [params, setParams] = useSearchParams();
@@ -29,21 +36,21 @@ export function UrgentStockHistoryPage() {
         <p className="text-sm text-text-muted">Os movimentos não podem ser editados nem apagados.</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {TYPES.map((value) => (
+        {TYPE_FILTERS.map((itemFilter) => (
           <button
-            key={value || "all"}
+            key={itemFilter.id || "all"}
             type="button"
-            className={`rounded-full px-3 py-1.5 text-sm ${
-              tipo === value ? "bg-teal-700 text-white" : "bg-surface-muted"
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              tipo === itemFilter.id ? "bg-teal-700 text-white" : "bg-surface-muted"
             }`}
             onClick={() => {
               const next = new URLSearchParams(params);
-              if (value) next.set("tipo", value);
+              if (itemFilter.id) next.set("tipo", itemFilter.id);
               else next.delete("tipo");
               setParams(next);
             }}
           >
-            {value || "Todos"}
+            {itemFilter.label}
           </button>
         ))}
       </div>
@@ -69,9 +76,9 @@ export function UrgentStockHistoryPage() {
               <tbody>
                 {(data?.results ?? []).map((row) => (
                   <tr key={row.id} className="border-b border-border/60">
-                    <td className="py-2 pr-3 whitespace-nowrap">{row.created_at.slice(0, 16).replace("T", " ")}</td>
+                    <td className="py-2 pr-3 whitespace-nowrap">{formatDisplayDateTime(row.created_at)}</td>
                     <td className="py-2 pr-3">{row.medicamento_nome}</td>
-                    <td className="py-2 pr-3">{row.tipo}</td>
+                    <td className="py-2 pr-3">{row.tipo_label || row.tipo}</td>
                     <td className="py-2 pr-3 tabular-nums">{row.quantidade}</td>
                     <td className="py-2 pr-3 tabular-nums">{row.quantidade_antes}</td>
                     <td className="py-2 pr-3 tabular-nums">{row.quantidade_depois}</td>

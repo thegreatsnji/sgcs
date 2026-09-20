@@ -45,7 +45,7 @@ export function LaboratoryRoleDashboardPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Pendentes" value={data.indicadores.pedidos_pendentes} badge={{ text: "Aguardam receção", variant: "warning" }} icon={<IconLab />} />
+        <KpiCard label="Pendentes" value={data.indicadores.pedidos_pendentes} badge={{ text: "Na fila", variant: "warning" }} icon={<IconLab />} />
         <KpiCard label="Em Processamento" value={data.indicadores.em_processamento} badge={{ text: "Activos", variant: "info" }} />
         <KpiCard label="Concluídos Hoje" value={data.indicadores.concluidos_hoje} badge={{ text: "Hoje", variant: "success" }} />
         <KpiCard label="Tempo de resposta" value={`${data.indicadores.tempo_medio_minutos} min`} badge={{ text: "Tempo médio", variant: "default" }} />

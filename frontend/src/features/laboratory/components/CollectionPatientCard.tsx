@@ -80,10 +80,17 @@ function CollectionPatientCardComponent({ order, onCollect }: CollectionPatientC
             Detalhes
           </Button>
         </Link>
-        {(order.estado === "RECEBIDO" || order.estado === "AGUARDANDO_COLHEITA") && onCollect && (
+        {order.estado === "RECEBIDO" && onCollect && (
           <Button size="sm" variant="primary" onClick={() => onCollect(order)}>
             Registar colheita
           </Button>
+        )}
+        {order.estado === "AGUARDANDO_COLHEITA" && (
+          <Link to={`/laboratory/${order.id}`}>
+            <Button size="sm" variant="primary">
+              Continuar processamento
+            </Button>
+          </Link>
         )}
       </div>
     </article>

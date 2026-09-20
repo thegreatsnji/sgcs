@@ -215,7 +215,7 @@ export function ExecutiveReportPage() {
         <p className="text-xs font-semibold tracking-widest text-primary-100 uppercase">Análise Clínica SauVida</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Painel Executivo</h1>
         <p className="mt-2 max-w-2xl text-sm text-primary-100/90">
-          Visão consolidada para direcção clínica — indicadores financeiros, operacionais e alertas em tempo real.
+          Indicadores financeiros, operacionais e alertas em tempo real.
         </p>
       </div>
 

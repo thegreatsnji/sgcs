@@ -45,6 +45,7 @@ class ClinicalRecordService:
             Appointment.objects.select_related(
                 "patient",
                 "doctor",
+                "check_in",
                 "sinais_vitais",
                 "anotacao_soap",
                 "seguimento",
@@ -197,6 +198,9 @@ class ClinicalRecordService:
             },
             "paciente": ClinicalRecordService._patient_context(patient, request=request),
             "sinais_vitais": ClinicalRecordService._serialize_sinais(sinais) if sinais else None,
+            "sinais_vitais_triagem": ClinicalRecordService._serialize_sinais_triagem(
+                appointment
+            ),
             "anotacao_soap": ClinicalRecordService._serialize_soap(soap) if soap else None,
             "diagnosticos": [
                 ClinicalRecordService._serialize_diagnostico(d)
@@ -204,7 +208,7 @@ class ClinicalRecordService:
             ],
             "pedidos_laboratorio": [
                 ClinicalRecordService._serialize_pedido_lab(p)
-                for p in appointment.pedidos_laboratorio.all()
+                for p in appointment.pedidos_laboratorio.select_related("servico").all()
             ],
             "resultados_laboratoriais": ClinicalRecordService._resultados_laboratoriais_consulta(
                 appointment.pk,
@@ -245,6 +249,29 @@ class ClinicalRecordService:
         }
 
     @staticmethod
+    def _serialize_sinais_triagem(appointment) -> dict | None:
+        check_in = getattr(appointment, "check_in", None)
+        if check_in is None:
+            return None
+        return {
+            "pressao_arterial": check_in.blood_pressure or "",
+            "frequencia_cardiaca": check_in.heart_rate,
+            "frequencia_respiratoria": check_in.respiratory_rate,
+            "temperatura": float(check_in.temperature)
+            if check_in.temperature is not None
+            else None,
+            "saturacao_oxigenio": check_in.spo2,
+            "peso": float(check_in.weight) if check_in.weight is not None else None,
+            "altura": float(check_in.height_cm) if check_in.height_cm is not None else None,
+            "imc": None,
+            "observacoes": "",
+            "origem": "TRIAGEM",
+            "registado_em": check_in.check_in_time.isoformat()
+            if getattr(check_in, "check_in_time", None)
+            else None,
+        }
+
+    @staticmethod
     def _serialize_soap(obj: AnotacaoClinica) -> dict:
         return {
             "id": obj.pk,
@@ -271,6 +298,10 @@ class ClinicalRecordService:
             "prioridade": obj.prioridade,
             "observacoes": obj.observacoes,
             "estado": obj.estado,
+            "estado_faturacao": obj.estado_faturacao,
+            "estado_faturacao_label": obj.get_estado_faturacao_display(),
+            "servico_id": obj.servico_id,
+            "servico_nome": obj.servico.nome if obj.servico_id else None,
             "created_at": obj.created_at.isoformat(),
         }
 
@@ -489,14 +520,36 @@ class ClinicalRecordService:
         data: dict,
         request=None,
     ) -> PedidoLaboratorio:
+        from apps.billing.models import Servico
+
         appointment = Appointment.objects.select_for_update().select_related("patient").get(
             pk=appointment_id
         )
         ClinicalRecordService._ensure_editable(appointment, user)
 
+        servico = None
+        servico_id = data.get("servico_id")
+        tipo_exame = (data.get("tipo_exame") or "").strip()
+        if servico_id:
+            try:
+                servico = Servico.objects.get(
+                    pk=int(servico_id),
+                    categoria="LABORATORIO",
+                    activo=True,
+                )
+            except (Servico.DoesNotExist, TypeError, ValueError) as exc:
+                raise ValueError(
+                    "Serviço de laboratório inválido ou inactivo no catálogo."
+                ) from exc
+            if not tipo_exame:
+                tipo_exame = servico.nome
+        if not tipo_exame:
+            raise ValueError("Indique um serviço do catálogo ou o tipo de exame.")
+
         pedido = PedidoLaboratorio.objects.create(
             consulta=appointment,
-            tipo_exame=data["tipo_exame"],
+            tipo_exame=tipo_exame,
+            servico=servico,
             prioridade=data.get("prioridade", "NORMAL"),
             observacoes=data.get("observacoes", ""),
             solicitado_por=user,
@@ -507,7 +560,10 @@ class ClinicalRecordService:
             request,
             appointment,
             f"Pedido de laboratório: {pedido.tipo_exame}.",
-            metadata={"pedido_id": pedido.pk},
+            metadata={
+                "pedido_id": pedido.pk,
+                "servico_id": pedido.servico_id,
+            },
         )
 
         from apps.laboratory.services.laboratory_service import LaboratoryService

@@ -23,8 +23,8 @@ export function AppHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
           <div>
-            <h1 className="text-lg font-semibold text-primary-700">SGCS — SauVida</h1>
-            <p className="text-sm text-slate-500">Sistema de Gestão Clínica</p>
+            <h1 className="text-lg font-semibold text-primary-700">SGCS SauVida</h1>
+            <p className="text-sm text-slate-500">Sistema de Gestão Clínica SauVida</p>
           </div>
           <nav className="hidden gap-3 md:flex">
             {hasPermission("patients.view") && (
@@ -47,7 +47,7 @@ export function AppHeader() {
                 Laboratório
               </Link>
             )}
-            {hasPermission("billing.view") && (
+            {user?.role !== "MEDICO" && hasPermission("billing.view") && (
               <Link to="/billing" className="text-sm font-medium text-slate-600 hover:text-primary-700">
                 Faturação
               </Link>

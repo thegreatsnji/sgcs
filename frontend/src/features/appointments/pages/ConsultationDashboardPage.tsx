@@ -19,7 +19,7 @@ export function ConsultationDashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Consultas Médicas</h1>
-        <p className="mt-1 text-slate-500">Painel do médico — fila, consultas activas e indicadores.</p>
+        <p className="mt-1 text-slate-500">Fila, consultas activas e indicadores.</p>
       </div>
 
       <ConsultationSubNav />

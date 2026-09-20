@@ -26,6 +26,7 @@ export interface UrgentMedicine {
   observacoes: string;
   abaixo_minimo: boolean;
   estado: StockStatus;
+  stock_inicial_por_confirmar: boolean;
 }
 
 export interface StockMovement {
@@ -33,6 +34,7 @@ export interface StockMovement {
   medicamento: number;
   medicamento_nome: string;
   tipo: "ENTRADA" | "SAIDA" | "AJUSTE" | "PERDA_EXPIRACAO";
+  tipo_label?: string;
   quantidade: number;
   quantidade_antes: number;
   quantidade_depois: number;
@@ -91,7 +93,7 @@ export const pharmacyService = {
       motivo?: string;
       paciente?: number;
     },
-    kind: "entrada" | "saida" | "ajuste" | "movimento" = "movimento",
+    kind: "entrada" | "saida" | "ajuste" | "perda" | "movimento" = "movimento",
   ) => {
     const { data } = await api.post(`/stock/items/${id}/${kind}/`, payload);
     return data.data as { item: UrgentMedicine; medicamento: UrgentMedicine };
@@ -108,5 +110,13 @@ export const pharmacyService = {
   dashboard: async () => {
     const { data } = await api.get<{ data: StockDashboard }>("/stock/dashboard/");
     return data.data;
+  },
+
+  defineInitialStock: async (
+    id: number,
+    payload: { quantidade: number; stock_minimo?: number; validade?: string; unidade?: string },
+  ) => {
+    const { data } = await api.post(`/stock/items/${id}/definir-stock-inicial/`, payload);
+    return data.data as { item: UrgentMedicine };
   },
 };

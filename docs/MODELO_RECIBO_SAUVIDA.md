@@ -2,7 +2,7 @@
 
 ## Referência
 
-Alinhado ao livro de recibos em papel: logótipo, identificação da clínica, número do recibo, texto «Recebi do/a senhor/a», «A importância de», «Referente a», data e assinatura do caixa.
+Alinhado ao livro de recibos em papel: logótipo, identificação da clínica, número do recibo, texto «Recebi do/a senhor/a», «A importância de», «Referente a» com **tabela de serviços** (quantidade, preço unitário cobrado e subtotal), data e assinatura do caixa. Colunas de preço oficial / redução só aparecem se activadas na configuração.
 
 ## Implementação
 

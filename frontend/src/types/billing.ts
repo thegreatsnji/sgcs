@@ -63,6 +63,7 @@ export interface Invoice {
   imposto: string;
   total: string;
   total_pago: string;
+  saldo?: string;
   emitida_em: string | null;
   itens: BillingItem[];
   pagamentos: Payment[];
@@ -101,6 +102,21 @@ export interface BillingDashboardData {
     faturas_emitidas_hoje: number;
   };
   servicos_mais_vendidos: Array<{ servico: string; quantidade: number }>;
+}
+
+export type OperationalPeriod = "hoje" | "semana" | "mes" | "personalizado";
+
+export interface OperationalBillingSummary {
+  periodo: {
+    modo?: OperationalPeriod | string;
+    data_inicio: string;
+    data_fim: string;
+  };
+  total_faturado: string;
+  total_recebido: string;
+  saldo_pendente: string;
+  total_reducoes: string;
+  numero_pagamentos: number;
 }
 
 export interface PatientFinancialHistory {

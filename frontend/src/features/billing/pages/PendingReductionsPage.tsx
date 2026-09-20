@@ -54,7 +54,7 @@ export function PendingReductionsPage() {
                 <div>
                   <p className="font-medium">{r.servico_nome}</p>
                   <p className="text-slate-600">
-                    Preço oficial: {Number(r.preco_oficial).toLocaleString("pt-PT")} FCFA — Valor
+                    Preço oficial: {Number(r.preco_oficial).toLocaleString("pt-PT")} FCFA. Valor
                     proposto: {Number(r.preco_proposto).toLocaleString("pt-PT")} FCFA (
                     {Number(r.percentual_reducao).toFixed(0)}%)
                   </p>

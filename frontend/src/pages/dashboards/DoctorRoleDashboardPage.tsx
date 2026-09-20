@@ -1,16 +1,18 @@
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { RoleDashboardHero } from "@/components/dashboards/RoleDashboardHero";
 import { IconCalendar, IconPatients } from "@/components/icons";
 import { KpiCard } from "@/components/ui/KpiCard";
-import { Badge, Card, ErrorState, SkeletonCard } from "@/design-system";
+import { Badge, Button, Card, ErrorState, SkeletonCard } from "@/design-system";
 import { appointmentsService } from "@/services/appointments/appointments.service";
 import { laboratoryService } from "@/services/laboratory";
 import { APPOINTMENT_STATUS_LABELS } from "@/constants/appointments";
 import { formatDisplayDateTime } from "@/utils/date";
 
 export function DoctorRoleDashboardPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch, dataUpdatedAt, isFetching } = useQuery({
     queryKey: ["consultas-dashboard"],
     queryFn: appointmentsService.getDashboard,
@@ -21,6 +23,18 @@ export function DoctorRoleDashboardPage() {
     queryKey: ["laboratory-dashboard"],
     queryFn: laboratoryService.getDashboard,
     refetchInterval: 30_000,
+  });
+
+  const startMutation = useMutation({
+    mutationFn: (id: number) => appointmentsService.start(id),
+    onSuccess: (updated) => {
+      void queryClient.invalidateQueries({ queryKey: ["consultas-dashboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["consultation-queue"] });
+      navigate(`/consultations/${updated.id}`);
+    },
+    onError: (_error, id) => {
+      navigate(`/consultations/${id}`);
+    },
   });
 
   if (isLoading || !data) {
@@ -46,7 +60,7 @@ export function DoctorRoleDashboardPage() {
         tone="violet"
         eyebrow="Área clínica"
         title="Painel médico"
-        description="Pacientes de hoje, fila e próximo atendimento — actualização automática."
+        description="Pacientes de hoje, fila e próximo atendimento."
         primaryAction={{ to: "/consultations/queue", label: "Fila de consultas" }}
         secondaryAction={{ to: "/consultations", label: "Registos clínicos" }}
         footer={
@@ -102,12 +116,13 @@ export function DoctorRoleDashboardPage() {
                   {formatDisplayDateTime(data.proxima_consulta.scheduled_at)}
                 </p>
               </div>
-              <Link
-                to={`/consultations/${data.proxima_consulta.id}`}
-                className="inline-flex rounded-xl bg-primary-600 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-primary-700"
+              <Button
+                variant="primary"
+                disabled={startMutation.isPending}
+                onClick={() => startMutation.mutate(data.proxima_consulta!.id)}
               >
-                Iniciar consulta
-              </Link>
+                Atender agora
+              </Button>
             </div>
           ) : (
             <p className="text-sm text-text-muted">Nenhum paciente na fila neste momento.</p>

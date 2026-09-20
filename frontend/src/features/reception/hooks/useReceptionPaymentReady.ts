@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
+import type { ReceptionAtendimentoStepId } from "@/features/reception/constants/atendimentoSteps";
 import { billingService } from "@/services/billing/billing.service";
 import type { Invoice } from "@/types/billing";
 
-function isSameLocalDay(iso: string): boolean {
+export function isSameLocalDay(iso: string): boolean {
   const d = new Date(iso);
   const now = new Date();
   return (
@@ -14,14 +15,14 @@ function isSameLocalDay(iso: string): boolean {
   );
 }
 
-function isFullyPaid(inv: Invoice): boolean {
+export function isFullyPaidInvoice(inv: Invoice): boolean {
   if (inv.estado === "PAGA") return true;
   const total = Number(inv.total);
   const paid = Number(inv.total_pago);
   return total > 0 && paid >= total;
 }
 
-function isTodayInvoice(inv: Invoice): boolean {
+export function isTodayInvoice(inv: Invoice): boolean {
   return Boolean(inv.emitida_em && isSameLocalDay(inv.emitida_em));
 }
 
@@ -44,13 +45,13 @@ export function useReceptionPaymentReady(patientId: number | null) {
   const partialInvoice = useMemo(
     () =>
       todayInvoices.find(
-        (inv) => inv.estado !== "CANCELADA" && Number(inv.total_pago) > 0 && !isFullyPaid(inv),
+        (inv) => inv.estado !== "CANCELADA" && Number(inv.total_pago) > 0 && !isFullyPaidInvoice(inv),
       ) ?? null,
     [todayInvoices],
   );
 
   const paidInvoice = useMemo(
-    () => todayInvoices.find((inv) => isFullyPaid(inv)) ?? null,
+    () => todayInvoices.find((inv) => isFullyPaidInvoice(inv)) ?? null,
     [todayInvoices],
   );
 
@@ -62,4 +63,35 @@ export function useReceptionPaymentReady(patientId: number | null) {
     paidInvoice,
     isLoading: invoicesLoading,
   };
+}
+
+/** Pacientes com fatura de hoje totalmente paga — para Continuar na fila. */
+export function useTodayPaidPatientIds(enabled = true) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["billing-invoices", "payment-gate-today"],
+    queryFn: () => billingService.listInvoices({ periodo: "hoje", page_size: 200 }),
+    enabled,
+    staleTime: 15_000,
+  });
+
+  const paidPatientIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const inv of data?.results ?? []) {
+      if (inv.estado === "CANCELADA") continue;
+      if (isFullyPaidInvoice(inv) && isTodayInvoice(inv)) {
+        ids.add(inv.paciente);
+      }
+    }
+    return ids;
+  }, [data?.results]);
+
+  return { paidPatientIds, isLoading };
+}
+
+export function resolveContinueAtendimentoStep(opts: {
+  isPaymentReady: boolean;
+  hasAssignedDoctor?: boolean;
+}): ReceptionAtendimentoStepId {
+  if (opts.isPaymentReady) return 4;
+  return 3;
 }

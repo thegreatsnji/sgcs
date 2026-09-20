@@ -21,7 +21,7 @@ from apps.authentication.models import UserRole
 from apps.patients.constants import HistoryEventType
 from apps.patients.services.history_service import PatientHistoryService
 from apps.patients.services.patient_service import PatientService
-from apps.reception.constants import CheckInStatus, QueuePriority, QueueStatus
+from apps.reception.constants import CheckInStatus, QueuePriority, QueueStatus, VisitPurpose
 from apps.reception.models import Referral, WaitingQueue
 
 
@@ -60,7 +60,8 @@ class AppointmentService:
             .order_by("scheduled_at")
         )
         if doctor and doctor.role == UserRole.MEDICO and not doctor.is_superuser:
-            queryset = queryset.filter(Q(doctor__isnull=True) | Q(doctor=doctor))
+            # Fila exclusiva: só utentes explicitamente atribuídos a este médico.
+            queryset = queryset.filter(doctor=doctor)
         return queryset
 
     @staticmethod
@@ -156,13 +157,63 @@ class AppointmentService:
     @staticmethod
     @transaction.atomic
     def create_from_handoff(referral: Referral, user, request=None, doctor_id: int | None = None) -> Appointment:
-        if Appointment.objects.filter(
-            referral=referral,
-            status__in=ACTIVE_APPOINTMENT_STATUSES,
-        ).exists():
-            raise ValueError("Já existe uma consulta activa para este encaminhamento.")
-
+        """Cria consulta a partir do handoff da receção, ou reutiliza marcação já ligada ao check-in."""
         queue_entry = WaitingQueue.objects.filter(check_in=referral.check_in).first()
+        resolved_doctor_id = doctor_id or getattr(referral, "assigned_doctor_id", None)
+
+        existing_by_referral = (
+            Appointment.objects.select_for_update()
+            .filter(referral=referral, status__in=ACTIVE_APPOINTMENT_STATUSES)
+            .first()
+        )
+        if existing_by_referral:
+            return existing_by_referral
+
+        existing_by_check_in = None
+        if referral.check_in_id:
+            existing_by_check_in = (
+                Appointment.objects.select_for_update()
+                .filter(
+                    check_in_id=referral.check_in_id,
+                    status__in=ACTIVE_APPOINTMENT_STATUSES,
+                )
+                .first()
+            )
+
+        if existing_by_check_in:
+            update_fields = ["referral", "updated_at"]
+            existing_by_check_in.referral = referral
+            if resolved_doctor_id and existing_by_check_in.doctor_id != resolved_doctor_id:
+                existing_by_check_in.doctor_id = resolved_doctor_id
+                update_fields.append("doctor_id")
+            if queue_entry and existing_by_check_in.queue_entry_id != queue_entry.pk:
+                existing_by_check_in.queue_entry = queue_entry
+                update_fields.append("queue_entry")
+            if existing_by_check_in.status in {
+                AppointmentStatus.AGENDADA,
+                AppointmentStatus.CONFIRMADA,
+            }:
+                existing_by_check_in.status = AppointmentStatus.EM_ESPERA
+                update_fields.append("status")
+            existing_by_check_in.save(update_fields=update_fields)
+            AppointmentService._log_consulta(
+                AuditAction.CONSULTA_CRIADA,
+                user,
+                request,
+                existing_by_check_in,
+                (
+                    f"Marcação {existing_by_check_in.appointment_number} ligada ao "
+                    f"encaminhamento — {referral.patient.full_name}."
+                ),
+                metadata={
+                    "patient_id": referral.patient_id,
+                    "referral_id": referral.pk,
+                    "check_in_id": referral.check_in_id,
+                    "source": "reception_handoff_reuse",
+                },
+            )
+            return existing_by_check_in
+
         now = timezone.now()
         priority = QueuePriority.NORMAL
         if referral.check_in_id:
@@ -178,7 +229,7 @@ class AppointmentService:
 
         appointment = Appointment.objects.create(
             patient=referral.patient,
-            doctor_id=doctor_id or getattr(referral, "assigned_doctor_id", None),
+            doctor_id=resolved_doctor_id,
             check_in=referral.check_in,
             referral=referral,
             queue_entry=queue_entry,
@@ -203,6 +254,122 @@ class AppointmentService:
                 "referral_id": referral.pk,
                 "check_in_id": referral.check_in_id,
                 "source": "reception_handoff",
+            },
+        )
+        return appointment
+
+    @staticmethod
+    @transaction.atomic
+    def confirmar_chegada(appointment_id: int, user, request=None) -> Appointment:
+        """Regista chegada do paciente marcado via check-in/fila da Receção (sem nova consulta).
+
+        Reutiliza ``ReceptionService.check_in`` (mesmo fluxo de Atendimento rápido / Fila).
+        Idempotente: repetir a acção não cria segundo check-in nem segunda consulta.
+        """
+        from apps.reception.services.reception_service import ReceptionService
+
+        appointment = (
+            Appointment.objects.select_for_update()
+            .select_related("patient")
+            .get(pk=appointment_id)
+        )
+
+        if appointment.status in {
+            AppointmentStatus.CANCELADA,
+            AppointmentStatus.CONCLUIDA,
+            AppointmentStatus.FALTA,
+            AppointmentStatus.EM_CONSULTA,
+        }:
+            raise ValueError("Não é possível confirmar chegada para esta marcação.")
+
+        # Já ligado à fila da receção — só garantir estado EM_ESPERA.
+        if appointment.check_in_id:
+            update_fields: list[str] = []
+            if not appointment.queue_entry_id:
+                queue_entry = WaitingQueue.objects.filter(check_in_id=appointment.check_in_id).first()
+                if queue_entry:
+                    appointment.queue_entry = queue_entry
+                    update_fields.append("queue_entry")
+            if appointment.status in {AppointmentStatus.AGENDADA, AppointmentStatus.CONFIRMADA}:
+                appointment.status = AppointmentStatus.EM_ESPERA
+                update_fields.append("status")
+            if update_fields:
+                update_fields.append("updated_at")
+                appointment.save(update_fields=update_fields)
+            return appointment
+
+        today = timezone.localdate()
+        appt_date = appointment.consultation_date
+        if appt_date is None and appointment.scheduled_at:
+            appt_date = timezone.localtime(appointment.scheduled_at).date()
+        if appt_date != today:
+            raise ValueError("Só é possível confirmar chegada para marcações do dia.")
+
+        if appointment.status not in {
+            AppointmentStatus.AGENDADA,
+            AppointmentStatus.CONFIRMADA,
+            AppointmentStatus.EM_ESPERA,
+        }:
+            raise ValueError("Estado da marcação não permite confirmar chegada.")
+
+        existing_entry = (
+            WaitingQueue.objects.select_for_update()
+            .filter(
+                patient_id=appointment.patient_id,
+                status__in=ReceptionService.ACTIVE_QUEUE_STATUSES,
+            )
+            .select_related("check_in")
+            .first()
+        )
+
+        if existing_entry:
+            other = (
+                Appointment.objects.filter(
+                    check_in=existing_entry.check_in,
+                    status__in=ACTIVE_APPOINTMENT_STATUSES,
+                )
+                .exclude(pk=appointment.pk)
+                .first()
+            )
+            if other:
+                raise ValueError(
+                    "O paciente já está em atendimento noutro registo. "
+                    "Não é possível ligar esta marcação."
+                )
+            check_in = existing_entry.check_in
+            queue_entry = existing_entry
+        else:
+            check_in = ReceptionService.check_in(
+                appointment.patient_id,
+                user,
+                priority=appointment.priority or QueuePriority.NORMAL,
+                visit_purpose=VisitPurpose.CONSULTA,
+                symptoms=(appointment.chief_complaint or "").strip(),
+                notes=(appointment.notes or "").strip(),
+                request=request,
+            )
+            queue_entry = WaitingQueue.objects.get(check_in=check_in)
+
+        appointment.check_in = check_in
+        appointment.queue_entry = queue_entry
+        appointment.status = AppointmentStatus.EM_ESPERA
+        update_fields = ["check_in", "queue_entry", "status", "updated_at"]
+        if user.role == UserRole.RECECIONISTA and appointment.receptionist_id is None:
+            appointment.receptionist = user
+            update_fields.append("receptionist")
+        appointment.save(update_fields=update_fields)
+
+        AppointmentService._log_consulta(
+            AuditAction.CONSULTA_CONFIRMADA,
+            user,
+            request,
+            appointment,
+            f"Chegada confirmada — {appointment.patient.full_name} na fila da receção.",
+            metadata={
+                "patient_id": appointment.patient_id,
+                "check_in_id": check_in.pk,
+                "queue_entry_id": queue_entry.pk,
+                "source": "confirm_arrival",
             },
         )
         return appointment
@@ -382,6 +549,10 @@ class AppointmentService:
             .select_related("patient")
             .get(pk=appointment_id)
         )
+
+        # Idempotente: segunda conclusão na mesma consulta devolve o estado actual.
+        if appointment.status == AppointmentStatus.CONCLUIDA:
+            return appointment
 
         if appointment.status != AppointmentStatus.EM_CONSULTA:
             raise ValueError("Apenas consultas em curso podem ser concluídas.")

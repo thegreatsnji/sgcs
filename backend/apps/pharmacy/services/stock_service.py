@@ -5,6 +5,7 @@ from apps.audit_logs.models import AuditAction
 from apps.audit_logs.services import AuditService
 from apps.pharmacy.constants import OrigemMovimentoStock, TipoMovimentoStockUrgencia
 from apps.pharmacy.models import MedicamentoUrgencia, MovimentoStockUrgencia
+from apps.pharmacy.status import item_expirado
 
 
 class StockUrgenciaError(Exception):
@@ -18,12 +19,39 @@ AUDIT_BY_TYPE = {
     TipoMovimentoStockUrgencia.PERDA_EXPIRACAO: AuditAction.STOCK_PERDA_EXPIRACAO,
 }
 
+ORIGENS_STOCK_INICIAL = {
+    OrigemMovimentoStock.STOCK_INICIAL,
+    OrigemMovimentoStock.STOCK_INICIAL_CLINICA,
+}
+
 
 class StockUrgenciaService:
     @staticmethod
     def proximo_codigo() -> str:
         last = MedicamentoUrgencia.objects.aggregate(m=Max("id"))["m"] or 0
         return f"STK-{last + 1:05d}"
+
+    @staticmethod
+    def encontrar_duplicado(*, nome: str, forma_apresentacao: str = "", exclude_pk=None):
+        qs = MedicamentoUrgencia.objects.filter(
+            nome__iexact=nome.strip(),
+            forma_apresentacao__iexact=(forma_apresentacao or "").strip(),
+        )
+        if exclude_pk:
+            qs = qs.exclude(pk=exclude_pk)
+        return qs.first()
+
+    @staticmethod
+    def stock_inicial_ja_definido(medicamento: MedicamentoUrgencia) -> bool:
+        return medicamento.movimentos.filter(origem__in=ORIGENS_STOCK_INICIAL).exists()
+
+    @staticmethod
+    def stock_inicial_por_confirmar(medicamento: MedicamentoUrgencia) -> bool:
+        if StockUrgenciaService.stock_inicial_ja_definido(medicamento):
+            return False
+        if medicamento.quantidade_stock > 0:
+            return False
+        return not medicamento.movimentos.filter(tipo=TipoMovimentoStockUrgencia.ENTRADA).exists()
 
     @staticmethod
     @transaction.atomic
@@ -43,9 +71,18 @@ class StockUrgenciaService:
         operador=None,
         request=None,
         origem: str = OrigemMovimentoStock.STOCK_INICIAL,
+        permitir_duplicado: bool = False,
     ) -> MedicamentoUrgencia:
         if quantidade_inicial < 0:
             raise StockUrgenciaError("A quantidade inicial não pode ser negativa.")
+        if not permitir_duplicado:
+            dup = StockUrgenciaService.encontrar_duplicado(
+                nome=nome, forma_apresentacao=forma_apresentacao or ""
+            )
+            if dup:
+                raise StockUrgenciaError(
+                    f"Já existe um item semelhante: {dup.nome} ({dup.codigo})."
+                )
         item = MedicamentoUrgencia.objects.create(
             codigo=(codigo or StockUrgenciaService.proximo_codigo()).strip(),
             nome=nome.strip(),
@@ -83,6 +120,52 @@ class StockUrgenciaService:
 
     @staticmethod
     @transaction.atomic
+    def definir_stock_inicial(
+        medicamento: MedicamentoUrgencia,
+        *,
+        quantidade: int,
+        stock_minimo: int | None = None,
+        validade=None,
+        unidade: str | None = None,
+        operador=None,
+        request=None,
+    ) -> MovimentoStockUrgencia:
+        locked = MedicamentoUrgencia.objects.select_for_update().get(pk=medicamento.pk)
+        if StockUrgenciaService.stock_inicial_ja_definido(locked):
+            raise StockUrgenciaError("O stock inicial já foi definido para este item.")
+        if locked.quantidade_stock > 0 or locked.movimentos.filter(
+            tipo=TipoMovimentoStockUrgencia.ENTRADA
+        ).exists():
+            raise StockUrgenciaError(
+                "Já existe quantidade ou entradas. Use Entrada ou Ajuste."
+            )
+        if quantidade <= 0:
+            raise StockUrgenciaError("Indique uma quantidade inicial superior a zero.")
+
+        update_fields = ["updated_at"]
+        if stock_minimo is not None:
+            locked.stock_minimo = max(0, stock_minimo)
+            update_fields.append("stock_minimo")
+        if validade is not None:
+            locked.validade = validade
+            update_fields.append("validade")
+        if unidade is not None and unidade.strip():
+            locked.unidade = unidade.strip()
+            update_fields.append("unidade")
+        locked.save(update_fields=update_fields)
+
+        return StockUrgenciaService.registar_movimento(
+            locked,
+            tipo=TipoMovimentoStockUrgencia.ENTRADA,
+            quantidade=quantidade,
+            motivo="Stock inicial",
+            operador=operador,
+            origem=OrigemMovimentoStock.STOCK_INICIAL,
+            request=request,
+        )
+
+    @staticmethod
+    @transaction.atomic
     def registar_movimento(
         medicamento: MedicamentoUrgencia,
         *,
@@ -95,14 +178,25 @@ class StockUrgenciaService:
         consulta=None,
         request=None,
     ) -> MovimentoStockUrgencia:
-        if quantidade <= 0:
-            raise StockUrgenciaError("A quantidade deve ser superior a zero.")
         locked = MedicamentoUrgencia.objects.select_for_update().get(pk=medicamento.pk)
+        if tipo == TipoMovimentoStockUrgencia.SAIDA and item_expirado(validade=locked.validade):
+            raise StockUrgenciaError(
+                "Este item está expirado e não pode ser utilizado."
+            )
+        if tipo == TipoMovimentoStockUrgencia.AJUSTE and not (motivo or "").strip():
+            raise StockUrgenciaError("Indique o motivo do ajuste.")
+        if tipo == TipoMovimentoStockUrgencia.PERDA_EXPIRACAO and not (motivo or "").strip():
+            raise StockUrgenciaError("Indique o motivo da perda ou expiração.")
+
         antes = locked.quantidade_stock
         if tipo == TipoMovimentoStockUrgencia.ENTRADA:
+            if quantidade <= 0:
+                raise StockUrgenciaError("A quantidade deve ser superior a zero.")
             depois = antes + quantidade
             delta = quantidade
         elif tipo in {TipoMovimentoStockUrgencia.SAIDA, TipoMovimentoStockUrgencia.PERDA_EXPIRACAO}:
+            if quantidade <= 0:
+                raise StockUrgenciaError("A quantidade deve ser superior a zero.")
             if quantidade > antes:
                 raise StockUrgenciaError("Stock insuficiente. Não é permitido stock negativo.")
             depois = antes - quantidade

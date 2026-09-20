@@ -29,7 +29,7 @@ export function LaboratoryTodayPage() {
 
   const finishMutation = useMutation({
     mutationFn: (id: number) => laboratoryService.finish(id),
-    onSuccess: () => { showToast("Pedido concluído.", "success"); invalidate(); },
+    onSuccess: () => { showToast("Processamento concluído.", "success"); invalidate(); },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
 
@@ -41,7 +41,7 @@ export function LaboratoryTodayPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Processamento</h1>
         <p className="mt-1 text-slate-500">
-          Amostras do dia em análise — {inProcessing.length} em processamento de {orders.length} total.
+          Amostras do dia em análise: {inProcessing.length} em processamento de {orders.length} no total.
         </p>
       </div>
       <LaboratorySubNav />

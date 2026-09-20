@@ -24,7 +24,9 @@ export interface ReceiptPrintData {
   totais: Record<string, string>;
   itens: Array<{
     nome: string;
+    quantidade: number;
     preco_oficial: string;
+    preco_cobrado: string;
     valor_reducao: string;
     subtotal_cobrado: string;
   }>;

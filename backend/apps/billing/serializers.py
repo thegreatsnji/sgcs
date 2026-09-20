@@ -307,6 +307,7 @@ class FaturaSerializer(serializers.ModelSerializer):
     pagamentos = PagamentoSerializer(many=True, read_only=True)
     editavel = serializers.BooleanField(source="is_editavel", read_only=True)
     total_pago = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    saldo = serializers.SerializerMethodField()
 
     class Meta:
         model = Fatura
@@ -324,6 +325,7 @@ class FaturaSerializer(serializers.ModelSerializer):
             "imposto",
             "total",
             "total_pago",
+            "saldo",
             "emitida_em",
             "emitida_por",
             "emitida_por_nome",
@@ -341,6 +343,7 @@ class FaturaSerializer(serializers.ModelSerializer):
             "imposto",
             "total",
             "total_pago",
+            "saldo",
             "emitida_em",
             "emitida_por",
             "created_at",
@@ -349,6 +352,13 @@ class FaturaSerializer(serializers.ModelSerializer):
 
     def get_emitida_por_nome(self, obj) -> str | None:
         return obj.emitida_por.get_full_name() if obj.emitida_por else None
+
+    def get_saldo(self, obj) -> str:
+        from decimal import Decimal
+
+        pago = obj.total_pago if obj.total_pago is not None else Decimal("0.00")
+        saldo = max(obj.total - pago, Decimal("0.00"))
+        return str(saldo)
 
 
 class FaturaCreateSerializer(serializers.Serializer):

@@ -69,8 +69,8 @@ class LaboratoryResultService:
         return InterpretacaoParametro.NORMAL
 
     @staticmethod
-    def listar_resultados():
-        return (
+    def listar_resultados(user=None):
+        queryset = (
             ResultadoLaboratorial.objects.select_related(
                 "pedido_laboratorial",
                 "pedido_laboratorial__paciente",
@@ -81,6 +81,18 @@ class LaboratoryResultService:
             .prefetch_related("parametros", "anexos__ficheiro")
             .order_by("-created_at")
         )
+        if (
+            user is not None
+            and getattr(user, "role", None) == UserRole.MEDICO
+            and not getattr(user, "is_superuser", False)
+        ):
+            queryset = queryset.filter(
+                estado__in=[
+                    ResultadoLaboratorialEstado.VALIDADO,
+                    ResultadoLaboratorialEstado.ENTREGUE,
+                ]
+            )
+        return queryset
 
     @staticmethod
     @transaction.atomic
@@ -193,8 +205,12 @@ class LaboratoryResultService:
             raise ValueError("Sem permissão para validar resultados.")
 
         resultado = (
-            ResultadoLaboratorial.objects.select_for_update()
-            .select_related("pedido_laboratorial", "pedido_laboratorial__consulta", "pedido_laboratorial__paciente")
+            ResultadoLaboratorial.objects.select_for_update(of=("self",))
+            .select_related(
+                "pedido_laboratorial",
+                "pedido_laboratorial__consulta",
+                "pedido_laboratorial__paciente",
+            )
             .get(pk=resultado_id)
         )
         if resultado.estado not in {
@@ -256,15 +272,15 @@ class LaboratoryResultService:
             },
         )
 
-        from apps.laboratory.tasks import (
-            actualizar_dashboard,
-            actualizar_prontuario,
-            notificar_medico,
+        from apps.laboratory.services.result_notification import (
+            notify_ordering_doctor_result_validated,
         )
+        from apps.laboratory.tasks import actualizar_dashboard, actualizar_prontuario
 
+        # Sync: o médico precisa do alerta mesmo sem worker Celery (piloto).
+        notify_ordering_doctor_result_validated(resultado.pk)
         actualizar_dashboard.delay()
         actualizar_prontuario.delay(resultado.pk)
-        notificar_medico.delay(resultado.pk)
 
         LaboratoryCacheService.invalidate_all(patient_id=pedido.paciente_id, consulta_id=pedido.consulta_id)
         return resultado

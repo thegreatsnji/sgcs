@@ -4,6 +4,7 @@ import { Button } from "@/design-system";
 import type { MedicamentoPrescrito } from "@/types/doctors";
 
 interface PrescricaoFormProps {
+  consultaId?: number;
   onSubmit: (values: {
     consulta_id: number;
     observacoes?: string;
@@ -20,8 +21,10 @@ const medicamentoVazio: MedicamentoPrescrito = {
   posologia: "",
 };
 
-export function PrescricaoForm({ onSubmit, isPending }: PrescricaoFormProps) {
-  const [consultaId, setConsultaId] = useState("");
+export function PrescricaoForm({ consultaId: consultaIdProp, onSubmit, isPending }: PrescricaoFormProps) {
+  const [consultaId, setConsultaId] = useState(
+    consultaIdProp != null ? String(consultaIdProp) : "",
+  );
   const [observacoes, setObservacoes] = useState("");
   const [medicamentos, setMedicamentos] = useState<MedicamentoPrescrito[]>([{ ...medicamentoVazio }]);
 
@@ -42,13 +45,17 @@ export function PrescricaoForm({ onSubmit, isPending }: PrescricaoFormProps) {
       }}
     >
       <div>
-        <label className="mb-1 block text-sm text-slate-600">ID da consulta</label>
-        <input
-          className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-          value={consultaId}
-          onChange={(e) => setConsultaId(e.target.value)}
-          required
-        />
+        {consultaIdProp == null ? (
+          <>
+            <label className="mb-1 block text-sm text-slate-600">ID da consulta</label>
+            <input
+              className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              value={consultaId}
+              onChange={(e) => setConsultaId(e.target.value)}
+              required
+            />
+          </>
+        ) : null}
       </div>
       <div>
         <label className="mb-1 block text-sm text-slate-600">Observações</label>

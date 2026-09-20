@@ -1,7 +1,7 @@
 /** Textos de interface em Português (PT) — fonte única para consistência clínica. */
 export const UI_COPY = {
   appName: "SauVida",
-  appTagline: "Sistema de Gestão Clínica",
+  appTagline: "Sistema de Gestão Clínica SauVida",
   analytics: "Análise Clínica SauVida",
 
   nav: {
@@ -28,7 +28,7 @@ export const UI_COPY = {
     featureFlags: "Funcionalidades experimentais",
     checkIn: "Triagem",
     fastReception: "Atendimento rápido",
-    pharmacyUrgent: "Stock de urgência",
+    pharmacyUrgent: "Stock de Urgência",
     queue: "Fila de atendimento",
     referrals: "Encaminhamentos",
     templates: "Modelos",
@@ -42,8 +42,10 @@ export const UI_COPY = {
     results: "Resultados",
     pending: "Pendentes",
     collection: "Colheitas",
+    processing: "Processamento",
     reception: "Receção",
     features: "Funcionalidades",
+    labOrdersToSettle: "Exames a regularizar",
   },
 
   actions: {
@@ -90,11 +92,12 @@ export const UI_COPY = {
     startAtendimento: "Iniciar atendimento",
     openQueue: "Abrir fila",
     continueAtendimento: "Continuar",
+    continueToDoctor: "Encaminhar médico",
+    changeDoctor: "Alterar médico",
     viewPatient: "Ver utente",
-    waitLabel: "Tempo de espera",
+    waitLabel: "Espera",
     emergencyInQueue: "Emergência na fila",
     kpiWaiting: "Em espera",
-    kpiAvgWait: "Tempo médio de espera",
     kpiAttendedToday: "Atendidos hoje",
   },
 

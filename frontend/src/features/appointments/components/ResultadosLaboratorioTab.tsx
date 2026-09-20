@@ -49,7 +49,7 @@ export function ResultadosLaboratorioTab({ resultados }: ResultadosLaboratorioTa
                     Visualizar
                   </Button>
                 </Link>
-                {row.anexos[0] && (
+                {row.anexos?.[0] && (
                   <a
                     href={laboratoryResultsService.downloadUrl(row.id, row.anexos[0].id)}
                     className="inline-flex items-center text-sm text-primary-700 hover:underline"

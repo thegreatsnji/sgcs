@@ -6,6 +6,8 @@ import {
   EMERGENCY_RELATIONSHIP_LABELS,
   PATIENT_GENDER_LABELS,
 } from "@/constants/patients";
+import { useAuth } from "@/contexts/AuthContext";
+import { buildAtendimentoUrl } from "@/features/reception/constants/atendimentoSteps";
 import { usePermissions } from "@/hooks/usePermissions";
 import { patientsService } from "@/services/patients";
 import type { PatientDetail } from "@/types/patient";
@@ -20,9 +22,11 @@ interface PatientProfileShellProps {
 }
 
 export function PatientProfileShell({ patient, children }: PatientProfileShellProps) {
+  const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const isNurse = user?.role === "ENFERMEIRO";
   const isHistorical = patient.import_origin === "MIGRACAO_EXCEL_SAUVIDA";
   const needsConfirmation = isHistorical && !patient.dados_verificados;
 
@@ -137,6 +141,19 @@ export function PatientProfileShell({ patient, children }: PatientProfileShellPr
             </dl>
 
             <div className="mt-6 flex flex-col gap-2 border-t border-slate-100 pt-6">
+              {hasPermission("reception.create") && patient.is_active && (
+                <Link
+                  to={
+                    isNurse
+                      ? `/nursing/triage?paciente=${patient.id}`
+                      : buildAtendimentoUrl({ passo: 1, paciente: patient.id })
+                  }
+                >
+                  <Button variant="primary" className="w-full">
+                    {isNurse ? "Nova triagem" : "Novo atendimento"}
+                  </Button>
+                </Link>
+              )}
               {hasPermission("patients.edit") && (
                 <Link to={`/patients/${patient.id}/edit`}>
                   <Button variant="outline" className="w-full">

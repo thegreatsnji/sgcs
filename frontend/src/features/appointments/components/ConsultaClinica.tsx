@@ -16,7 +16,10 @@ import { SeguimentoForm } from "@/features/appointments/components/SeguimentoFor
 import { SinaisVitaisForm } from "@/features/appointments/components/SinaisVitaisForm";
 import { SOAPForm } from "@/features/appointments/components/SOAPForm";
 import { AppointmentStatusBadge } from "@/features/appointments/components/AppointmentStatusBadge";
+import { PrescricaoForm } from "@/features/doctors/components/PrescricaoForm";
 import { appointmentsService } from "@/services/appointments";
+import { doctorsService } from "@/services/doctors";
+import type { MedicamentoPrescrito } from "@/types/doctors";
 import type { ClinicalTab } from "@/types/clinicalRecord";
 import type { AppointmentStatus } from "@/types/appointment";
 import { getApiErrorMessage } from "@/utils/api-error";
@@ -28,6 +31,7 @@ const EHR_TABS: { id: ClinicalTab; label: string }[] = [
   { id: "soap", label: "Notas SOAP" },
   { id: "diagnosticos", label: "Diagnósticos" },
   { id: "laboratorio", label: "Laboratório" },
+  { id: "prescricao", label: "Prescrição" },
   { id: "imagiologia", label: "Imagiologia" },
   { id: "seguimento", label: "Seguimento" },
 ];
@@ -64,7 +68,7 @@ export function ConsultaClinica({ appointmentId }: ConsultaClinicaProps) {
   const soapMutation = useMutation({
     mutationFn: (payload: object) =>
       appointmentsService.updateClinical(appointmentId, payload as Record<string, string>),
-    onSuccess: () => { showToast("SOAP guardado.", "success"); onSaved(); invalidate(); },
+    onSuccess: () => { onSaved(); invalidate(); },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
 
@@ -76,7 +80,10 @@ export function ConsultaClinica({ appointmentId }: ConsultaClinicaProps) {
   });
 
   const labMutation = useMutation({
-    mutationFn: (payload: object) => appointmentsService.addLabOrder(appointmentId, payload as { tipo_exame: string }),
+    mutationFn: (payload: object) => appointmentsService.addLabOrder(
+      appointmentId,
+      payload as { tipo_exame?: string; servico_id?: number },
+    ),
     onSuccess: () => { showToast("Pedido de laboratório emitido.", "success"); onSaved(); invalidate(); },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
@@ -90,7 +97,21 @@ export function ConsultaClinica({ appointmentId }: ConsultaClinicaProps) {
   const followUpMutation = useMutation({
     mutationFn: (payload: { data_retorno: string; motivo: string; observacoes?: string }) =>
       appointmentsService.saveFollowUp(appointmentId, payload),
-    onSuccess: () => { showToast("Seguimento agendado.", "success"); onSaved(); invalidate(); },
+    onSuccess: () => { showToast("Recomendação de seguimento registada.", "success"); onSaved(); invalidate(); },
+    onError: (e) => showToast(getApiErrorMessage(e), "error"),
+  });
+
+  const prescriptionMutation = useMutation({
+    mutationFn: (payload: {
+      consulta_id: number;
+      observacoes?: string;
+      medicamentos: MedicamentoPrescrito[];
+    }) => doctorsService.createPrescription(payload),
+    onSuccess: () => {
+      showToast("Prescrição criada.", "success");
+      onSaved();
+      void queryClient.invalidateQueries({ queryKey: ["doctor-prescriptions"] });
+    },
     onError: (e) => showToast(getApiErrorMessage(e), "error"),
   });
 
@@ -110,7 +131,8 @@ export function ConsultaClinica({ appointmentId }: ConsultaClinicaProps) {
     diagnosisMutation.isPending ||
     labMutation.isPending ||
     imagingMutation.isPending ||
-    followUpMutation.isPending;
+    followUpMutation.isPending ||
+    prescriptionMutation.isPending;
 
   if (isLoading || !data) return <ConsultationSkeleton />;
   if (isError) return <ErrorState message="Não foi possível carregar o prontuário." onRetry={() => void refetch()} />;
@@ -191,6 +213,7 @@ export function ConsultaClinica({ appointmentId }: ConsultaClinicaProps) {
             {tab === "vitais" && (
               <SinaisVitaisForm
                 initial={data.sinais_vitais}
+                triage={data.sinais_vitais_triagem}
                 disabled={!editavel}
                 onSubmit={(v) => vitalsMutation.mutate(v)}
                 isPending={vitalsMutation.isPending}
@@ -202,6 +225,7 @@ export function ConsultaClinica({ appointmentId }: ConsultaClinicaProps) {
                 initial={data.anotacao_soap}
                 disabled={!editavel}
                 onSubmit={(v) => soapMutation.mutate(v)}
+                onAutosave={(v: import("@/types/clinicalRecord").SOAPNote) => soapMutation.mutate(v)}
                 isPending={soapMutation.isPending}
               />
             )}
@@ -220,7 +244,7 @@ export function ConsultaClinica({ appointmentId }: ConsultaClinicaProps) {
                 <PedidosLaboratorio
                   pedidos={data.pedidos_laboratorio}
                   disabled={!editavel}
-                  onAdd={(d) => labMutation.mutate(d)}
+                  onAdd={(d) => labMutation.mutateAsync(d)}
                   isPending={labMutation.isPending}
                 />
                 <ResultadosLaboratorioTab resultados={data.resultados_laboratoriais ?? []} />
@@ -236,6 +260,16 @@ export function ConsultaClinica({ appointmentId }: ConsultaClinicaProps) {
               />
             )}
 
+            {tab === "prescricao" && (
+              <Card title="Prescrição">
+                <PrescricaoForm
+                  consultaId={appointmentId}
+                  onSubmit={(values) => prescriptionMutation.mutate(values)}
+                  isPending={prescriptionMutation.isPending}
+                />
+              </Card>
+            )}
+
             {tab === "seguimento" && (
               <SeguimentoForm
                 initial={data.seguimento}
@@ -247,7 +281,7 @@ export function ConsultaClinica({ appointmentId }: ConsultaClinicaProps) {
 
             {!editavel && (
               <Badge variant="default" className="mt-4">
-                Prontuário bloqueado — consulta concluída.
+                Prontuário bloqueado. Consulta concluída.
               </Badge>
             )}
           </div>

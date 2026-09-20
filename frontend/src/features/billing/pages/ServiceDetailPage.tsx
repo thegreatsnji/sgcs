@@ -22,7 +22,7 @@ export function ServiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const serviceId = Number(id);
   const { hasPermission } = usePermissions();
-  const canEdit = hasPermission("billing.edit");
+  const canEdit = hasPermission("billing.delete");
 
   const { data: service, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["billing-service", serviceId],

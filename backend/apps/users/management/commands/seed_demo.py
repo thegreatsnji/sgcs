@@ -184,8 +184,6 @@ class Command(BaseCommand):
 
         users = self._ensure_users(reset=options["reset_demo_users"])
         self._deactivate_legacy_financeiro_demo()
-        admin = users["admin@sauvida.gw"]
-        director = users["director@sauvida.gw"]
         medico1 = users["medico1@sauvida.gw"]
         medico2 = users["medico2@sauvida.gw"]
         rececao = users["rececao@sauvida.gw"]
@@ -196,7 +194,7 @@ class Command(BaseCommand):
         appointments = self._ensure_appointments(patients, medico1, medico2, rececao)
         self._ensure_queue(patients, rececao)
         self._ensure_lab(appointments, lab_user)
-        self._ensure_billing(patients, servico, director)
+        self._ensure_billing(patients, servico, rececao)
         self._ensure_notifications(users)
 
         self._print_credentials(users)
@@ -359,12 +357,12 @@ class Command(BaseCommand):
         except Exception as exc:  # noqa: BLE001
             self.stdout.write(self.style.WARNING(f"  · laboratório omitido: {exc}"))
 
-    def _ensure_billing(self, patients, servico, director):
+    def _ensure_billing(self, patients, servico, cashier):
         patient = patients[1]
         try:
             orc = BillingService.criar_orcamento(
                 patient.id,
-                director,
+                cashier,
                 itens=[
                     {
                         "servico_id": servico.id,
@@ -373,19 +371,19 @@ class Command(BaseCommand):
                     }
                 ],
             )
-            BillingService.aprovar_orcamento(orc.pk, director)
+            BillingService.aprovar_orcamento(orc.pk, cashier)
             fatura = BillingService.gerar_fatura(
-                director,
+                cashier,
                 orcamento_id=orc.pk,
             )
             pagamento = BillingService.registar_pagamento(
                 fatura.pk,
-                director,
+                cashier,
                 valor=fatura.total,
                 metodo_pagamento=MetodoPagamento.DINHEIRO,
                 referencia="DEMO-PAG-001",
             )
-            BillingService.confirmar_pagamento(pagamento.pk, director)
+            BillingService.confirmar_pagamento(pagamento.pk, cashier)
             self.stdout.write(f"  ✓ fatura/pagamento: {fatura.numero}")
         except Exception as exc:  # noqa: BLE001
             self.stdout.write(self.style.WARNING(f"  · faturação omitida: {exc}"))

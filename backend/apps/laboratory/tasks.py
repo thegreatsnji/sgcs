@@ -26,8 +26,12 @@ def actualizar_dashboard():
 
 @app.task(name="laboratory.notificar_medico")
 def notificar_medico(resultado_id: int):
-    """Notifica o médico sobre resultado disponível — implementação futura."""
-    return {"status": "ok", "resultado_id": resultado_id}
+    """Notifica o médico solicitante de que o resultado foi validado."""
+    from apps.laboratory.services.result_notification import (
+        notify_ordering_doctor_result_validated,
+    )
+
+    return notify_ordering_doctor_result_validated(resultado_id)
 
 
 @app.task(name="laboratory.actualizar_prontuario")

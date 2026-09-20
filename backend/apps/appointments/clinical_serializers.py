@@ -36,9 +36,19 @@ class DiagnosticoCreateSerializer(serializers.Serializer):
 
 
 class PedidoExameSerializer(serializers.Serializer):
-    tipo_exame = serializers.CharField(max_length=150)
+    tipo_exame = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
+    servico_id = serializers.IntegerField(required=False, allow_null=True)
     prioridade = serializers.ChoiceField(choices=QueuePriority.choices, default=QueuePriority.NORMAL)
     observacoes = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        servico_id = attrs.get("servico_id")
+        tipo = (attrs.get("tipo_exame") or "").strip()
+        if not servico_id and not tipo:
+            raise serializers.ValidationError(
+                "Indique um serviço do catálogo ou o tipo de exame."
+            )
+        return attrs
 
 
 class SeguimentoSerializer(serializers.Serializer):

@@ -4,6 +4,7 @@ import type { VitalSigns } from "@/types/clinicalRecord";
 
 interface SinaisVitaisFormProps {
   initial?: VitalSigns | null;
+  triage?: VitalSigns | null;
   disabled?: boolean;
   onSubmit: (data: Partial<VitalSigns>) => void;
   isPending?: boolean;
@@ -31,11 +32,17 @@ function VitalField({
   );
 }
 
-export function SinaisVitaisForm({ initial, disabled, onSubmit, isPending }: SinaisVitaisFormProps) {
+export function SinaisVitaisForm({ initial, triage, disabled, onSubmit, isPending }: SinaisVitaisFormProps) {
   const imc = initial?.imc;
 
   return (
     <Card title="Sinais vitais">
+      {triage ? (
+        <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+          <p className="font-medium text-slate-800">Sinais vitais da triagem</p>
+          <p className="mt-1 text-xs text-slate-500">Referência do check-in — não substitui o registo clínico.</p>
+        </div>
+      ) : null}
       <form
         onSubmit={(e) => {
           e.preventDefault();

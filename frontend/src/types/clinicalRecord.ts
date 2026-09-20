@@ -58,6 +58,10 @@ export interface ExamOrder {
   prioridade: string;
   observacoes: string;
   estado: string;
+  estado_faturacao?: string;
+  estado_faturacao_label?: string;
+  servico_id?: number | null;
+  servico_nome?: string | null;
   created_at: string;
 }
 
@@ -82,6 +86,8 @@ export interface ClinicalRecord {
   };
   paciente: ClinicalPatientSummary;
   sinais_vitais: VitalSigns | null;
+  /** Vitais do check-in/triagem (read-only no prontuário). */
+  sinais_vitais_triagem?: VitalSigns | null;
   anotacao_soap: SOAPNote | null;
   diagnosticos: ClinicalDiagnosis[];
   pedidos_laboratorio: ExamOrder[];
@@ -100,6 +106,12 @@ export interface ClinicalRecord {
   ultimos_pedidos_imagiologia: Array<Record<string, unknown>>;
 }
 
+export type LaboratoryCatalogItem = {
+  id: number;
+  codigo: string;
+  nome: string;
+};
+
 export type ClinicalTab =
   | "resumo"
   | "vitais"
@@ -107,6 +119,7 @@ export type ClinicalTab =
   | "diagnosticos"
   | "laboratorio"
   | "resultados_laboratorio"
+  | "prescricao"
   | "imagiologia"
   | "seguimento"
   | "historico";

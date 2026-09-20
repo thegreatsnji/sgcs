@@ -22,6 +22,7 @@ from apps.pharmacy.permissions import (
     require_any,
 )
 from apps.pharmacy.serializers import (
+    DefinirStockInicialSerializer,
     MedicamentoUrgenciaSerializer,
     MedicamentoUrgenciaWriteSerializer,
     MovimentoStockUrgenciaSerializer,
@@ -71,7 +72,7 @@ class MedicamentoUrgenciaViewSet(viewsets.ModelViewSet):
             return [require_any(*ENTRY_CODES)()]
         if self.action == "saida":
             return [require_any(*EXIT_CODES)()]
-        if self.action in ("ajuste", "perda"):
+        if self.action in ("ajuste", "perda", "definir_stock_inicial"):
             return [require_any(*ADJUST_CODES)()]
         if self.action == "movimento":
             tipo = (self.request.data or {}).get("tipo")
@@ -98,13 +99,21 @@ class MedicamentoUrgenciaViewSet(viewsets.ModelViewSet):
         hoje = date.today()
         limite = hoje + timedelta(days=dias_proxima_validade())
         if estado == "SEM_STOCK":
-            qs = qs.filter(quantidade_stock=0)
+            qs = qs.filter(quantidade_stock=0).filter(
+                Q(validade__isnull=True) | Q(validade__gte=hoje)
+            )
         elif estado == "STOCK_BAIXO":
-            qs = qs.filter(quantidade_stock__gt=0, quantidade_stock__lte=F("stock_minimo"))
+            qs = qs.filter(quantidade_stock__gt=0, quantidade_stock__lte=F("stock_minimo")).filter(
+                Q(validade__isnull=True) | Q(validade__gt=limite)
+            )
         elif estado == "EXPIRADO":
             qs = qs.filter(validade__lt=hoje)
         elif estado == "PROXIMO_DA_VALIDADE":
-            qs = qs.filter(validade__gte=hoje, validade__lte=limite)
+            qs = qs.filter(
+                quantidade_stock__gt=0,
+                validade__gte=hoje,
+                validade__lte=limite,
+            )
         elif estado == "DISPONIVEL":
             qs = qs.filter(quantidade_stock__gt=F("stock_minimo")).filter(
                 Q(validade__isnull=True) | Q(validade__gt=limite)
@@ -136,6 +145,16 @@ class MedicamentoUrgenciaViewSet(viewsets.ModelViewSet):
         serializer = MedicamentoUrgenciaWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        dup = StockUrgenciaService.encontrar_duplicado(
+            nome=data["nome"],
+            forma_apresentacao=data.get("forma_apresentacao") or "",
+        )
+        if dup:
+            return error_response(
+                message=f"Já existe um item semelhante: {dup.nome} ({dup.codigo}).",
+                status=status.HTTP_400_BAD_REQUEST,
+                errors={"existing_id": dup.pk, "existing_codigo": dup.codigo},
+            )
         try:
             obj = StockUrgenciaService.criar_item(
                 nome=data["nome"],
@@ -150,6 +169,7 @@ class MedicamentoUrgenciaViewSet(viewsets.ModelViewSet):
                 quantidade_texto_original=data.get("quantidade_texto_original") or "",
                 operador=request.user,
                 request=request,
+                permitir_duplicado=True,
             )
         except StockUrgenciaError as exc:
             return error_response(message=str(exc), status=status.HTTP_400_BAD_REQUEST)
@@ -226,6 +246,34 @@ class MedicamentoUrgenciaViewSet(viewsets.ModelViewSet):
     def perda(self, request, pk=None):
         return self._move(request, tipo=TipoMovimentoStockUrgencia.PERDA_EXPIRACAO)
 
+    @extend_schema(tags=["Stock de urgência"], request=DefinirStockInicialSerializer)
+    @action(detail=True, methods=["post"], url_path="definir-stock-inicial")
+    def definir_stock_inicial(self, request, pk=None):
+        medicamento = self.get_object()
+        payload = DefinirStockInicialSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        data = payload.validated_data
+        try:
+            mov = StockUrgenciaService.definir_stock_inicial(
+                medicamento,
+                quantidade=data["quantidade"],
+                stock_minimo=data.get("stock_minimo"),
+                validade=data.get("validade"),
+                unidade=data.get("unidade"),
+                operador=request.user,
+                request=request,
+            )
+        except StockUrgenciaError as exc:
+            return error_response(message=str(exc), status=status.HTTP_400_BAD_REQUEST)
+        medicamento.refresh_from_db()
+        return success_response(
+            data={
+                "item": MedicamentoUrgenciaSerializer(medicamento).data,
+                "movimento": MovimentoStockUrgenciaSerializer(mov).data,
+            },
+            message="Stock inicial definido com sucesso.",
+        )
+
 
 @extend_schema_view(list=extend_schema(tags=["Stock de urgência"]))
 class MovimentoStockUrgenciaViewSet(viewsets.ReadOnlyModelViewSet):
@@ -264,10 +312,12 @@ class StockDashboardView(APIView):
         qs = MedicamentoUrgencia.objects.filter(activo=True)
         hoje = date.today()
         limite = hoje + timedelta(days=dias_proxima_validade())
-        baixo = qs.filter(quantidade_stock__gt=0, quantidade_stock__lte=F("stock_minimo"))
-        sem = qs.filter(quantidade_stock=0)
         expirado = qs.filter(validade__lt=hoje)
-        proximo = qs.filter(validade__gte=hoje, validade__lte=limite)
+        sem = qs.filter(quantidade_stock=0).filter(Q(validade__isnull=True) | Q(validade__gte=hoje))
+        proximo = qs.filter(quantidade_stock__gt=0, validade__gte=hoje, validade__lte=limite)
+        baixo = qs.filter(quantidade_stock__gt=0, quantidade_stock__lte=F("stock_minimo")).filter(
+            Q(validade__isnull=True) | Q(validade__gt=limite)
+        )
         atencao = list(
             qs.filter(
                 Q(quantidade_stock__lte=F("stock_minimo")) | Q(validade__lte=limite, validade__isnull=False)

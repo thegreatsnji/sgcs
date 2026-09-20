@@ -51,7 +51,7 @@ export function MedicoProfilesPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">Médicos — configuração</h2>
+      <h2 className="text-2xl font-bold text-slate-900">Configuração de médicos</h2>
       <SettingsSubNav />
       <Card title="Lista de médicos">
         <Table<MedicoPerfil>
@@ -108,7 +108,7 @@ export function MedicoProfilesPage() {
       </Card>
 
       {editing ? (
-        <Card title={`Configurar — ${editing.utilizador_nome}`}>
+        <Card title={`Configurar: ${editing.utilizador_nome}`}>
           <form
             className="grid gap-4 sm:grid-cols-2"
             onSubmit={(e) => {
@@ -188,7 +188,7 @@ export function MedicoProfilesPage() {
                 <option value="">—</option>
                 {consultas?.results.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.codigo} — {s.nome} ({s.preco} FCFA)
+                    {s.codigo}: {s.nome} ({s.preco} FCFA)
                   </option>
                 ))}
               </select>

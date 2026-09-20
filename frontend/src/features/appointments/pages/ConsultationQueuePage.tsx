@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Card, ErrorState, LoadingState, Pagination, useToast } from "@/design-system";
+import { Button, Card, ErrorState, LoadingState, Pagination, useToast } from "@/design-system";
 import { CONSULTATION_PAGE_SIZE } from "@/constants/appointments";
 import { ConsultationQueueTable } from "@/features/appointments/components/ConsultationQueueTable";
 import { ConsultationSubNav } from "@/features/appointments/components/ConsultationSubNav";
+import { usePermissions } from "@/hooks/usePermissions";
 import { appointmentsService } from "@/services/appointments";
 import type { Appointment } from "@/types/appointment";
 import { getApiErrorMessage } from "@/utils/api-error";
@@ -14,6 +15,8 @@ export function ConsultationQueuePage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
+  const canStart = hasPermission("appointments.start");
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -33,6 +36,7 @@ export function ConsultationQueuePage() {
   });
 
   const appointments = data?.results ?? [];
+  const nextPatient = appointments.find((row) => row.status === "CONFIRMADA" || row.status === "EM_ESPERA");
   const totalPages = Math.max(1, Math.ceil((data?.count ?? 0) / CONSULTATION_PAGE_SIZE));
 
   return (
@@ -44,6 +48,27 @@ export function ConsultationQueuePage() {
 
       <ConsultationSubNav />
 
+      {nextPatient && canStart ? (
+        <Card className="border-primary-200 bg-primary-50/60">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold tracking-wide text-primary-700 uppercase">Próximo utente</p>
+              <p className="text-lg font-bold text-slate-900">{nextPatient.patient.full_name}</p>
+              <p className="text-sm text-slate-600">
+                {nextPatient.chief_complaint || nextPatient.notes || nextPatient.appointment_number}
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => startMutation.mutate(nextPatient)}
+              disabled={startMutation.isPending}
+            >
+              Atender agora
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
       <Card>
         {isLoading ? (
           <LoadingState message="A carregar fila médica..." />
@@ -53,8 +78,9 @@ export function ConsultationQueuePage() {
           <>
             <ConsultationQueueTable
               appointments={appointments}
-              onStart={(appointment) => startMutation.mutate(appointment)}
+              onStart={canStart ? (appointment) => startMutation.mutate(appointment) : undefined}
               onOpen={(appointment) => navigate(`/consultations/${appointment.id}`)}
+              showStartAction={canStart}
             />
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
               <span className="text-sm text-slate-600">Total: {data?.count ?? 0}</span>

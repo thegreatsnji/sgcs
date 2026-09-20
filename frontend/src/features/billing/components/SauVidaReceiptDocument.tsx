@@ -32,6 +32,10 @@ export function SauVidaReceiptDocument({ data, className = "" }: SauVidaReceiptD
         ? "receipt-format-termico_80"
         : "receipt-format-a4";
 
+  /** Columns before Subtotal: Serviço + Qtd + Preço unit. (+ optional Oficial / Redução). */
+  const detailColSpan =
+    3 + (cfg.mostrar_preco_oficial ? 1 : 0) + (cfg.mostrar_reducao ? 1 : 0);
+
   return (
     <article
       className={`receipt-print-surface receipt-sauvida ${formatoClass} ${className}`.trim()}
@@ -94,33 +98,56 @@ export function SauVidaReceiptDocument({ data, className = "" }: SauVidaReceiptD
           ) : null}
         </p>
 
-        <p className="receipt-sauvida__field">
-          {data.textos.referente_a}{" "}
-          <span className="receipt-sauvida__fill">{data.referente_a}</span>
-        </p>
+        <p className="receipt-sauvida__field">{data.textos.referente_a}:</p>
 
-        {cfg.mostrar_preco_oficial || cfg.mostrar_reducao ? (
+        {data.itens.length > 0 ? (
           <table className="receipt-sauvida__table">
             <thead>
               <tr>
                 <th>Serviço</th>
-                {cfg.mostrar_preco_oficial ? <th>Oficial</th> : null}
-                {cfg.mostrar_reducao ? <th>Redução</th> : null}
-                <th>Cobrado</th>
+                <th className="receipt-sauvida__num">Qtd</th>
+                <th className="receipt-sauvida__num">Preço unit.</th>
+                {cfg.mostrar_preco_oficial ? (
+                  <th className="receipt-sauvida__num">Oficial</th>
+                ) : null}
+                {cfg.mostrar_reducao ? (
+                  <th className="receipt-sauvida__num">Redução</th>
+                ) : null}
+                <th className="receipt-sauvida__num">Subtotal</th>
               </tr>
             </thead>
             <tbody>
-              {data.itens.map((it) => (
-                <tr key={`${it.nome}-${it.subtotal_cobrado}`}>
+              {data.itens.map((it, idx) => (
+                <tr key={`${it.nome}-${idx}-${it.subtotal_cobrado}`}>
                   <td>{it.nome}</td>
-                  {cfg.mostrar_preco_oficial ? <td>{formatFcfa(it.preco_oficial)}</td> : null}
-                  {cfg.mostrar_reducao ? <td>{formatFcfa(it.valor_reducao)}</td> : null}
-                  <td>{formatFcfa(it.subtotal_cobrado)}</td>
+                  <td className="receipt-sauvida__num">{it.quantidade ?? 1}</td>
+                  <td className="receipt-sauvida__num">
+                    {formatFcfa(it.preco_cobrado ?? it.subtotal_cobrado)}
+                  </td>
+                  {cfg.mostrar_preco_oficial ? (
+                    <td className="receipt-sauvida__num">{formatFcfa(it.preco_oficial)}</td>
+                  ) : null}
+                  {cfg.mostrar_reducao ? (
+                    <td className="receipt-sauvida__num">{formatFcfa(it.valor_reducao)}</td>
+                  ) : null}
+                  <td className="receipt-sauvida__num">{formatFcfa(it.subtotal_cobrado)}</td>
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={detailColSpan}>Total dos serviços</td>
+                <td className="receipt-sauvida__num receipt-sauvida__table-total">
+                  {formatFcfa(data.totais.total_cobrado)}
+                </td>
+              </tr>
+            </tfoot>
           </table>
-        ) : null}
+        ) : (
+          <p className="receipt-sauvida__field">
+            <span className="receipt-sauvida__fill">{data.referente_a || "—"}</span>
+          </p>
+        )}
 
         {cfg.mostrar_saldo ? (
           <p className="receipt-sauvida__totals">

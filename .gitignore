@@ -51,6 +51,12 @@ coverage/
 celerybeat-schedule
 celerybeat-schedule-*
 
+# Uploads locais / artefactos de teste
+backend/media/
+backend/pytest*.txt
+frontend/build_sprint*.txt
+frontend/lint_sprint*.txt
+
 # Frontend
 frontend/node_modules/
 frontend/dist/
