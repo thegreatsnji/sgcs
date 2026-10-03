@@ -9,6 +9,13 @@ def dias_proxima_validade() -> int:
     return int(getattr(settings, "STOCK_URGENCIA_DIAS_PROXIMA_VALIDADE", 30))
 
 
+def item_expirado(*, validade, hoje: date | None = None) -> bool:
+    if not validade:
+        return False
+    hoje = hoje or date.today()
+    return validade < hoje
+
+
 def estado_item(*, quantidade: int, stock_minimo: int, validade=None, hoje: date | None = None) -> str:
     hoje = hoje or date.today()
     if validade and validade < hoje:
