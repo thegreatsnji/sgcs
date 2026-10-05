@@ -6,3 +6,6 @@ class CommonConfig(AppConfig):
     name = "apps.common"
     label = "common"
     verbose_name = "Comum"
+
+    def ready(self):
+        import core.checks.security_checks  # noqa: F401

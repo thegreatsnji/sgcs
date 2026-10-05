@@ -30,6 +30,12 @@ export interface LaboratoryResult {
   numero_pedido: string;
   paciente_id: number;
   paciente_nome: string;
+  paciente_codigo?: string;
+  paciente_sexo?: string | null;
+  paciente_sexo_label?: string | null;
+  paciente_birth_date?: string | null;
+  paciente_idade?: number | null;
+  exames_nomes?: string[];
   consulta_id: number;
   medico_nome: string | null;
   estado: ResultadoEstado;

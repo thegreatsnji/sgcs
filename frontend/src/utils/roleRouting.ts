@@ -17,6 +17,6 @@ export function getRoleDashboardPath(role?: UserRole | string | null): string {
     case "ENFERMEIRO":
       return "/dashboard/nurse";
     default:
-      return "/";
+      return "/404";
   }
 }

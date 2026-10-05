@@ -12,6 +12,8 @@ class SecurityHeadersMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         response["X-Content-Type-Options"] = "nosniff"
+        response["X-Frame-Options"] = getattr(settings, "X_FRAME_OPTIONS", "DENY")
+        response["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response["Referrer-Policy"] = getattr(settings, "SECURE_REFERRER_POLICY", "strict-origin-when-cross-origin")
         if getattr(settings, "SECURE_CONTENT_SECURITY_POLICY", ""):
             response["Content-Security-Policy"] = settings.SECURE_CONTENT_SECURITY_POLICY

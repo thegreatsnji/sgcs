@@ -17,11 +17,12 @@ STORAGE_BACKEND=local  # ou s3, minio, azure
 
 ## Deploy
 
+**Hostinger VPS:** ver [HOSTINGER_DEPLOY.md](./HOSTINGER_DEPLOY.md) (`docker-compose.prod.yml`, `.env.production`).
+
 ```bash
-docker compose up --build -d
-docker exec sgcs-backend python manage.py migrate
-docker exec sgcs-backend python manage.py seed_rbac
-docker exec sgcs-backend python manage.py collectstatic --noinput
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+docker compose -f docker-compose.prod.yml exec backend python manage.py check_deploy_security
+docker compose -f docker-compose.prod.yml exec backend python manage.py seed_rbac
 ```
 
 ## Settings

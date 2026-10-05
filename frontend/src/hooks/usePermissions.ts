@@ -7,11 +7,12 @@ import { usersService } from "@/services/users";
 export function usePermissions() {
   const { user } = useAuth();
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, isError, refetch } = useQuery({
     queryKey: ["profile-permissions", user?.id],
     queryFn: usersService.getProfile,
     enabled: Boolean(user),
     staleTime: 5 * 60_000,
+    retry: 2,
   });
 
   const permissions = profile?.permissions ?? [];
@@ -29,8 +30,10 @@ export function usePermissions() {
     () => ({
       permissions,
       hasPermission,
-      isLoading,
+      isLoading: Boolean(user) && isLoading,
+      isError,
+      refetchPermissions: refetch,
     }),
-    [permissions, hasPermission, isLoading],
+    [permissions, hasPermission, isLoading, isError, refetch, user],
   );
 }

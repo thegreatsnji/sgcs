@@ -24,12 +24,14 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center">
           <h2 className="text-lg font-semibold text-red-800">Ocorreu um erro inesperado</h2>
           <p className="mt-2 text-sm text-red-700">Tente recarregar a página.</p>
           <Button className="mt-4" variant="primary" onClick={() => window.location.reload()}>
             Recarregar
           </Button>
+        </div>
         </div>
       );
     }

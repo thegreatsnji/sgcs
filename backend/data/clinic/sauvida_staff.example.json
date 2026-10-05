@@ -1,0 +1,134 @@
+[
+  {
+    "first_name": "Manain",
+    "last_name": "Paulino Nancabi",
+    "phone": "955767409",
+    "role": "MEDICO",
+    "email": "manain.nancabi@sauvida.gw"
+  },
+  {
+    "first_name": "Mamadú",
+    "last_name": "Aliu Baldé",
+    "phone": "955385030",
+    "role": "MEDICO",
+    "email": "mamadu.balde@sauvida.gw"
+  },
+  {
+    "first_name": "Canhana",
+    "last_name": "Djack",
+    "phone": "955246006",
+    "role": "MEDICO",
+    "email": "canhana.djack@sauvida.gw"
+  },
+  {
+    "first_name": "Flávio",
+    "last_name": "Mendes",
+    "phone": "955735938",
+    "role": "MEDICO",
+    "email": "flavio.mendes@sauvida.gw"
+  },
+  {
+    "first_name": "Tino",
+    "last_name": "Inluta",
+    "phone": "955242776",
+    "role": "MEDICO",
+    "email": "tino.inluta@sauvida.gw"
+  },
+  {
+    "first_name": "Watson",
+    "last_name": "Naquede",
+    "phone": "955765157",
+    "role": "MEDICO",
+    "email": "watson.naquede@sauvida.gw"
+  },
+  {
+    "first_name": "Joaquim",
+    "last_name": "Mendes",
+    "phone": "955155504",
+    "role": "MEDICO",
+    "email": "joaquim.mendes@sauvida.gw"
+  },
+  {
+    "first_name": "Elvis",
+    "last_name": "Luís Gomes",
+    "phone": "955936032",
+    "role": "ENFERMEIRO",
+    "email": "elvis.gomes@sauvida.gw"
+  },
+  {
+    "first_name": "Midana",
+    "last_name": "Indafa",
+    "phone": "955789834",
+    "role": "ENFERMEIRO",
+    "email": "midana.indafa@sauvida.gw"
+  },
+  {
+    "first_name": "Dayze",
+    "last_name": "Nhimanam Pereira Nam Dingna",
+    "phone": "956295437",
+    "role": "ENFERMEIRO",
+    "email": "dayze.dingna@sauvida.gw"
+  },
+  {
+    "first_name": "Milquia",
+    "last_name": "Inês Dias",
+    "phone": "955162780",
+    "role": "ENFERMEIRO",
+    "email": "milquia.dias@sauvida.gw"
+  },
+  {
+    "first_name": "Verônica",
+    "last_name": "Francisco Lopes",
+    "phone": "956930279",
+    "role": "ENFERMEIRO",
+    "email": "veronica.lopes@sauvida.gw"
+  },
+  {
+    "first_name": "Bacar",
+    "last_name": "Sidico Santos Sanha",
+    "phone": "955374796",
+    "role": "ADMINISTRADOR",
+    "email": "bacar.sanha@sauvida.gw",
+    "is_superuser": true
+  },
+  {
+    "first_name": "Ângela",
+    "last_name": "Martina Da Silva Dabo",
+    "phone": "956283584",
+    "role": "PARTEIRA",
+    "position": "Parteira",
+    "email": "angela.dabo@sauvida.gw"
+  },
+  {
+    "first_name": "Manuela",
+    "last_name": "Djó",
+    "phone": "955116106",
+    "role": "PARTEIRA",
+    "position": "Parteira",
+    "email": "manuela.djo@sauvida.gw"
+  },
+  {
+    "first_name": "Sali",
+    "last_name": "Uri Djaló",
+    "phone": "956086441",
+    "role": "SECRETARIA",
+    "position": "Secretária",
+    "email": "sali.djalo@sauvida.gw"
+  },
+  {
+    "first_name": "Diamantino",
+    "last_name": "Luís Nhaga",
+    "phone": "955584621",
+    "role": "LABORATORIO",
+    "position": "Técnico de laboratório",
+    "email": "diamantino.nhaga@sauvida.gw"
+  },
+  {
+    "first_name": "Juelson",
+    "last_name": "Bassafin",
+    "phone": "957704963",
+    "role": "LABORATORIO",
+    "position": "Técnico de laboratório",
+    "email": "juelson.bassafin@sauvida.gw"
+  }
+]

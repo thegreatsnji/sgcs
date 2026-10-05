@@ -14,12 +14,14 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 
 from core.health.views import ApiRootView, HealthView, LiveView, ReadyView
 
+_admin_path = getattr(settings, "DJANGO_ADMIN_PATH", "admin")
+
 urlpatterns = [
     path("", ApiRootView.as_view(), name="api-root"),
     path("health/", HealthView.as_view(), name="health"),
     path("live/", LiveView.as_view(), name="live"),
     path("ready/", ReadyView.as_view(), name="ready"),
-    path("admin/", admin.site.urls),
+    path(f"{_admin_path}/", admin.site.urls),
     path("api/v1/auth/", include("apps.authentication.urls")),
     path("api/v1/users/", include("apps.users.urls")),
     path("api/v1/patients/", include("apps.patients.urls")),
@@ -40,18 +42,22 @@ urlpatterns = [
     path("api/v1/notifications/", include("apps.notifications.urls")),
     path("api/v1/audit-logs/", include("apps.audit_logs.urls")),
     path("api/v1/dashboard/", include("apps.dashboard.urls")),
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path(
-        "api/docs/",
-        SpectacularSwaggerView.as_view(url_name="schema"),
-        name="swagger-ui",
-    ),
-    path(
-        "api/redoc/",
-        SpectacularRedocView.as_view(url_name="schema"),
-        name="redoc",
-    ),
 ]
+
+if settings.DEBUG or getattr(settings, "ENABLE_API_DOCS", False):
+    urlpatterns += [
+        path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+        path(
+            "api/docs/",
+            SpectacularSwaggerView.as_view(url_name="schema"),
+            name="swagger-ui",
+        ),
+        path(
+            "api/redoc/",
+            SpectacularRedocView.as_view(url_name="schema"),
+            name="redoc",
+        ),
+    ]
 
 if settings.DEBUG:
     try:

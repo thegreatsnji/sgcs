@@ -1,11 +1,13 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RouterProvider } from "react-router-dom";
 
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { ToastProvider } from "@/design-system";
+import { LoadingState, ToastProvider } from "@/design-system";
 import { useAuthBootstrap } from "@/hooks/useAuthBootstrap";
-import { router } from "@/routes";
+
+const AppRouter = lazy(() => import("@/routes/AppRouter"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,19 +22,25 @@ const queryClient = new QueryClient({
 function AppProviders() {
   useAuthBootstrap();
 
-  return <RouterProvider router={router} />;
+  return (
+    <Suspense fallback={<LoadingState message="A preparar aplicação..." />}>
+      <AppRouter />
+    </Suspense>
+  );
 }
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <AppProviders />
-          </ToastProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <AppProviders />
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

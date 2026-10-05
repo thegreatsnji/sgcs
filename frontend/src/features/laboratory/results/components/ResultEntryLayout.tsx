@@ -5,6 +5,9 @@ import type { LaboratoryResult } from "@/types/laboratoryResult";
 export interface LabPatientInfo {
   full_name: string;
   patient_number?: string;
+  gender_label?: string | null;
+  birth_date?: string | null;
+  age_years?: number | null;
   numero_pedido?: string;
   medico_nome?: string | null;
   consulta_id?: number;

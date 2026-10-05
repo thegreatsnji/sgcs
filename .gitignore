@@ -72,6 +72,10 @@ secrets/
 
 # Dados clínicos privados / migração histórica
 backend/data/private/
+
+.env.production
+deploy/nginx/certs/*.pem
+deploy/nginx/certs/*.key
 backend/data/migration/
 backups/
 *.patient-data.csv

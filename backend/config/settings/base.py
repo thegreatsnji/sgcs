@@ -13,6 +13,10 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me-in-production")
 
 DEBUG = os.getenv("APP_DEBUG", "false").lower() == "true"
 
+ALLOW_PUBLIC_REGISTRATION = os.getenv("ALLOW_PUBLIC_REGISTRATION", "false").lower() == "true"
+ENABLE_API_DOCS = os.getenv("ENABLE_API_DOCS", "false").lower() == "true"
+DJANGO_ADMIN_PATH = os.getenv("DJANGO_ADMIN_PATH", "admin").strip("/") or "admin"
+
 APP_ENV = os.getenv("APP_ENV", "development")
 
 ALLOWED_HOSTS = [
@@ -200,6 +204,12 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CSRF_TRUSTED_ORIGINS", os.getenv("CORS_ALLOWED_ORIGINS", "")).split(",")
+    if origin.strip()
+]
 
 from core.config.cache import build_cache_config, build_fallback_cache_config
 

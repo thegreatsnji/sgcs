@@ -2,10 +2,19 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import { clearStoredAuth, getStoredAuth, setStoredAuth } from "@/utils/auth-storage";
 
-/** Em dev usa o proxy do Vite (`/api`) para evitar falhas de CORS no browser. */
-const API_ORIGIN = import.meta.env.DEV
-  ? ""
-  : import.meta.env.VITE_API_URL || "http://localhost:8000";
+/** Em dev: proxy Vite. Em prod: VITE_API_URL vazio = mesmo domínio (Nginx /api). */
+function resolveApiOrigin(): string {
+  if (import.meta.env.DEV) {
+    return "";
+  }
+  const configured = import.meta.env.VITE_API_URL;
+  if (configured === undefined || configured === "") {
+    return "";
+  }
+  return String(configured).replace(/\/$/, "");
+}
+
+const API_ORIGIN = resolveApiOrigin();
 const API_ROOT = `${API_ORIGIN}/api/v1`;
 
 export const api = axios.create({

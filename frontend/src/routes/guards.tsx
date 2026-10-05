@@ -49,12 +49,29 @@ interface PermissionRouteProps {
 }
 
 export function PermissionRoute({ permission, fallback }: PermissionRouteProps) {
-  const { hasPermission, isLoading } = usePermissions();
+  const { hasPermission, isLoading, isError, refetchPermissions } = usePermissions();
   const { user } = useAuth();
-  const resolvedFallback = fallback ?? getRoleDashboardPath(user?.role);
+  const roleHome = getRoleDashboardPath(user?.role);
+  const resolvedFallback =
+    fallback && fallback !== "/" ? fallback : roleHome !== "/" ? roleHome : "/404";
 
   if (isLoading) {
     return <LoadingState message="A verificar permissões..." />;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 p-8 text-center">
+        <p className="text-slate-700">Não foi possível carregar permissões.</p>
+        <button
+          type="button"
+          className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
+          onClick={() => void refetchPermissions()}
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
   }
 
   if (!hasPermission(permission)) {

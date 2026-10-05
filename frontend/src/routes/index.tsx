@@ -1,62 +1,62 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
-import { PatientClinicalPage } from "@/features/patients/pages/PatientClinicalPage";
-import { PatientDetailPage } from "@/features/patients/pages/PatientDetailPage";
-import { PatientDocumentsPage } from "@/features/patients/pages/PatientDocumentsPage";
-import { PatientFormPage } from "@/features/patients/pages/PatientFormPage";
-import { PatientHistoryPage } from "@/features/patients/pages/PatientHistoryPage";
-import { PatientsListPage } from "@/features/patients/pages/PatientsListPage";
-import { CheckInPage } from "@/features/reception/pages/CheckInPage";
-import { ReceptionDashboardPage } from "@/features/reception/pages/ReceptionDashboardPage";
-import { ReceptionWorkflowPage } from "@/features/reception/pages/ReceptionWorkflowPage";
-import { ReferralPage } from "@/features/reception/pages/ReferralPage";
-import { WaitingQueuePage } from "@/features/reception/pages/WaitingQueuePage";
-import { PendingLabOrdersPage } from "@/features/reception/pages/PendingLabOrdersPage";
-import { ConsultationDashboardPage } from "@/features/appointments/pages/ConsultationDashboardPage";
-import { ConsultationDetailPage } from "@/features/appointments/pages/ConsultationDetailPage";
-import { ConsultationHistoryPage } from "@/features/appointments/pages/ConsultationHistoryPage";
-import { ConsultationQueuePage } from "@/features/appointments/pages/ConsultationQueuePage";
-import { AppointmentDetailPage } from "@/features/appointments/pages/AppointmentDetailPage";
-import { AppointmentEditPage } from "@/features/appointments/pages/AppointmentEditPage";
-import { AppointmentFormPage } from "@/features/appointments/pages/AppointmentFormPage";
-import { AppointmentsCalendarPage } from "@/features/appointments/pages/AppointmentsCalendarPage";
-import { AppointmentsDashboardPage } from "@/features/appointments/pages/AppointmentsDashboardPage";
-import { AppointmentsListPage } from "@/features/appointments/pages/AppointmentsListPage";
-import { AppointmentsQueuePage } from "@/features/appointments/pages/AppointmentsQueuePage";
-import { LaboratoryCollectionPage } from "@/features/laboratory/pages/LaboratoryCollectionPage";
-import { LaboratoryDashboardPage } from "@/features/laboratory/pages/LaboratoryDashboardPage";
-import { LaboratoryDetailPage } from "@/features/laboratory/pages/LaboratoryDetailPage";
-import { LaboratoryPendingPage } from "@/features/laboratory/pages/LaboratoryPendingPage";
-import { LaboratoryTodayPage } from "@/features/laboratory/pages/LaboratoryTodayPage";
-import { ResultCreatePage } from "@/features/laboratory/results/pages/ResultCreatePage";
-import { ResultDetailPage } from "@/features/laboratory/results/pages/ResultDetailPage";
-import { ResultEditPage } from "@/features/laboratory/results/pages/ResultEditPage";
-import { ResultHistoryPage } from "@/features/laboratory/results/pages/ResultHistoryPage";
-import { ResultsDashboardPage } from "@/features/laboratory/results/pages/ResultsDashboardPage";
-import { BillingDashboardPage } from "@/features/billing/pages/BillingDashboardPage";
-import { InvoiceCreatePage } from "@/features/billing/pages/InvoiceCreatePage";
-import { PendingReductionsPage } from "@/features/billing/pages/PendingReductionsPage";
-import { UrgentStockPage } from "@/features/pharmacy/pages/UrgentStockPage";
-import { UrgentStockHistoryPage } from "@/features/pharmacy/pages/UrgentStockHistoryPage";
-import { InvoiceDetailPage } from "@/features/billing/pages/InvoiceDetailPage";
-import { InvoicesListPage } from "@/features/billing/pages/InvoicesListPage";
-import { PatientHistoryPage as BillingPatientHistoryPage } from "@/features/billing/pages/PatientHistoryPage";
-import { PaymentsListPage } from "@/features/billing/pages/PaymentsListPage";
-import { QuoteCreatePage } from "@/features/billing/pages/QuoteCreatePage";
-import { QuotesListPage } from "@/features/billing/pages/QuotesListPage";
-import { ReceiptDetailPage } from "@/features/billing/pages/ReceiptDetailPage";
-import { ReceiptsListPage } from "@/features/billing/pages/ReceiptsListPage";
-import { ServiceDetailPage } from "@/features/billing/pages/ServiceDetailPage";
-import { ServiceFormPage } from "@/features/billing/pages/ServiceFormPage";
-import { ServicesListPage } from "@/features/billing/pages/ServicesListPage";
-import { CashMovementsPage } from "@/features/finance/pages/CashMovementsPage";
-import { CashRegisterDetailPage } from "@/features/finance/pages/CashRegisterDetailPage";
-import { CashRegistersPage } from "@/features/finance/pages/CashRegistersPage";
-import { ExpenseFormPage } from "@/features/finance/pages/ExpenseFormPage";
-import { ExpensesPage } from "@/features/finance/pages/ExpensesPage";
-import { FinanceDashboardPage } from "@/features/finance/pages/FinanceDashboardPage";
-import { FinanceReportsPage } from "@/features/finance/pages/FinanceReportsPage";
 import {
+  PatientClinicalPage,
+  PatientDetailPage,
+  PatientDocumentsPage,
+  PatientFormPage,
+  PatientHistoryPage,
+  PatientsListPage,
+  CheckInPage,
+  ReceptionDashboardPage,
+  ReceptionWorkflowPage,
+  ReferralPage,
+  WaitingQueuePage,
+  PendingLabOrdersPage,
+  ConsultationDashboardPage,
+  ConsultationDetailPage,
+  ConsultationHistoryPage,
+  ConsultationQueuePage,
+  AppointmentDetailPage,
+  AppointmentEditPage,
+  AppointmentFormPage,
+  AppointmentsCalendarPage,
+  AppointmentsDashboardPage,
+  AppointmentsListPage,
+  AppointmentsQueuePage,
+  LaboratoryCollectionPage,
+  LaboratoryDashboardPage,
+  LaboratoryDetailPage,
+  LaboratoryPendingPage,
+  LaboratoryTodayPage,
+  ResultCreatePage,
+  ResultDetailPage,
+  ResultEditPage,
+  ResultHistoryPage,
+  ResultsDashboardPage,
+  BillingDashboardPage,
+  InvoiceCreatePage,
+  PendingReductionsPage,
+  UrgentStockPage,
+  UrgentStockHistoryPage,
+  InvoiceDetailPage,
+  InvoicesListPage,
+  BillingPatientHistoryPage,
+  PaymentsListPage,
+  QuoteCreatePage,
+  QuotesListPage,
+  ReceiptDetailPage,
+  ReceiptsListPage,
+  ServiceDetailPage,
+  ServiceFormPage,
+  ServicesListPage,
+  CashMovementsPage,
+  CashRegisterDetailPage,
+  CashRegistersPage,
+  ExpenseFormPage,
+  ExpensesPage,
+  FinanceDashboardPage,
+  FinanceReportsPage,
   AppointmentsReportPage,
   BillingReportPage,
   ExecutiveReportPage,
@@ -64,8 +64,6 @@ import {
   LaboratoryReportPage,
   PatientsReportPage,
   ReportsDashboardPage,
-} from "@/features/reports/pages/ReportsPages";
-import {
   BackupPage,
   BillingSettingsPage,
   ClinicSettingsPage,
@@ -80,45 +78,40 @@ import {
   SpecialtiesPage,
   SystemStatusPage,
   WorkingHoursPage,
-} from "@/features/settings/pages/SettingsPages";
-import { MedicoProfilesPage } from "@/features/settings/pages/MedicoProfilesPage";
-import {
+  MedicoProfilesPage,
   ClinicalEvolutionPage,
-} from "@/features/doctors/pages/ClinicalEvolutionPage";
-import {
   DischargePage,
   DoctorDashboardPage,
   HistoryPage,
   PrescriptionsPage,
   TreatmentsPage,
-} from "@/features/doctors/pages/DoctorPages";
-import {
   EmailHistoryPage,
   NotificationCenterPage,
   NotificationsDashboardPage,
   PreferencesPage,
   SMSHistoryPage,
   TemplatesPage,
-} from "@/features/notifications/pages/NotificationsPages";
+  AdminDashboardPage,
+  AuditPage,
+  GroupsPage,
+  PermissionsPage,
+  ProfilePage,
+  UserFormPage,
+  UsersListPage,
+  LoginPage,
+  NotFoundPage,
+  AdminRoleDashboardPage,
+  DirectorRoleDashboardPage,
+  DoctorRoleDashboardPage,
+  LaboratoryRoleDashboardPage,
+  NurseTriagePage,
+  NurseRoleDashboardPage,
+  ReceptionRoleDashboardPage,
+} from "@/routes/pages.lazy";
+
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { AppLayout } from "@/layouts/AppLayout";
 import { AuthLayout } from "@/layouts/AuthLayout";
-import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
-import { AuditPage } from "@/pages/admin/AuditPage";
-import { GroupsPage } from "@/pages/admin/GroupsPage";
-import { PermissionsPage } from "@/pages/admin/PermissionsPage";
-import { ProfilePage } from "@/pages/admin/ProfilePage";
-import { UserFormPage } from "@/pages/admin/UserFormPage";
-import { UsersListPage } from "@/pages/admin/UsersListPage";
-import { LoginPage } from "@/pages/LoginPage";
-import { NotFoundPage } from "@/pages/NotFoundPage";
-import { AdminRoleDashboardPage } from "@/pages/dashboards/AdminRoleDashboardPage";
-import { DirectorRoleDashboardPage } from "@/pages/dashboards/DirectorRoleDashboardPage";
-import { DoctorRoleDashboardPage } from "@/pages/dashboards/DoctorRoleDashboardPage";
-import { LaboratoryRoleDashboardPage } from "@/pages/dashboards/LaboratoryRoleDashboardPage";
-import { NurseTriagePage } from "@/features/nursing/pages/NurseTriagePage";
-import { NurseRoleDashboardPage } from "@/pages/dashboards/NurseRoleDashboardPage";
-import { ReceptionRoleDashboardPage } from "@/pages/dashboards/ReceptionRoleDashboardPage";
 import { ProtectedRoute, PublicRoute, PermissionRoute, PermissionGuard, AdminOnlyRoute } from "@/routes/guards";
 import { RoleGuard } from "@/routes/RoleGuard";
 import { RoleHomeRedirect } from "@/routes/RoleHomeRedirect";

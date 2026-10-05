@@ -9,6 +9,8 @@
     "down": "docker compose down",
     "logs": "docker compose logs -f",
     "seed": "docker compose exec backend python manage.py seed_demo --reset-demo-users",
-    "ready": "node scripts/wait-ready.mjs"
+    "ready": "node scripts/wait-ready.mjs",
+    "prod:up": "docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build",
+    "prod:down": "docker compose -f docker-compose.prod.yml down"
   }
 }

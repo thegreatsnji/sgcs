@@ -72,7 +72,11 @@ export function LoginPage() {
       if (isAxiosError(error)) {
         const detail = error.response?.data?.detail;
         if (typeof detail === "string") {
-          setErrorMessage(detail);
+          setErrorMessage(
+            detail === "No active account found with the given credentials."
+              ? "Email ou palavra-passe incorrectos."
+              : detail,
+          );
         } else if (!error.response) {
           setErrorMessage("Não foi possível contactar o servidor. Tente novamente.");
         } else {

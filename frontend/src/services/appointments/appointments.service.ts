@@ -6,7 +6,8 @@ import type {
   AppointmentUpdatePayload,
   ConsultasDashboardData,
 } from "@/types/appointment";
-import type { ClinicalRecord } from "@/types/clinicalRecord";
+import type { ClinicalRecord, LaboratoryCatalogItem } from "@/types/clinicalRecord";
+import { billingService } from "@/services/billing/billing.service";
 import { unwrapApiData } from "@/utils/api-response";
 
 async function getPaginated<T>(url: string, params?: object) {
@@ -111,9 +112,30 @@ export const appointmentsService = {
     return unwrapApiData(data);
   },
 
-  addLabOrder: async (id: number, payload: { tipo_exame: string; prioridade?: string; observacoes?: string }) => {
+  addLabOrder: async (
+    id: number,
+    payload: {
+      tipo_exame?: string;
+      servico_id?: number;
+      prioridade?: string;
+      observacoes?: string;
+    },
+  ) => {
     const { data } = await api.post<ApiEnvelope<ClinicalRecord>>(`/appointments/${id}/laboratory/`, payload);
     return unwrapApiData(data);
+  },
+
+  getLaboratoryCatalog: async (): Promise<LaboratoryCatalogItem[]> => {
+    const page = await billingService.listServices({
+      categoria: "LABORATORIO",
+      activo: true,
+      page_size: 500,
+    });
+    return page.results.map((s) => ({
+      id: s.id,
+      codigo: s.codigo,
+      nome: s.nome,
+    }));
   },
 
   addImagingOrder: async (id: number, payload: { tipo_exame: string; prioridade?: string; observacoes?: string }) => {

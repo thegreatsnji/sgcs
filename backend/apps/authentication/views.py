@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -25,6 +26,11 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = (permissions.AllowAny,)
+
+    def get_permissions(self):
+        if not getattr(settings, "ALLOW_PUBLIC_REGISTRATION", False):
+            return [permissions.IsAdminUser()]
+        return super().get_permissions()
 
 
 class MeView(APIView):

@@ -13,6 +13,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    strictPort: true,
+    watch: {
+      // Docker on Windows bind mounts: set CHOKIDAR_USEPOLLING=true in compose.
+      usePolling: process.env.CHOKIDAR_USEPOLLING === "true",
+    },
     proxy: {
       "/api": {
         // Docker: use VITE_PROXY_TARGET=http://backend:8000 (see docker-compose.yml)
@@ -27,10 +32,16 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom", "react-router-dom"],
-          query: ["@tanstack/react-query"],
-          charts: ["recharts"],
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("recharts") || id.includes("d3-")) return "charts";
+            if (id.includes("@tanstack/react-query")) return "query";
+            if (id.includes("react-router") || id.includes("react-dom") || /\/react\//.test(id))
+              return "vendor";
+            if (id.includes("@hookform") || id.includes("zod")) return "forms";
+          }
+          if (id.includes("/features/reports/")) return "reports";
+          if (id.includes("/features/settings/")) return "settings";
         },
       },
     },

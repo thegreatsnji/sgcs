@@ -37,7 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const currentUser = await getCurrentUser();
+      const currentUser = await Promise.race([
+        getCurrentUser(),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error("timeout")), 15_000);
+        }),
+      ]);
       setUser(currentUser);
     } catch {
       clearStoredAuth();

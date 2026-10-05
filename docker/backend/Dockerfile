@@ -10,8 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
+ARG REQUIREMENTS=development
 COPY backend/requirements/ /app/requirements/
-RUN pip install --no-cache-dir -r requirements/development.txt
+RUN pip install --no-cache-dir -r requirements/${REQUIREMENTS}.txt
 
 COPY backend/ /app/
 
