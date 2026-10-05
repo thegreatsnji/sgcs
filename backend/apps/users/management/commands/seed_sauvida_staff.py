@@ -6,15 +6,17 @@ Não usar em ambiente demo com seed_demo activo sem desactivar contas demo.
 Ficheiro predefinido (gitignored):
   backend/data/private/sauvida_staff.json
 
-Copiar de backend/data/clinic/sauvida_staff.example.json e ajustar.
+Copiar de backend/data/clinic/sauvida_staff.example.json ou sauvida_staff.csv e ajustar.
 
 Palavra-passe inicial:
   --password-file PATH   (primeira linha não vazia)
   ou variável SAUVIDA_STAFF_INITIAL_PASSWORD
+  Piloto local: backend/data/private/pilot_initial_password.txt (gitignored; ex. Demo@2026!)
 """
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 import re
@@ -68,6 +70,36 @@ def _normalize_phone(raw: str) -> str:
     return f"+{digits}" if raw.strip().startswith("+") else digits
 
 
+def _load_staff_payload(path: Path) -> list[dict]:
+    if path.suffix.lower() == ".csv":
+        rows: list[dict] = []
+        with path.open(encoding="utf-8-sig", newline="") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                first = (row.get("first_name") or "").strip()
+                last = (row.get("last_name") or "").strip()
+                if not first and not last:
+                    continue
+                entry = {
+                    "first_name": first,
+                    "last_name": last,
+                    "phone": (row.get("phone") or "").strip(),
+                    "role": (row.get("role") or "").strip(),
+                    "position": (row.get("position") or "").strip(),
+                    "email": (row.get("email") or "").strip(),
+                }
+                superuser = (row.get("is_superuser") or "").strip().lower()
+                if superuser in ("1", "true", "yes", "sim"):
+                    entry["is_superuser"] = True
+                rows.append(entry)
+        return rows
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, list):
+        raise CommandError("O JSON deve ser uma lista de objectos utilizador.")
+    return payload
+
+
 def _load_password(options) -> str | None:
     path = options.get("password_file")
     if path:
@@ -85,12 +117,14 @@ class Command(BaseCommand):
     help = "Importa utilizadores SauVida a partir de JSON (piloto/produção)"
 
     def add_arguments(self, parser):
-        default_file = Path(settings.BASE_DIR) / "data" / "private" / "sauvida_staff.json"
+        default_json = Path(settings.BASE_DIR) / "data" / "private" / "sauvida_staff.json"
+        default_csv = Path(settings.BASE_DIR) / "data" / "private" / "sauvida_staff.csv"
+        default_file = default_csv if default_csv.is_file() else default_json
         parser.add_argument(
             "--file",
             type=str,
             default=str(default_file),
-            help=f"JSON com a equipa (predef.: {default_file})",
+            help="JSON ou CSV com a equipa (predef.: private/sauvida_staff.csv ou .json)",
         )
         parser.add_argument(
             "--password-file",
@@ -120,13 +154,13 @@ class Command(BaseCommand):
         if not path.is_file():
             raise CommandError(
                 f"Ficheiro não encontrado: {path}\n"
-                "Copie backend/data/clinic/sauvida_staff.example.json para "
-                "backend/data/private/sauvida_staff.json"
+                "Copie backend/data/clinic/sauvida_staff.csv (ou .example.json) para "
+                "backend/data/private/sauvida_staff.csv"
             )
 
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(payload, list):
-            raise CommandError("O JSON deve ser uma lista de objectos utilizador.")
+        payload = _load_staff_payload(path)
+        if not payload:
+            raise CommandError("Nenhum utilizador no ficheiro (preenche pelo menos uma linha com nome).")
 
         password = _load_password(options)
         dry_run = options["dry_run"]

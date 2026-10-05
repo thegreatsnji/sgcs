@@ -130,5 +130,13 @@
     "role": "LABORATORIO",
     "position": "Técnico de laboratório",
     "email": "juelson.bassafin@sauvida.gw"
+  },
+  {
+    "first_name": "Bonina",
+    "last_name": "Correia",
+    "phone": "955899824",
+    "role": "DIRECTOR",
+    "position": "Direção clínica",
+    "email": "bonina.correia@sauvida.gw"
   }
 ]

@@ -57,6 +57,7 @@ services:
       - media_data:/app/media
       - static_data:/app/staticfiles
       - logs_data:/app/logs
+      - ./backend/data/private:/app/data/private:ro
     depends_on:
       db:
         condition: service_healthy

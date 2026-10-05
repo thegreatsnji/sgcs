@@ -5,8 +5,10 @@ Guia para publicar o SGCS com **camadas de segurança activas** (HTTPS, cookies 
 ## Pré-requisitos Hostinger
 
 - **VPS** (não alojamento partilhado PHP) — Django + PostgreSQL + Redis.
-- Domínio apontado para o IP do VPS (registo A).
+- Domínio apontado para o IP do VPS (registo A) — ou use o IP público para piloto HTTP.
 - SSH activo, Docker + Docker Compose instalados.
+
+**Instalação rápida (script):** [deploy/hostinger/README.md](../deploy/hostinger/README.md) — VPS `148.230.113.108`, `bash deploy/hostinger/vps-install.sh`.
 
 ## 1. Segredos e ambiente
 
