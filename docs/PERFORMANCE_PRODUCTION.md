@@ -18,30 +18,12 @@ Melhorias incluídas no código para **https://clinicasauvida.systems** (ou outr
 ```bash
 cd /opt/sgcs
 git pull origin main
+bash deploy/hostinger/vps-apply-performance-env.sh
 ```
 
-Editar `/opt/sgcs/.env.production` — acrescentar ou ajustar:
+O script actualiza **`/opt/sgcs/.env.production`**, faz backup, ajusta Nginx SSL se necessário, e faz **rebuild** dos contentores.
 
-```env
-REDIS_CACHE_URL=redis://redis:6379/1
-CELERY_RESULT_BACKEND=redis://redis:6379/2
-DB_CONN_MAX_AGE=120
-GUNICORN_WORKERS=3
-CACHE_TIMEOUT=300
-CELERY_CONCURRENCY=2
-```
-
-Se já usa HTTPS com ficheiro gerado `deploy/nginx/generated/default-ssl.conf`, após `git pull` confirme que inclui:
-
-`include /etc/nginx/snippets/sgcs-performance.conf;`
-
-(se não, copie de `hostinger-ssl.conf.template` ou volte a correr `vps-enable-https.sh`).
-
-Rebuild:
-
-```bash
-bash deploy/hostinger/compose-prod.sh up -d --build
-```
+Edição manual (alternativa): ver variáveis em `.env.production.example`.
 
 ## Ajuste fino (Hostinger KVM 2)
 
