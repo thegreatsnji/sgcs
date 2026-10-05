@@ -82,30 +82,37 @@ else
   echo "==> .env.production already exists — keeping it."
 fi
 
-mkdir -p backend/data/private
+mkdir -p backend/data/private deploy/nginx/certs
 if [[ ! -f backend/data/private/sauvida_staff.csv ]]; then
   cp backend/data/clinic/sauvida_staff.csv backend/data/private/sauvida_staff.csv
 fi
 printf '%s\n' "$STAFF_PASSWORD" > backend/data/private/pilot_initial_password.txt
 chmod 600 backend/data/private/pilot_initial_password.txt
 
+COMPOSE=(bash deploy/hostinger/compose-prod.sh)
+
+if [[ ! -s .env.production ]] || ! grep -q '^DB_PASSWORD=.\+' .env.production; then
+  echo "ERROR: .env.production missing or DB_PASSWORD empty. Remove it and re-run this script."
+  exit 1
+fi
+
 echo "==> Building and starting containers (may take several minutes)..."
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+"${COMPOSE[@]}" up -d --build
 
 echo "==> Waiting for backend..."
 for i in $(seq 1 60); do
-  if docker compose -f docker-compose.prod.yml exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready/')" 2>/dev/null; then
+  if "${COMPOSE[@]}" exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready/')" 2>/dev/null; then
     break
   fi
   sleep 5
 done
 
 echo "==> Staff users (skip if already imported)..."
-docker compose -f docker-compose.prod.yml exec -T backend python manage.py seed_sauvida_staff \
+"${COMPOSE[@]}" exec -T backend python manage.py seed_sauvida_staff \
   --file /app/data/private/sauvida_staff.csv \
   --password-file /app/data/private/pilot_initial_password.txt \
   --deactivate-demo-users \
-  || docker compose -f docker-compose.prod.yml exec -T backend python manage.py seed_sauvida_staff \
+  || "${COMPOSE[@]}" exec -T backend python manage.py seed_sauvida_staff \
   --file /app/data/private/sauvida_staff.csv \
   --update-existing \
   --password-file /app/data/private/pilot_initial_password.txt

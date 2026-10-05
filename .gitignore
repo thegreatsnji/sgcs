@@ -74,8 +74,9 @@ secrets/
 backend/data/private/
 
 .env.production
-deploy/nginx/certs/*.pem
-deploy/nginx/certs/*.key
+deploy/nginx/certs/
+deploy/nginx/generated/
+backend/data/clinic/sauvida_staff.csv
 backend/data/migration/
 backups/
 *.patient-data.csv

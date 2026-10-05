@@ -61,3 +61,22 @@ Edit `/opt/sgcs/.env.production`:
 - Rebuild: `docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build`
 
 See [docs/HOSTINGER_DEPLOY.md](../../docs/HOSTINGER_DEPLOY.md).
+
+## 7. Security finish + GitHub public/private
+
+After install:
+
+```bash
+cd /opt/sgcs
+bash deploy/hostinger/vps-finish-security.sh
+```
+
+When DNS points to the VPS:
+
+```bash
+export DOMAIN=clinicasauvida.gw
+export CERTBOT_EMAIL=you@clinicasauvida.gw
+bash deploy/hostinger/vps-enable-https.sh
+```
+
+Full checklist (passwords, backups, **whether the repo can be public**): [docs/VPS_SECURITY_AND_GITHUB.md](../../docs/VPS_SECURITY_AND_GITHUB.md).

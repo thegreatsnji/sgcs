@@ -1,0 +1,7 @@
+# Override: expõe 443 no contentor web (usar com vps-enable-https.sh).
+# docker compose -f docker-compose.prod.yml -f docker-compose.prod.https.yml ...
+
+services:
+  web:
+    ports:
+      - "${HTTPS_PORT:-443}:443"

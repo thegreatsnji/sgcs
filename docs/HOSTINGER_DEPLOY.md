@@ -82,4 +82,4 @@ Com HTTPS activo, confirme:
 | Demo | `seed_demo` opcional | **proibido** |
 | DB/Redis | portas expostas | rede interna |
 
-Ver também [Production.md](./Production.md) e [SPRINT18_PILOT_DEPLOYMENT_CHECKLIST.md](./SPRINT18_PILOT_DEPLOYMENT_CHECKLIST.md).
+Ver também [Production.md](./Production.md), [VPS_SECURITY_AND_GITHUB.md](./VPS_SECURITY_AND_GITHUB.md) (HTTPS, hardening, repo público) e [SPRINT18_PILOT_DEPLOYMENT_CHECKLIST.md](./SPRINT18_PILOT_DEPLOYMENT_CHECKLIST.md).
