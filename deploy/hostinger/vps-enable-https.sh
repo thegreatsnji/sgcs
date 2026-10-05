@@ -10,7 +10,7 @@ set -euo pipefail
 
 SGCS_DIR="${SGCS_DIR:-/opt/sgcs}"
 DOMAIN="${DOMAIN:?Set DOMAIN=your.domain.gw}"
-CERTBOT_EMAIL="${CERTBOT_EMAIL:?Set CERTBOT_EMAIL=for Let's Encrypt notices}"
+CERTBOT_EMAIL="${CERTBOT_EMAIL:?Set CERTBOT_EMAIL for Lets Encrypt notices}"
 VPS_IP="${VPS_IP:-}"
 
 cd "$SGCS_DIR"

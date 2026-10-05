@@ -4,7 +4,10 @@ import os
 
 
 def build_cache_config() -> dict:
-    redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
+    redis_url = os.getenv(
+        "REDIS_CACHE_URL",
+        os.getenv("REDIS_URL", "redis://redis:6379/1"),
+    )
 
     return {
         "default": {

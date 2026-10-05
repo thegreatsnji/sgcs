@@ -24,7 +24,10 @@ services:
     image: redis:7-alpine
     container_name: sgcs-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: >
+      redis-server --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     healthcheck:
@@ -50,9 +53,6 @@ services:
       APP_DEBUG: "false"
       DJANGO_SETTINGS_MODULE: config.settings.production
       DB_HOST: db
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
     volumes:
       - media_data:/app/media
       - static_data:/app/staticfiles
@@ -76,16 +76,16 @@ services:
         REQUIREMENTS: production
     container_name: sgcs-celery-worker
     restart: unless-stopped
-    command: celery -A config worker -l info
+    command:
+      - sh
+      - -c
+      - celery -A config worker -l info --concurrency=$${CELERY_CONCURRENCY:-2} --prefetch-multiplier=$${CELERY_PREFETCH:-1}
     env_file:
       - .env.production
     environment:
       APP_ENV: production
       DJANGO_SETTINGS_MODULE: config.settings.production
       DB_HOST: db
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
     volumes:
       - media_data:/app/media
       - logs_data:/app/logs
@@ -110,9 +110,6 @@ services:
       APP_ENV: production
       DJANGO_SETTINGS_MODULE: config.settings.production
       DB_HOST: db
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
     depends_on:
       backend:
         condition: service_started
@@ -133,6 +130,7 @@ services:
       - static_data:/var/www/static:ro
       - media_data:/var/www/media:ro
       - ${NGINX_CONF_PATH:-./deploy/nginx/hostinger.conf}:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/nginx/sgcs-server-performance.conf:/etc/nginx/snippets/sgcs-performance.conf:ro
       - ./deploy/nginx/certs:/etc/nginx/certs:ro
     depends_on:
       - backend

@@ -6,6 +6,8 @@ from .base import *  # noqa: F403
 
 DEBUG = False
 
+DATABASES["default"]["CONN_MAX_AGE"] = int(os.getenv("DB_CONN_MAX_AGE", "120"))  # noqa: F405
+
 ALLOW_PUBLIC_REGISTRATION = False
 ENABLE_API_DOCS = os.getenv("ENABLE_API_DOCS", "false").lower() == "true"
 

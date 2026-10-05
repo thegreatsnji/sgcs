@@ -34,10 +34,14 @@ if [ "$APP_ENV" = "development" ]; then
 else
   python manage.py collectstatic --noinput
   WORKERS="${GUNICORN_WORKERS:-3}"
+  MAX_REQ="${GUNICORN_MAX_REQUESTS:-1000}"
+  MAX_JITTER="${GUNICORN_MAX_REQUESTS_JITTER:-100}"
   exec gunicorn config.wsgi:application \
     --bind 0.0.0.0:8000 \
     --workers "$WORKERS" \
     --timeout 120 \
+    --max-requests "$MAX_REQ" \
+    --max-requests-jitter "$MAX_JITTER" \
     --access-logfile - \
     --error-logfile -
 fi

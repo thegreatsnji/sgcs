@@ -2,7 +2,7 @@
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F
+from django.db.models import Case, F, IntegerField, When
 from django.utils import timezone
 
 from apps.audit_logs.models import AuditAction
@@ -194,19 +194,37 @@ class ReceptionService:
         return check_in
 
     @staticmethod
-    def get_active_queue(use_cache: bool = True):
-        if use_cache:
-            cached = cache.get(QUEUE_CACHE_KEY)
-            if cached is not None:
-                return cached
-
-        queryset = (
+    def _queue_queryset():
+        return (
             WaitingQueue.objects.filter(status__in=ReceptionService.ACTIVE_QUEUE_STATUSES)
             .select_related("patient", "check_in", "check_in__receptionist")
             .order_by("position")
         )
+
+    @staticmethod
+    def get_active_queue(use_cache: bool = True):
         if use_cache:
-            cache.set(QUEUE_CACHE_KEY, queryset, QUEUE_CACHE_TTL)
+            cached_pks = cache.get(QUEUE_CACHE_KEY)
+            if cached_pks is not None:
+                if not cached_pks:
+                    return WaitingQueue.objects.none()
+                order = Case(
+                    *[When(pk=pk, then=pos) for pos, pk in enumerate(cached_pks)],
+                    output_field=IntegerField(),
+                )
+                return (
+                    WaitingQueue.objects.filter(pk__in=cached_pks)
+                    .select_related("patient", "check_in", "check_in__receptionist")
+                    .order_by(order)
+                )
+
+        queryset = ReceptionService._queue_queryset()
+        if use_cache:
+            cache.set(
+                QUEUE_CACHE_KEY,
+                list(queryset.values_list("pk", flat=True)),
+                QUEUE_CACHE_TTL,
+            )
         return queryset
 
     @staticmethod
